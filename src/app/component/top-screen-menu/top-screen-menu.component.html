@@ -1,0 +1,16 @@
+<nav class="top-menu">
+    <ul class="menu-list">
+      <li *ngFor="let item of menuItems" class="menu-item" (click)="toggleDropdown(item)">
+        {{ item.name }}
+        <div class="dropdown" *ngIf="item.isOpen">
+          <ul class="dropdown-list">
+            <li *ngFor="let option of item.options" 
+                class="dropdown-item"
+                (click)="selectOption(option)">
+              {{ option }}
+            </li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </nav>
