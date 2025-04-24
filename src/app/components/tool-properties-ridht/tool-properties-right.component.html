@@ -1,0 +1,50 @@
+<div class="properties-container">
+    <h3>Propriétés</h3>
+  
+    <!-- Nom Field -->
+    <mat-form-field appearance="fill">
+      <mat-label>Nom:</mat-label>
+      <input matInput  >
+    </mat-form-field>
+  
+    <!-- Taille Field -->
+    <mat-form-field appearance="fill">
+      <mat-label>Taille:</mat-label>
+      <input matInput >
+    </mat-form-field>
+  
+    <!-- Position Field -->
+    <div class="position-section">
+        <label class="section-label">Position:</label>
+        <div class="subfields">
+          <!-- Position X -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position X:</mat-label>
+            <input matInput >
+          </mat-form-field>
+    
+          <!-- Position Y -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position Y:</mat-label>
+            <input matInput >
+          </mat-form-field>
+    
+          <!-- Rotation -->
+          <mat-form-field appearance="fill">
+            <mat-label>Rotation:</mat-label>
+            <input matInput >
+          </mat-form-field>
+        </div>
+      </div>
+  
+    <!-- Couleur Field -->
+    <div class="color-field">
+      <mat-form-field appearance="fill">
+        <mat-label>Couleur:</mat-label>
+        <input matInput readonly>
+      </mat-form-field>
+      <button mat-icon-button aria-label="Ouvrir le sélecteur de couleur">
+        <mat-icon>color_lens</mat-icon>
+      </button>
+    </div>
+  </div>

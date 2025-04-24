@@ -1,0 +1,27 @@
+.page-container {
+    display: flex;
+    height: 100vh; /* Full viewport height */
+    background-color: #1e1e1e; /* Dark background similar to the image */
+  }
+  
+  .main-content {
+    flex: 1; /* Takes remaining space */
+    overflow: auto; /* Allows scrolling if content overflows */
+    padding: 16px;
+  }
+  
+  .placeholder-content {
+    height: 100%;
+    background-color: #333; /* Placeholder background */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+  
+  .properties-panel {
+    width: 300px; /* Fixed width for the properties panel, adjust as needed */
+    background-color: #2a2a2a; /* Match the dark theme */
+    border-left: 1px solid #444; /* Separator line */
+  }
