@@ -1,35 +1,33 @@
+<!-- tool-graphical-left.component.html -->
 <div class="toolbar-container">
-  <!-- Scrollable Wrapper for Sections -->
   <div class="sections-wrapper">
-    <!-- 2D Section -->
     <div class="toolbar-section">
       <h3 class="section-title">2D</h3>
       <div class="tool-group">
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>title</mat-icon>
         </button>
 
-        <!-- Image Button with Hidden Input -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" (click)="triggerFileInput(); onToolButtonClick()">
+          <button class="tool-button" (click)="triggerFileInput(); ">
             <mat-icon>image</mat-icon>
           </button>
           <input type="file" accept="image/*" (change)="onFileSelected($event)" #fileInput style="display: none" />
         </div>
 
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>crop_square</mat-icon>
         </button>
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>gesture</mat-icon>
         </button>
 
-        <!-- Line Button with Dropdown -->
+        <!-- Ligne -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" #lineButton (click)="toggleLineStyles()">
+          <button class="tool-button" #lineButton (click)="toggleMenu('line')">
             <mat-icon>timeline</mat-icon>
           </button>
-          <div class="line-styles-dropdown dropdown-menu" *ngIf="showLineStyles">
+          <div class="line-styles-dropdown dropdown-menu" *ngIf="currentMenu === 'line'">
             <div class="line-style-option" (click)="selectLineStyle('solid')">
               <span class="line-preview solid-line"></span> Solid
             </div>
@@ -48,12 +46,12 @@
           </div>
         </div>
 
-        <!-- Polygon Button with Dropdown -->
+        <!-- Polygones 2D -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" #polygonButton (click)="togglePolygonShapes()">
+          <button class="tool-button" #polygonButton (click)="toggleMenu('polygon')">
             <mat-icon>pentagon</mat-icon>
           </button>
-          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="showPolygonShapes">
+          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="currentMenu === 'polygon'">
             <div class="shape-option" (click)="selectPolygonShape('circle')">
               <span class="shape-preview circle-shape"></span> Circle
             </div>
@@ -63,42 +61,40 @@
             <div class="shape-option" (click)="selectPolygonShape('square')">
               <span class="shape-preview square-shape"></span> Square
             </div>
-           
             <div class="shape-option" (click)="selectPolygonShape('pentagon3D')">
-              <span class="shape-preview pentagon3d-shape"></span> Pentagon 
+              <span class="shape-preview pentagon3d-shape"></span> Pentagon
             </div>
           </div>
         </div>
 
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>straighten</mat-icon>
         </button>
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>grid_on</mat-icon>
         </button>
       </div>
     </div>
 
-    <!-- 3D Section -->
     <div class="toolbar-section">
       <h3 class="section-title">3D</h3>
       <div class="tool-group">
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>3d_rotation</mat-icon>
         </button>
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>edit</mat-icon>
         </button>
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>circle</mat-icon>
         </button>
 
-        <!-- Ajout du wrapper et du menu déroulant pour change_history -->
+        <!-- Menu 3D -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" #shape3DButton (click)="toggleShape3DMenu()">
+          <button class="tool-button" #shape3DButton (click)="toggleMenu('shape3D')">
             <mat-icon>change_history</mat-icon>
           </button>
-          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="showShape3DMenu">
+          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="currentMenu === 'shape3D'">
             <div class="shape-option" (click)="selectShape3D('circle')">
               <span class="shape-preview circle-shape"></span> Circle
             </div>
@@ -108,14 +104,13 @@
             <div class="shape-option" (click)="selectShape3D('square')">
               <span class="shape-preview square-shape"></span> Square
             </div>
-           
             <div class="shape-option" (click)="selectShape3D('pentagon3D')">
               <span class="shape-preview pentagon3d-shape"></span> Pentagon 3D
             </div>
           </div>
         </div>
 
-        <button class="tool-button" (click)="onToolButtonClick()">
+        <button class="tool-button" >
           <mat-icon>star</mat-icon>
         </button>
       </div>

@@ -7,28 +7,17 @@
 
 .page-container {
   display: flex;
+  flex-direction: row;
   flex: 1;
   overflow: hidden;
 }
 
 .main-content {
-  flex: 1;
+  width: 100%;
+  flex-grow: 1;
   background-color: #1e1e1e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-
-.placeholder-content {
   font-size: 18px;
   color: #ccc;
 }
 
-.properties-panel {
-  width: 300px;
-  background-color: #1e1e1e;
-  border-left: 1px solid #1e1e1e;
-  overflow-y: auto;
-}
 

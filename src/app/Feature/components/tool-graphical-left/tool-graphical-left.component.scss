@@ -1,8 +1,7 @@
 .toolbar-container {
-  position: fixed;
-  left: 0;
-  top: 48px;
-  height: calc(100vh - 48px);
+
+
+  height: 100%;
   width: 130px;
   background: linear-gradient(180deg, #252525, #1e1e1e);
   display: flex;
@@ -22,15 +21,14 @@
 /* Classe commune pour tous les menus déroulants */
 .dropdown-menu {
   position: fixed;
-  left: 180px;
-  top: 0;
-  background: #2a2a2a;
+  left: 135px;
+  background: #91909021;
   border: 1px solid #555;
   border-radius: 8px;
-  padding: 20px;
+
   width: 100px;
   z-index: 100;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 4px rgba(68, 68, 68, 0.4);
   animation: slideIn 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -54,9 +52,8 @@
 
 /* Styles spécifiques pour polygon-shapes-dropdown */
 .polygon-shapes-dropdown {
-  width: 140px;
-  padding: 12px;
-}
+
+  padding: 5px}
 
 .sections-wrapper {
   overflow-x: visible;
