@@ -1,0 +1,34 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  background-color: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.placeholder-content {
+  font-size: 18px;
+  color: #ccc;
+}
+
+.properties-panel {
+  width: 300px;
+  background-color: #2a2a2a;
+  border-left: 1px solid #444;
+  overflow-y: auto;
+}
+

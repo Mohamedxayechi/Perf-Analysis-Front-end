@@ -1,0 +1,124 @@
+<div class="toolbar-container">
+  <!-- Scrollable Wrapper for Sections -->
+  <div class="sections-wrapper">
+    <!-- 2D Section -->
+    <div class="toolbar-section">
+      <h3 class="section-title">2D</h3>
+      <div class="tool-group">
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>title</mat-icon>
+        </button>
+
+        <!-- Image Button with Hidden Input -->
+        <div class="tool-button-wrapper">
+          <button class="tool-button" (click)="triggerFileInput(); onToolButtonClick()">
+            <mat-icon>image</mat-icon>
+          </button>
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" #fileInput style="display: none" />
+        </div>
+
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>crop_square</mat-icon>
+        </button>
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>gesture</mat-icon>
+        </button>
+
+        <!-- Line Button with Dropdown -->
+        <div class="tool-button-wrapper">
+          <button class="tool-button" #lineButton (click)="toggleLineStyles()">
+            <mat-icon>timeline</mat-icon>
+          </button>
+          <div class="line-styles-dropdown dropdown-menu" *ngIf="showLineStyles">
+            <div class="line-style-option" (click)="selectLineStyle('solid')">
+              <span class="line-preview solid-line"></span> Solid
+            </div>
+            <div class="line-style-option" (click)="selectLineStyle('dashed')">
+              <span class="line-preview dashed-line"></span> Dashed
+            </div>
+            <div class="line-style-option" (click)="selectLineStyle('dotted')">
+              <span class="line-preview dotted-line"></span> Dotted
+            </div>
+            <div class="line-style-option" (click)="selectLineStyle('wavy')">
+              <span class="line-preview wavy-line"></span> Wavy
+            </div>
+            <div class="line-style-option" (click)="selectLineStyle('zigzag')">
+              <span class="line-preview zigzag-line"></span> Zigzag
+            </div>
+          </div>
+        </div>
+
+        <!-- Polygon Button with Dropdown -->
+        <div class="tool-button-wrapper">
+          <button class="tool-button" #polygonButton (click)="togglePolygonShapes()">
+            <mat-icon>pentagon</mat-icon>
+          </button>
+          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="showPolygonShapes">
+            <div class="shape-option" (click)="selectPolygonShape('circle')">
+              <span class="shape-preview circle-shape"></span> Circle
+            </div>
+            <div class="shape-option" (click)="selectPolygonShape('rectangle')">
+              <span class="shape-preview rectangle-shape"></span> Rectangle
+            </div>
+            <div class="shape-option" (click)="selectPolygonShape('square')">
+              <span class="shape-preview square-shape"></span> Square
+            </div>
+           
+            <div class="shape-option" (click)="selectPolygonShape('pentagon3D')">
+              <span class="shape-preview pentagon3d-shape"></span> Pentagon 3D
+            </div>
+          </div>
+        </div>
+
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>straighten</mat-icon>
+        </button>
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>grid_on</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3D Section -->
+    <div class="toolbar-section">
+      <h3 class="section-title">3D</h3>
+      <div class="tool-group">
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>3d_rotation</mat-icon>
+        </button>
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>circle</mat-icon>
+        </button>
+
+        <!-- Ajout du wrapper et du menu déroulant pour change_history -->
+        <div class="tool-button-wrapper">
+          <button class="tool-button" #shape3DButton (click)="toggleShape3DMenu()">
+            <mat-icon>change_history</mat-icon>
+          </button>
+          <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="showShape3DMenu">
+            <div class="shape-option" (click)="selectShape3D('circle')">
+              <span class="shape-preview circle-shape"></span> Circle
+            </div>
+            <div class="shape-option" (click)="selectShape3D('rectangle')">
+              <span class="shape-preview rectangle-shape"></span> Rectangle
+            </div>
+            <div class="shape-option" (click)="selectShape3D('square')">
+              <span class="shape-preview square-shape"></span> Square
+            </div>
+           
+            <div class="shape-option" (click)="selectShape3D('pentagon3D')">
+              <span class="shape-preview pentagon3d-shape"></span> Pentagon 3D
+            </div>
+          </div>
+        </div>
+
+        <button class="tool-button" (click)="onToolButtonClick()">
+          <mat-icon>star</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

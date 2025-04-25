@@ -1,0 +1,252 @@
+.toolbar-container {
+  position: fixed;
+  left: 0;
+  top: 48px;
+  height: calc(100vh - 48px);
+  width: 180px;
+  background: linear-gradient(180deg, #252525, #1e1e1e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 0;
+  border-right: 1px solid #444;
+  color: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+  transition: width 0.3s ease;
+}
+
+.toolbar-container:hover {
+  width: 185px;
+}
+
+/* Classe commune pour tous les menus déroulants */
+.dropdown-menu {
+  position: fixed;
+  left: 180px;
+  top: 0;
+  background: #2a2a2a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 20px;
+  width: 120px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #2a2a2a;
+  transform: translateY(-50%);
+}
+
+
+
+/* Styles spécifiques pour polygon-shapes-dropdown */
+.polygon-shapes-dropdown {
+  width: 140px;
+  padding: 12px;
+}
+
+.sections-wrapper {
+  overflow-x: visible;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4a90e2 #2a2a2a;
+}
+
+.sections-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sections-wrapper::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb {
+  background: #4a90e2;
+  border-radius: 4px;
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #357abd;
+}
+
+.toolbar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0;
+  color: #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: #4a90e2;
+  border-radius: 1px;
+}
+
+.tool-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  justify-items: center;
+  padding: 0 5px;
+}
+
+.tool-button {
+  background: #2a2a2a;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tool-button:hover {
+  background: #4a90e2;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.tool-button:focus {
+  outline: none;
+  background: #357abd;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+  cursor: pointer;
+}
+
+mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  color: #d0d0d0;
+  transition: color 0.3s ease;
+}
+
+.tool-button:hover mat-icon {
+  color: #fff;
+}
+
+.tool-button-wrapper {
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.line-style-option,
+.shape-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  color: #d0d0d0;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.line-style-option:hover,
+.shape-option:hover {
+  background: #4a90e2;
+  color: #fff;
+  cursor: pointer;
+}
+
+.line-preview {
+  width: 35px;
+  height: 3px;
+}
+
+.solid-line {
+  background: #fff;
+}
+
+.dashed-line {
+  background: linear-gradient(to right, #fff 50%, transparent 50%);
+  background-size: 8px 3px;
+}
+
+.dotted-line {
+  background: linear-gradient(to right, #fff 3px, transparent 3px);
+  background-size: 6px 3px;
+}
+
+.wavy-line {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 3" preserveAspectRatio="none"><path d="M0,1.5 Q8.75,0 17.5,1.5 T35,1.5" stroke="white" stroke-width="1.5" fill="none"/></svg>');
+  background-size: 35px 3px;
+}
+
+.zigzag-line {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 3" preserveAspectRatio="none"><path d="M0,1.5 L8.75,0 L17.5,1.5 L26.25,0 L35,1.5" stroke="white" stroke-width="1.5" fill="none"/></svg>');
+  background-size: 35px 3px;
+}
+
+.shape-preview {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+}
+
+.circle-shape {
+  border-radius: 50%;
+}
+
+.rectangle-shape {
+  width: 30px;
+  height: 15px;
+}
+
+.square-shape {
+  width: 20px;
+  height: 20px;
+}
+
+.pentagon-shape {
+  background: none;
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
