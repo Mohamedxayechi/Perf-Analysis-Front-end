@@ -43,7 +43,7 @@ export class ToolGraphicalLeftComponent {
         const dropdownHeight = dropdown.offsetHeight;
         const buttonHeight = buttonRect.height;
         const topPosition = buttonRect.top + (buttonHeight - dropdownHeight) / 2;
-        dropdown.style.left = '180px';
+        dropdown.style.left = '140px';
         dropdown.style.top = `${topPosition}px`;
       }
     }, 0);

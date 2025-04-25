@@ -1,87 +1,85 @@
-.tool-properties-right-container {
-  height: 100%;
-  background-color: #2a2a2a;
+.properties-panel-container {
+  position: relative;
+}
+
+.properties-panel {
+  background: #2a2a2a; /* Dark grayish-black background */
+  border-left: 1px solid #4b4949; /* Slightly lighter border for contrast */
+  padding: 16px;
+  height: 100vh; /* Full viewport height */
+  overflow-y: auto;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3); /* Slightly darker shadow */
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  margin-top: 30px; /* As requested */
+  color: #ffffff; /* White text for contrast */
 }
 
 .properties-container {
-  padding: 16px;
-  background-color: #2a2a2a;
-  color: #ffffff;
-  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-family: 'Roboto', sans-serif;
-
-  h3 {
-    margin: 0 0 16px 0;
-    font-size: 18px;
-    font-weight: 500;
-  }
-
-  mat-icon {
-    color: #ffffff;
-    font-size: 18px;
-    margin-bottom: 16px;
-  }
-
-  mat-form-field {
-    width: 100%;
-  }
-
-  .position-section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    .section-label {
-      font-size: 14px;
-      color: #ffffff;
-      margin-bottom: 4px;
-    }
-
-    .subfields {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-left: 16px; /* Indent subfields for hierarchy */
-    }
-  }
-
-  .color-field {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    mat-form-field {
-      flex-grow: 1;
-    }
-
-    button {
-      color: #ffffff;
-      &:hover {
-        background-color: rgba(214, 233, 41, 0.1);
-      }
-    }
-  }
+  background: #2a2a2a; /* Match the panel's dark background */
+  color: #ffffff; /* White text for consistency */
 }
 
+.position-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-label {
+  font-weight: bold;
+  color: #ffffff; /* White for contrast */
+}
+
+.subfields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+button[mat-icon-button] {
+  position: fixed;
+  top: 50px;
+  right: 16px; /* Default position when panel is hidden */
+  z-index: 1000;
+  transition: right 300ms ease-in-out;
+  color: #ffffff; /* White icon for contrast */
+  background-color: #333; /* Slightly lighter dark background for button */
+}
+
+/* When the panel is visible, move the button to the left edge of the panel */
+button[mat-icon-button].button-hidden {
+  right: 31px; /* 300px (panel width) + 16px (padding) */
+}
+
+/* Ensure Material form fields have readable colors */
 :host ::ng-deep {
   .mat-form-field-appearance-fill .mat-form-field-flex {
-    background-color: #e6c047;
+    background-color: #333; /* Darker input background */
     border-radius: 4px;
   }
 
   .mat-form-field-label,
   .mat-input-element {
-    color: #ffffff;
+    color: #ffffff; /* White text for labels and inputs */
   }
 
   .mat-form-field-underline {
-    background-color: #ffffff;
+    background-color: #ffffff; /* White underline for visibility */
   }
 
   .mat-form-field-ripple {
-    background-color: #ffffff;
+    background-color: #ffffff; /* White ripple effect */
   }
 }

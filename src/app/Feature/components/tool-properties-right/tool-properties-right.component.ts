@@ -6,24 +6,41 @@ import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import { ToolPropertiesRightService } from '../../Services/tool-properties-right.service';
 import { Subscription } from 'rxjs';
+import { trigger, state, style, animate, transition } from '@angular/animations';
 
 @Component({
   selector: 'app-tool-properties-right',
   standalone: true,
-  imports: [  
+  imports: [
     CommonModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule],
+    MatButtonModule
+  ],
   templateUrl: './tool-properties-right.component.html',
-  styleUrl: './tool-properties-right.component.scss'
+  styleUrls: ['./tool-properties-right.component.scss'],
+  animations: [
+    trigger('panelAnimation', [
+      state('visible', style({
+        opacity: 1,
+        transform: 'translateX(0)'
+      })),
+      state('hidden', style({
+        opacity: 0,
+        transform: 'translateX(100%)'
+      })),
+      transition('visible <=> hidden', [
+        animate('300ms ease-in-out')
+      ])
+    ])
+  ]
 })
 export class ToolPropertiesRightComponent {
-  
   showPropertiesPanel = false;
   private subscription: Subscription;
   flash = false;
+
   constructor(private toolPropertiesRightService: ToolPropertiesRightService) {
     this.subscription = new Subscription();
   }
@@ -36,5 +53,9 @@ export class ToolPropertiesRightComponent {
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
+  }
+
+  onToolButtonClick() {
+    this.toolPropertiesRightService.togglePropertiesPanel();
   }
 }

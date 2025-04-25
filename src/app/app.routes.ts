@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './Feature/components/home/home.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserModule } from '@angular/platform-browser';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent, pathMatch: 'full' }, // Use HomeComponent for root
