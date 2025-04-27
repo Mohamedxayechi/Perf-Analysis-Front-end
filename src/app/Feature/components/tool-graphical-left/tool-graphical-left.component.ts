@@ -33,18 +33,6 @@ export class ToolGraphicalLeftComponent {
 
   constructor(private toolPropertiesRightService: ToolPropertiesRightService) {}
 
-  private positionDropdown(button: ElementRef, dropdownClass: string) {
-    setTimeout(() => {
-      const btnRect = button.nativeElement.getBoundingClientRect();
-      const dropdown = document.querySelector(`.${dropdownClass}`) as HTMLElement | null;
-      if (dropdown) {
-        const ddHeight = dropdown.offsetHeight;
-        const topPos  = btnRect.top + (btnRect.height - ddHeight) / 2;
-        // dropdown.style.left = '140px';
-        dropdown.style.top  = `${topPos}px`;
-      }
-    }, 0);
-  }
 
   toggleMenu(menu: Exclude<MenuKey, null>) {
     this.currentMenu = (this.currentMenu === menu) ? null : menu;
@@ -55,9 +43,9 @@ export class ToolGraphicalLeftComponent {
         shape3D: { button: this.shape3DButton, cls: 'polygon-shapes-dropdown' } // même dropdown
       };
       const { button, cls } = mapping[this.currentMenu];
-      this.positionDropdown(button, cls);
+
     }
-    
+
   }
 
   selectLineStyle(style: string) {

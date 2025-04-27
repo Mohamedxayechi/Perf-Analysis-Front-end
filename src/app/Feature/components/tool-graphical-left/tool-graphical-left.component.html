@@ -24,9 +24,6 @@
 
         <!-- Ligne -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" #lineButton (click)="toggleMenu('line')">
-            <mat-icon>timeline</mat-icon>
-          </button>
           <div class="line-styles-dropdown dropdown-menu" *ngIf="currentMenu === 'line'">
             <div class="line-style-option" (click)="selectLineStyle('solid')">
               <span class="line-preview solid-line"></span> Solid
@@ -44,13 +41,14 @@
               <span class="line-preview zigzag-line"></span> Zigzag
             </div>
           </div>
+          <button class="tool-button" #lineButton (click)="toggleMenu('line')">
+            <mat-icon>timeline</mat-icon>
+          </button>
+
         </div>
 
         <!-- Polygones 2D -->
         <div class="tool-button-wrapper">
-          <button class="tool-button" #polygonButton (click)="toggleMenu('polygon')">
-            <mat-icon>pentagon</mat-icon>
-          </button>
           <div class="polygon-shapes-dropdown dropdown-menu" *ngIf="currentMenu === 'polygon'">
             <div class="shape-option" (click)="selectPolygonShape('circle')">
               <span class="shape-preview circle-shape"></span> Circle
@@ -65,6 +63,10 @@
               <span class="shape-preview pentagon3d-shape"></span> Pentagon
             </div>
           </div>
+          <button class="tool-button" #polygonButton (click)="toggleMenu('polygon')">
+            <mat-icon>pentagon</mat-icon>
+          </button>
+
         </div>
 
         <button class="tool-button" >

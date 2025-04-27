@@ -1,8 +1,8 @@
 <div class="properties-panel-container">
   <!-- Bouton menu toujours visible -->
- 
-  <button mat-icon-button 
-          (click)="onToolButtonClick()" 
+
+  <button mat-icon-button
+          (click)="onToolButtonClick()"
           aria-label="Afficher/Masquer le panneau des propriétés"
           [ngClass]="{'button-hidden': !showPropertiesPanel}">
           <mat-icon>{{ showPropertiesPanel ? 'arrow_forward' : 'menu' }}</mat-icon>
@@ -11,7 +11,7 @@
   <!-- Panneau des propriétés avec animation -->
   <div class="properties-panel" [@panelAnimation]="showPropertiesPanel ? 'visible' : 'hidden'">
     <div class="properties-container">
-      <div></div>
+
       <h3>Propriétés</h3>
       <!-- Nom Field -->
       <mat-form-field appearance="fill">
@@ -27,7 +27,9 @@
 
       <!-- Position Field -->
       <div class="position-section">
-        <label class="section-label">Position:</label>
+        <div class="section-label">
+        <label >Position:</label>
+      </div>
         <div class="subfields">
           <!-- Position X -->
           <mat-form-field appearance="fill">
@@ -55,7 +57,7 @@
           <mat-label>Couleur:</mat-label>
           <input matInput readonly>
         </mat-form-field>
-       
+
       </div>
     </div>
   </div>
