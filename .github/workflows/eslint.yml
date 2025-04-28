@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [ "**" ] # Run on pull requests targeting any branch
   schedule:
-    - cron: '21 14 * * 5'
+    - cron: '21 14 * * 5' # Weekly run on Fridays at 14:21 UTC
 
 jobs:
   eslint:
-    name: Run ESLint scanning
+    name: Run ESLint scanning # Matches the status check name in branch protection
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,7 +23,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Adjust to match your project's Node.js version
+          node-version: '20' # Matches your project's Node.js version
           cache: 'npm'
 
       - name: Install dependencies
