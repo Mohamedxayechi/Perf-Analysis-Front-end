@@ -2,9 +2,9 @@ name: ESLint
 
 on:
   push:
-    branches: [ "*" ] # Run on push to all branches
+    branches: [ "**" ] # Run on push to all branches
   pull_request:
-    branches: [ "*" ] # Run on pull requests targeting any branch
+    branches: [ "**" ] # Run on pull requests targeting any branch
   schedule:
     - cron: '21 14 * * 5'
 
