@@ -1,0 +1,30 @@
+<div class="container" #container>
+    <app-main-canvas></app-main-canvas>
+    <app-actions-bar></app-actions-bar>
+    <div class="canvas-container mx-auto">
+      <canvas
+        appTimelineCanvas
+        [time]="time"
+        [distancePerTime]="distancePerTime"
+        [scale]="scale"
+        [cursorX]="cursorX"
+        [spaceBeforLine]="spaceBefore"
+        (widthEmitte)="onWidthChange($event)"
+        (scaleEmitte)="onScaleChange($event)"
+        (cursorMove)="onCursorMove($event)"
+      >
+      </canvas>
+  
+      <app-cursor [cursorX]="cursorX" [scale]="scale" [spaceBefore]="spaceBefore">
+      </app-cursor>
+  
+      <app-drag-drop-horizontalorting
+        [distancePerTime]="distancePerTime * scale"
+        [spaceBefore]="spaceBefore"
+      ></app-drag-drop-horizontalorting>
+    </div>
+    <app-zoom (zoomChange)="onScaleChange($event)" [zoom]="scale"></app-zoom>
+  </div>
+  
+  
+  

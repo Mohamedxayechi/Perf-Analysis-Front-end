@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+/* Cdk And Material Style */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@import '@angular/cdk/overlay-prebuilt.css';
+
+/* Resizing Directive Styles */
+.resize-handle-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: ew-resize;
+    padding: 4px;
+    pointer-events: auto;
+    user-select: none;
+  }
+  
+  .resize-handle-left {
+    left: 0;
+  }
+  
+  .resize-handle-right {
+    right: 0;
+  }
+  /* styles.scss or any global file */

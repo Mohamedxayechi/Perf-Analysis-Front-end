@@ -1,0 +1,22 @@
+
+<button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+    <mat-icon>more_horiz</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu" yPosition="below">
+    <button mat-menu-item disabled>
+      <mat-icon>content_cut</mat-icon>
+      <span>Trim</span>
+    </button>
+    <button mat-menu-item disabled>
+      <mat-icon>autorenew</mat-icon>
+      <span>Replace</span>
+    </button>
+    <button mat-menu-item (click)="duplicateItem()">
+      <mat-icon>control_point_duplicate</mat-icon>
+      <span>Duplicate</span>
+    </button>
+    <button mat-menu-item (click)="deleteItem()">
+      <mat-icon>delete</mat-icon>
+      <span>delete</span>
+    </button>
+  </mat-menu>
