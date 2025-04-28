@@ -1,0 +1,64 @@
+<div class="properties-panel-container">
+  <!-- Bouton menu toujours visible -->
+
+  <button mat-icon-button
+          (click)="onToolButtonClick()"
+          aria-label="Afficher/Masquer le panneau des propriétés"
+          [ngClass]="{'button-hidden': !showPropertiesPanel}">
+          <mat-icon>{{ showPropertiesPanel ? 'arrow_forward' : 'menu' }}</mat-icon>
+  </button>
+
+  <!-- Panneau des propriétés avec animation -->
+  <div class="properties-panel" [@panelAnimation]="showPropertiesPanel ? 'visible' : 'hidden'">
+    <div class="properties-container">
+
+      <h3>Propriétés</h3>
+      <!-- Nom Field -->
+      <mat-form-field appearance="fill">
+        <mat-label>Nom:</mat-label>
+        <input matInput>
+      </mat-form-field>
+
+      <!-- Taille Field -->
+      <mat-form-field appearance="fill">
+        <mat-label>Taille:</mat-label>
+        <input matInput>
+      </mat-form-field>
+
+      <!-- Position Field -->
+      <div class="position-section">
+        <div class="section-label">
+        <label >Position:</label>
+      </div>
+        <div class="subfields">
+          <!-- Position X -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position X:</mat-label>
+            <input matInput>
+          </mat-form-field>
+
+          <!-- Position Y -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position Y:</mat-label>
+            <input matInput>
+          </mat-form-field>
+
+          <!-- Rotation -->
+          <mat-form-field appearance="fill">
+            <mat-label>Rotation:</mat-label>
+            <input matInput>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Couleur Field -->
+      <div class="color-field">
+        <mat-form-field appearance="fill">
+          <mat-label>Couleur:</mat-label>
+          <input matInput readonly>
+        </mat-form-field>
+
+      </div>
+    </div>
+  </div>
+</div>
