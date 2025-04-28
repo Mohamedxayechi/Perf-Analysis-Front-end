@@ -2,7 +2,7 @@ name: ESLint
 
 on:
   push:
-    branches: [ "**" ] # Run on push to all branches
+    branches: [ "**" ] # Run on push to any branch
   pull_request:
     branches: [ "**" ] # Run on pull requests targeting any branch
   schedule:
@@ -10,12 +10,13 @@ on:
 
 jobs:
   eslint:
-    name: Run ESLint scanning # Matches the status check name in branch protection
+    name: ESLint # <-- Match EXACTLY the required status check name
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
       actions: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Matches your project's Node.js version
+          node-version: '20' # Matches your project Node.js version
           cache: 'npm'
 
       - name: Install dependencies
