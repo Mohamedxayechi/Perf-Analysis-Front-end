@@ -1,0 +1,85 @@
+name: "CodeQL for Angular"
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  schedule:
+    - cron: '29 5 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Set up Node.js environment
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.20.8' # Matches your Node.js version
+        cache: ${{ (steps.check-lock-file.outputs.package-manager == 'yarn') && 'yarn' || 'npm' }} # Cache based on package manager
+
+    # Check for lock file to determine package manager
+    - name: Check for lock file
+      id: check-lock-file
+      run: |
+        if [ -f "yarn.lock" ]; then
+          echo "package-manager=yarn" >> $GITHUB_OUTPUT
+        elif [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ]; then
+          echo "package-manager=npm" >> $GITHUB_OUTPUT
+        else
+          echo "package-manager=npm" >> $GITHUB_OUTPUT
+          echo "no-lock-file=true" >> $GITHUB_OUTPUT
+        fi
+
+    # Install Yarn if needed
+    - name: Install Yarn
+      if: steps.check-lock-file.outputs.package-manager == 'yarn'
+      run: npm install -g yarn@1.22.22 # Matches your Yarn version
+
+    # Install dependencies with npm
+    - name: Install dependencies (npm)
+      if: steps.check-lock-file.outputs.package-manager == 'npm'
+      run: |
+        if [ "${{ steps.check-lock-file.outputs.no-lock-file }}" == "true" ]; then
+          npm install # Fallback to npm install if no lock file
+        else
+          npm ci # Use npm ci for reproducible builds
+        fi
+
+    # Install dependencies with Yarn
+    - name: Install dependencies (Yarn)
+      if: steps.check-lock-file.outputs.package-manager == 'yarn'
+      run: yarn install --frozen-lockfile # Use Yarn with locked dependencies
+
+    # Optional: Build the Angular project (uncomment if needed)
+    # - name: Build Angular project
+    #   run: ${{ steps.check-lock-file.outputs.package-manager }} run build --if-present
+
+    # Initialize CodeQL
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # queries: security-extended,security-and-quality # Uncomment for custom queries
+
+    # Perform CodeQL Analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
