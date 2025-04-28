@@ -1,0 +1,55 @@
+/* Container for the properties panel and toggle button */
+.properties-panel-container {
+  position: absolute;
+}
+
+/* Toggle button for showing/hiding the properties panel */
+button[mat-icon-button] {
+  position: fixed;
+  top: 10%;
+  right: 2%; /* Default position when panel is hidden */
+  z-index: 1000;
+  transition: right 300ms ease-in-out;
+  color: #ffffff; /* White icon for contrast */
+  background-color: #333; /* Slightly lighter dark background for button */
+}
+
+/* Properties panel with animation for show/hide */
+.properties-panel {
+  background: #2a2a2a; /* Dark grayish-black background */
+  border-left: 1px solid #4b4949; /* Slightly lighter border for contrast */
+  padding: 16px;
+  height: 100%; /* Full viewport height */
+  overflow-y: auto;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3); /* Slightly darker shadow */
+  position: fixed;
+  right: 0;
+  width: 300px;
+  color: #ffffff; /* White text for contrast */
+}
+
+/* Container for all property fields inside the panel */
+.properties-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #2a2a2a; /* Match the panel's dark background */
+  color: #ffffff; /* White text for consistency */
+}
+
+/* Section for position-related properties */
+
+
+/* Label for the position section */
+.section-label {
+  margin-bottom: 5%;
+  font-weight: bold;
+  color: #ffffff; /* White for contrast */
+}
+
+/* Container for position subfields (X, Y, Rotation) */
+.subfields {
+  width: 100%;
+}
+
+

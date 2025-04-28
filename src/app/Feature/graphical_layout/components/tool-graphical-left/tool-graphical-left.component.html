@@ -1,0 +1,40 @@
+<div class="toolbar-container">
+  <div class="sections-wrapper">
+    <div class="toolbar-section" *ngFor="let section of sections; trackBy: trackByTitle">
+      <h3 class="section-title">{{ section.title }}</h3>
+      <div class="tool-group">
+        <div class="tool-button-wrapper" *ngFor="let tool of section.tools; trackBy: trackByIcon">
+          <ng-container *ngIf="tool.type === 'button'">
+            <button class="tool-button">
+              <mat-icon>{{ tool.icon }}</mat-icon>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="tool.type === 'image-upload'">
+            <button class="tool-button" (click)="tool.action!()">
+              <mat-icon>{{ tool.icon }}</mat-icon>
+            </button>
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" #fileInput style="display: none" />
+          </ng-container>
+          <ng-container *ngIf="tool.type === 'dropdown' && tool.menuKey">
+            <div
+            class="{{ tool.menuKey === 'line' ? 'line-styles-dropdown' : 'polygon-shapes-dropdown' }} dropdown-menu"
+            *ngIf="tool.menuKey === currentMenu"
+          >
+            <div
+              class="{{ tool.menuKey === 'line' ? 'line-style-option' : 'shape-option' }}"
+              *ngFor="let item of getDropdownItems(tool.menuKey); trackBy: trackByValue"
+              (click)="selectItem(tool.menuKey, item.value)"
+            >
+              <span class="shape-preview {{ item.previewClass }}"></span> {{ item.label }}
+            </div>
+          </div>
+            <button class="tool-button" (click)="toggleMenu(tool.menuKey)">
+              <mat-icon>{{ tool.icon }}</mat-icon>
+            </button>
+     
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
