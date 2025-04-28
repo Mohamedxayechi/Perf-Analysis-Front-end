@@ -5,17 +5,15 @@ import { ShapeAdapterClass } from './ShapeAdapter';
 import { eventBus, EventPayload } from './event-bus';
 
 // Define ShapeData to ensure id and type are required for create/update
-type ShapeData = 
+type ShapeData =
   | ({ id: string; type: 'simple' } & Partial<Simple2DShape>)
   | ({ id: string; type: 'complex' } & Partial<Complex2DShape>);
 
 export class Library {
   private shapes: Map<string, Simple2DShape | Complex2DShape> = new Map();
-  private engine: Engine;
   private adapter: ShapeAdapterClass;
 
-  constructor(engine: Engine, adapter: ShapeAdapterClass) {
-    this.engine = engine;
+  constructor(adapter: ShapeAdapterClass) {
     this.adapter = adapter;
   }
 
@@ -27,7 +25,7 @@ export class Library {
         this.adapter.create(shapeData as Simple2DShape | Complex2DShape).then(success => {
           if (success) {
             this.shapes.set(shapeData.id, shapeData as Simple2DShape | Complex2DShape);
-            this.engine.emit({ type: 'shape.added', data: shapeData });
+            Engine.getInstance().emit({ type: 'shape.added', data: shapeData });
           } else {
             console.error(`Failed to add shape with ID ${shapeData.id}`);
           }
@@ -43,7 +41,7 @@ export class Library {
         this.adapter.delete(id).then(success => {
           if (success) {
             this.shapes.delete(id);
-            this.engine.emit({ type: 'shape.deleted', data: { id } });
+            Engine.getInstance().emit({ type: 'shape.deleted', data: { id } });
           } else {
             console.error(`Failed to delete shape with ID ${id}`);
           }
@@ -65,7 +63,7 @@ export class Library {
             if (existingShape) {
               Object.assign(existingShape, properties);
               this.shapes.set(id, existingShape);
-              this.engine.emit({ type: 'shape.updated', data: { id, properties } });
+              Engine.getInstance().emit({ type: 'shape.updated', data: { id, properties } });
             } else {
               console.error(`Shape with ID ${id} not found for update`);
             }
@@ -82,7 +80,7 @@ export class Library {
       case 'shape.isSelected': {
         const id: string = event.data.id;
         this.adapter.isSelected(id).then(isSelected => {
-          this.engine.emit({ type: 'shape.selection', data: { id, isSelected } });
+          Engine.getInstance().emit({ type: 'shape.selection', data: { id, isSelected } });
         }).catch(error => {
           const message = error instanceof Error ? error.message : String(error);
           console.error(`Error checking selection for shape with ID ${id}: ${message}`);

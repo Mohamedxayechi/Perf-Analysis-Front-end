@@ -25,10 +25,9 @@ export class Display {
   private stage: Konva.Stage | null = null;
   private layer: Konva.Layer | null = null;
   private shapes: Map<string, Konva.Shape> = new Map();
-  private engine: Engine;
 
-  constructor(engine: Engine) {
-    this.engine = engine;
+  constructor() {
+    // No dependencies
   }
 
   handleEvent(event: EventPayload): void {
@@ -131,7 +130,7 @@ export class Display {
         const shape = e.target as Konva.Shape;
         const id = shape.id();
         const { x, y } = shape.position();
-        this.engine.emit({ type: 'ui.shape.dragged', data: { id, props: { x, y } } });
+        Engine.getInstance().emit({ type: 'ui.shape.dragged', data: { id, props: { x, y } } });
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

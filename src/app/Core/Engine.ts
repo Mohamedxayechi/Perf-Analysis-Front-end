@@ -1,5 +1,6 @@
 import { Display } from './Display';
 import { Storage } from './Storage';
+import { StorageAdapterClass } from './StorageAdapterClass';
 import { EventEmitter } from './EventEmitter';
 import { eventBus, EventPayload } from './event-bus';
 
@@ -15,14 +16,11 @@ export class Engine {
   private domains: Domain[] = [];
   private events: EventEmitter;
   private config: any;
+  private isInitialized: boolean = false;
 
   private constructor(config: any) {
     this.config = config || {};
     this.events = new EventEmitter();
-    // Subscribe to eventBus and forward events to all domains
-    eventBus.subscribe((ev: EventPayload) => {
-      this.domains.forEach(domain => domain.handleEvent(ev));
-    });
   }
 
   static getInstance(config?: any): Engine {
@@ -32,26 +30,55 @@ export class Engine {
     return Engine.instance;
   }
 
+  // Initialize the engine and its components
+  init(): void {
+    if (this.isInitialized) return;
+
+    // Initialize subsystems
+    this.initDisplay();
+    this.initStorage();
+
+    // Subscribe to eventBus only after initialization
+    eventBus.subscribe((ev: EventPayload) => {
+      this.domains.forEach(domain => domain.handleEvent(ev));
+    });
+
+    this.isInitialized = true;
+  }
+
   initDisplay(): void {
-   
+    if (!this.display) {
+      this.display = new Display();
+      console.log('Display initialized');
+    }
   }
 
   initStorage(): void {
-    
+    if (!this.storage) {
+      // Instantiate StorageAdapterClass without arguments, assuming it has a no-arg constructor
+      const adapter = new StorageAdapterClass();
+      this.storage = new Storage(adapter);
+      console.log('Storage initialized');
+    }
   }
 
   getDisplay(): Display | null {
     return this.display;
   }
 
-  
+  getStorage(): Storage | null {
+    return this.storage;
+  }
 
   getEvents(): EventEmitter {
     return this.events;
   }
 
   emit(event: EventPayload): void {
-    // Emit directly through eventBus
+    if (!this.isInitialized) {
+      console.warn('Engine not initialized. Call init() before emitting events.');
+      return;
+    }
     eventBus.next({ type: event.type, data: event.data });
   }
 
@@ -61,5 +88,10 @@ export class Engine {
 
   loadProject(): void {
     console.log('Loading project...');
+  }
+
+  // Method to register domains
+  registerDomain(domain: Domain): void {
+    this.domains.push(domain);
   }
 }
