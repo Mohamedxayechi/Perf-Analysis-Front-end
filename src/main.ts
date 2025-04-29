@@ -10,6 +10,6 @@ bootstrapApplication(AppComponent, {
   providers: [
   
     provideHttpClient(), // Provide HTTP client for making HTTP requests
-    provideRouter(routes), provideAnimationsAsync(),
+    provideRouter(routes), provideAnimationsAsync(), provideAnimationsAsync(),
   ],
 }).catch((err) => console.error(err));
