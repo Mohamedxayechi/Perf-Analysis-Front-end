@@ -2,7 +2,6 @@ name: Lighthouse Audit on PR (ng serve)
 
 on:
   pull_request:
-    branches: [main]
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -13,7 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-      # v3 is acceptable, but consider upgrading to v4 in the future.
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -37,52 +35,100 @@ jobs:
       env:
         HOST: 0.0.0.0
         PORT: 4200
-      # Captures the PID and waits for the server to be ready.
 
     - name: Install Lighthouse
       run: npm install -g lighthouse
 
     - name: Run Lighthouse
+      id: lighthouse
+      continue-on-error: true
       run: |
         lighthouse http://localhost:4200 \
           --output=html,json \
           --output-path=lighthouse-report.${{ github.run_id }} \
           --chrome-flags="--headless --no-sandbox"
-      # Generates HTML and JSON reports; --no-sandbox is required for GitHub Actions.
 
-    - name: Debug Lighthouse Report Files
-      run: |
-        ls -la lighthouse-report.${{ github.run_id }}*
-        cat lighthouse-report.${{ github.run_id }}.report.json || echo "JSON file not found"
-      # Optional debugging step to verify report files.
+    - name: Post Lighthouse Report and Check Threshold
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const core = require('@actions/core');
+          const github = require('@actions/github');
+          const fs = require('fs');
 
-    - name: Show Lighthouse Score in Logs
-      run: |
-        if [ -f lighthouse-report.${{ github.run_id }}.report.json ]; then
-          SCORE=$(jq '.categories.performance.score' lighthouse-report.${{ github.run_id }}.report.json)
-          echo "Performance score: $SCORE"
-        else
-          echo "❌ Lighthouse JSON report not found"
-          exit 1
-        fi
-      # Uses the correct .report.json file and checks its existence.
+          const context = github.context;
+          const runUrl = `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const reportPath = 'lighthouse-report.${{ github.run_id }}.report.json';
+          const outcome = '${{ steps.lighthouse.outcome }}';
 
-    - name: Enforce Performance Threshold
-      run: |
-        if [ -n "$SCORE" ] && (( $(echo "$SCORE < 0.9" | bc -l) )); then
-          echo "❌ Performance score below 0.9 threshold"
-          exit 1
-        fi
-      # Ensures SCORE is set and uses bc for floating-point comparison.
+          let comment;
+
+          if (outcome === 'success' && fs.existsSync(reportPath)) {
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+
+            const performanceScore = report.categories.performance.score;
+            const accessibilityScore = report.categories.accessibility.score;
+            const bestPracticesScore = report.categories['best-practices'].score;
+            const seoScore = report.categories.seo.score;
+            const pwaScore = report.categories.pwa.score;
+
+            const fcp = report.audits['first-contentful-paint'].displayValue;
+            const si = report.audits['speed-index'].displayValue;
+            const lcp = report.audits['largest-contentful-paint'].displayValue;
+            const tti = report.audits['interactive'].displayValue;
+            const tbt = report.audits['total-blocking-time'].displayValue;
+            const cls = report.audits['cumulative-layout-shift'].displayValue;
+
+            comment = `
+## Lighthouse Report
+
+| Category         | Score |
+|------------------|-------|
+| Performance      | ${performanceScore.toFixed(2)} |
+| Accessibility    | ${accessibilityScore.toFixed(2)} |
+| Best Practices   | ${bestPracticesScore.toFixed(2)} |
+| SEO              | ${seoScore.toFixed(2)} |
+| PWA              | ${pwaScore.toFixed(2)} |
+
+### Performance Metrics
+- **First Contentful Paint**: ${fcp}
+- **Speed Index**: ${si}
+- **Largest Contentful Paint**: ${lcp}
+- **Time to Interactive**: ${tti}
+- **Total Blocking Time**: ${tbt}
+- **Cumulative Layout Shift**: ${cls}
+
+${performanceScore < 0.9 ? '❌ Performance score is below 0.9 threshold' : '✅ Performance score meets the threshold'}
+
+For the full report, see the [workflow run](${runUrl}).
+            `;
+
+            if (performanceScore < 0.9) {
+              core.setFailed(`Performance score ${performanceScore} is below threshold 0.9`);
+            }
+          } else {
+            comment = `
+## Lighthouse Report
+
+❌ Lighthouse failed to run or report not found. See the [workflow run](${runUrl}) for details.
+            `;
+            core.setFailed('Lighthouse failed to run or report not found');
+          }
+
+          await github.rest.issues.createComment({
+            issue_number: context.payload.pull_request.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
 
     - name: Upload Report Artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: lighthouse-report
         path: lighthouse-report.${{ github.run_id }}.*
-      # Uploads both HTML and JSON reports.
 
     - name: Terminate Angular Server
       if: always()
       run: kill $SERVER_PID || echo "No process to kill"
-      # Uses $SERVER_PID and handles cases where no process exists.
