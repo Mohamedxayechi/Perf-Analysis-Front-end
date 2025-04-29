@@ -58,7 +58,7 @@ jobs:
     - name: Extract Lighthouse Scores
       id: extract_scores
       run: |
-        if [ -f lighthouse-report.json ]; then
+        if [ -f lighthouse-report.${{ github.run_id }}  ]; then
           PERFORMANCE=$(jq '.categories.performance.score' lighthouse-report.json)
           ACCESSIBILITY=$(jq '.categories.accessibility.score' lighthouse-report.json)
           BEST_PRACTICES=$(jq '.categories["best-practices"].score' lighthouse-report.json)
