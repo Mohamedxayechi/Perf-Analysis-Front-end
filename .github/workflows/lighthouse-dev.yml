@@ -2,6 +2,7 @@ name: Lighthouse Audit on PR (ng serve)
 
 on:
   pull_request:
+    branches: [main]  # Restrict to main branch
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -23,32 +24,45 @@ jobs:
 
     - name: Start Angular dev server
       run: |
-        npm run start &  # starts ng serve in background
-        echo "Waiting for dev server to be ready..."
-        npx wait-on http://localhost:4200
+        npm run start > server.log 2>&1 &
+        echo "Angular server starting..."
+        timeout 120 npx wait-on http://localhost:4200 || {
+            echo "❌ Server failed to start within 2 minutes"
+            cat server.log
+            exit 1
+        }
       env:
         HOST: 0.0.0.0
         PORT: 4200
 
-    - name: Install Lighthouse and jq
-      run: |
-        npm install -g lighthouse
-        sudo apt-get install -y jq
+    - name: Install Lighthouse
+      run: npm install -g lighthouse
 
-    - name: Run Lighthouse Audit
+    - name: Run Lighthouse
       run: |
         lighthouse http://localhost:4200 \
-          --output=json \
-          --output-path=lighthouse-report.json \
-          --quiet
+          --output=html,json \
+          --output-path=lighthouse-report.${{ github.run_id }} \
+          --chrome-flags="--headless --no-sandbox"
 
-    - name: Show Lighthouse Performance Score
+    - name: Show Lighthouse Score in Logs
       run: |
-        SCORE=$(jq '.categories.performance.score * 100' lighthouse-report.json)
-        echo "🟢 Lighthouse Performance Score: $SCORE"
+        SCORE=$(jq '.categories.performance.score' lighthouse-report.${{ github.run_id }}.json)
+        echo "Performance score: $SCORE"
 
-    - name: Upload Lighthouse Report
-      uses: actions/upload-artifact@v2
+    - name: Enforce Performance Threshold
+      run: |
+        if (( $(echo "$SCORE < 0.9" | bc -l) )); then
+          echo "❌ Performance score below 0.9 threshold"
+          exit 1
+        fi
+
+    - name: Upload Report Artifact
+      uses: actions/upload-artifact@v4  # Update to latest version
       with:
         name: lighthouse-report
-        path: lighthouse-report.json
+        path: lighthouse-report.${{ github.run_id }}.*
+
+    - name: Terminate Angular Server
+      if: always()
+      run: kill ${{ env.SERVER_PID }} || true
