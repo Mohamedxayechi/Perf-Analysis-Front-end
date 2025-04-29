@@ -1,0 +1,15 @@
+<div class="project-list">
+    <mat-card *ngFor="let project of projects">
+      <img mat-card-image src="../../../../../assets/images/download.jpg" alt="Project Image" style="height: 140px;">
+      <mat-card-content>
+        <h2>{{ project.projectName }}</h2>
+        <p>{{ project.description || 'No description provided.' }}</p>
+        <p>Created: {{ project.timestamp }} By User: {{ project.userId }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button (click)="editProject(project)">Modify project</button>
+        <button mat-button color="warn" (click)="deleteProject(project)">Delete project</button>
+
+      </mat-card-actions>
+    </mat-card>
+</div>

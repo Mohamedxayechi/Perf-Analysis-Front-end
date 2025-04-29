@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Edit Project</h2>
+    <mat-dialog-content>
+      <mat-form-field appearance="fill">
+        <mat-label>Project Name</mat-label>
+        <input matInput [(ngModel)]="data.projectName" required maxlength="100">
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Description</mat-label>
+        <textarea matInput [(ngModel)]="data.description" maxlength="500"></textarea>
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>User ID</mat-label>
+        <input matInput [(ngModel)]="data.userId" required>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <button mat-button (click)="onCancel()">Cancel</button>
+      <button mat-button [disabled]="!data.projectName || !data.userId" (click)="onSave()">Save</button>
+    </mat-dialog-actions>
