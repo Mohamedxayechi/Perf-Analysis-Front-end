@@ -2,6 +2,7 @@ name: Lighthouse Audit on PR (ng serve)
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened]
 
 jobs:
