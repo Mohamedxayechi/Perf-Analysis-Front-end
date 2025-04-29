@@ -1,0 +1,50 @@
+name: Lighthouse Audit on PR (ng serve)
+
+on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+  
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Start Angular dev server
+      run: |
+        npm run start &  # starts `ng serve` in the background
+        echo "Waiting for dev server..."
+        npx wait-on http://localhost:4200
+      env:
+        HOST: 0.0.0.0
+        PORT: 4200
+
+    - name: Install Lighthouse
+      run: npm install -g lighthouse
+
+    - name: Run Lighthouse
+      run: |
+        lighthouse http://localhost:4200 --output=json --output-path=lighthouse-report.json --quiet
+
+    - name: Show Lighthouse Score in Logs
+      run: |
+        SCORE=$(jq '.categories.performance.score' lighthouse-report.json)
+        echo "Performance score: $SCORE"
+
+    - name: Upload Report Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: lighthouse-report
+        path: lighthouse-report.json
