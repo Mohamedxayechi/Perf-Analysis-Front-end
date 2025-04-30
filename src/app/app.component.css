@@ -1,0 +1,50 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif; 
+  }
+  
+  html, body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .parent {
+    height: 100%;
+  }
+  
+  .child {
+    height: 100%;
+  }
+  
+  .player-container {
+    display: flex;
+    flex-direction: row; 
+    height: 98vh;
+  }
+  
+  .toolbar {
+    width: 10%;
+    background-color: #f0f0f0;
+    padding: 10px;
+    overflow-y: auto;
+  }
+  
+  .media-player {
+    width: 70%;
+    margin: auto auto; 
+    display: block;
+    flex-shrink: 0;  
+    padding-bottom: 5%;      
+  }
+  
+  .properties-bar {
+    width: 30%;
+    background-color: #f0f0f0;
+    padding: 10px;
+    overflow-y: auto;
+  }

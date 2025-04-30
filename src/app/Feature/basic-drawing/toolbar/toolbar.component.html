@@ -1,0 +1,13 @@
+<div class="tool-bar">
+    <div class="tools">  
+      <button 
+        *ngFor="let tool of tools"
+        class="tool-button" 
+        [class.active]="activeTool === tool.id"
+        (click)="selectTool(tool.id)"
+        [title]="tool.label">
+        <span>{{tool.label}}</span>
+      </button>
+  
+    </div>
+  </div>

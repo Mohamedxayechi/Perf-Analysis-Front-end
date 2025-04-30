@@ -1,0 +1,36 @@
+.tool-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 10px;
+    background-color: #f0f0f0;
+  }
+  
+   .tools {
+    justify-content: space-between;
+    gap: 5px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .tool-button {
+    
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;  
+    justify-content: center; 
+    align-items: center; 
+    &:hover {
+      background-color: #e6e6e6;
+    }
+    
+    &.active {
+      background-color: #007bff;
+      color: white;
+      border-color: #0069d9;
+    }
+  }

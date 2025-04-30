@@ -1,0 +1,39 @@
+<div *ngIf="shapeUpdated">
+  <h3>Shape Properties</h3>
+  <div>Type: {{ shapeUpdated.getClassName() }}</div>
+
+  <div class="property-row">
+    <div class="property">
+      <label>X</label>
+      <input type="number" [(ngModel)]="x">
+    </div>
+    <div class="property">
+      <label>Y</label>
+      <input type="number" [(ngModel)]="y" />
+    </div>
+    <div class="property">
+      <label>Width</label>
+      <input type="number" [(ngModel)]="width" />
+    </div>
+    <div class="property">
+      <label>Height</label>
+      <input type="number" [(ngModel)]="height" />
+    </div>
+    <div class="property">
+      <label>Rotation</label>
+      <input type="number" [(ngModel)]="rotation">
+    </div>
+    <div *ngIf="isText" class="property">
+      <label>Text</label>
+      <input type="string" [(ngModel)]="text">
+    </div>
+    <div class="property">
+      <label>Color:</label>
+      <input
+        type="color"
+        (input)="updateColor($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+</div>

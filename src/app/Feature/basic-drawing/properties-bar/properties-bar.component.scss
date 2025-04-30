@@ -1,0 +1,23 @@
+.property-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10%; 
+    margin-top: 5%;
+  }
+  
+  .property {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5%;
+  }
+  
+  .property label {
+    margin-right: 8px; 
+    min-width: 60px;   
+  }
+  
+  .property input {
+    flex: 1;
+    min-width: 100px;
+  }
+  
