@@ -1,10 +1,9 @@
-
-
 export interface Project {
-    id: number;
-    projectName: string;
-    description: string;
-    timestamp: string;
-    userId: string;
-  }
+  id: string;
+  projectName: string;
+  description: string;
+  timestamp: string;
+  userId: string;
+  videoUrl: string;
+}
   

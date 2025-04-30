@@ -1,31 +1,44 @@
+/* form-project.component.css */
 .container {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 1rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
 }
+
 h2 {
-  font-size: 1.75rem;
-  color: #333;
-  margin-bottom: 1.5rem;
   text-align: center;
+  margin-bottom: 20px;
+  color: #333;
 }
+
 .full-width {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
 }
+
 .button-container {
-  text-align: right;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
+
+button[mat-flat-button] {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+button[mat-flat-button][disabled] {
+  background-color: #cccccc;
+}
+
+/* Ensure video upload component fits well */
+app-upload-file {
+  display: block;
+  margin: 20px 0;
+}
+
 @media (max-width: 600px) {
   .container {
-    margin: 1rem;
-    padding: 0.75rem;
-  }
-  h2 {
-    font-size: 1.5rem;
+    padding: 10px;
   }
 }
