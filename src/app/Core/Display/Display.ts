@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import Konva from 'konva';
 import { Engine } from '../Engine';
-import { eventBus, EventPayload } from '../Utility/event-bus';
+import {EventPayload } from '../Utility/event-bus';
 
 type ShapeData = {
   id: string;
