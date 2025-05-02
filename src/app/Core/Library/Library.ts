@@ -1,31 +1,31 @@
 import { Injectable } from '@angular/core';
 import { Engine } from '../Engine';
-import { Simple2DShape } from './Simple2DShape';
-import { Complex2DShape } from './Complex2DShape';
 import { ShapeAdapterClass } from './ShapeAdapter';
+import { BaseShape } from './Models/BaseShape';
 import { eventBus, EventPayload } from '../Utility/event-bus';
 
 type InputShapeData = {
-  id: string;
+  id?: string;
   shapeName: string;
-  props: Record<string, any>;
+  x: number;
+  y: number;
+  props?: Record<string, any>;
 };
 
-type ShapeData =
-  | ({ id: string; type: 'simple' } & Partial<Simple2DShape>)
-  | ({ id: string; type: 'complex' } & Partial<Complex2DShape>);
+type ShapeData = {
+  id: string;
+  type: 'simple' | 'complex';
+  x: number;
+  y: number;
+} & Partial<BaseShape>;
 
 @Injectable({
   providedIn: 'root',
 })
 export class Library {
-  private shapes: Map<string, Simple2DShape | Complex2DShape> = new Map();
-  private adapter: ShapeAdapterClass;
   private eventProcessing: boolean = false;
 
-  constructor(adapter: ShapeAdapterClass) {
-    this.adapter = adapter;
-  }
+  constructor(private adapter: ShapeAdapterClass) {}
 
   handleEvent(event: EventPayload): void {
     console.log(`[${new Date().toISOString()}] Library received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
@@ -42,65 +42,58 @@ export class Library {
           const shapeType = this.getShapeType(inputData.shapeName);
           console.log(`[${new Date().toISOString()}] Processing shape: ${inputData.shapeName} (${shapeType})`);
 
+          const shapeId = this.adapter.createShape(shapeType, inputData.x, inputData.y);
+          const shape = this.adapter.get(shapeId);
+          if (inputData.props) {
+            this.adapter.update(shapeId, inputData.props);
+          }
+
           const shapeData: ShapeData = {
-            id: inputData.id,
+            id: shapeId,
             type: shapeType,
+            x: inputData.x,
+            y: inputData.y,
             ...inputData.props,
           };
 
-          this.adapter.setAdapter(shapeType);
-          this.adapter.create(shapeData as Simple2DShape | Complex2DShape).then(success => {
-            if (success) {
-              this.shapes.set(shapeData.id, shapeData as Simple2DShape | Complex2DShape);
-              Engine.getInstance().emit({ type: 'shape.added', data: shapeData, origin: 'domain', processed: false });
-            } else {
-              console.error(`Failed to add shape with ID ${shapeData.id}`);
-            }
-          }).catch(error => {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(`Error adding shape with ID ${shapeData.id}: ${message}`);
+          Engine.getInstance().emit({
+            type: 'shape.added',
+            data: shapeData,
+            origin: 'domain',
+            processed: false,
           });
           break;
         }
 
         case 'shape.delete': {
           const id: string = event.data.id;
-          this.adapter.delete(id).then(success => {
-            if (success) {
-              this.shapes.delete(id);
-              Engine.getInstance().emit({ type: 'shape.deleted', data: { id }, origin: 'domain', processed: false });
-            } else {
-              console.error(`Failed to delete shape with ID ${id}`);
-            }
-          }).catch(error => {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(`Error deleting shape with ID ${id}: ${message}`);
-          });
+          const success = this.adapter.delete(id);
+          if (success) {
+            Engine.getInstance().emit({
+              type: 'shape.deleted',
+              data: { id },
+              origin: 'domain',
+              processed: false,
+            });
+          } else {
+            console.error(`Failed to delete shape with ID ${id}`);
+          }
           break;
         }
 
         case 'shape.update': {
-          const { id, properties }: { id: string; properties: ShapeData } = event.data;
-          if (properties.type) {
-            this.adapter.setAdapter(properties.type);
+          const { id, properties }: { id: string; properties: Partial<BaseShape> } = event.data;
+          const success = this.adapter.update(id, properties);
+          if (success) {
+            Engine.getInstance().emit({
+              type: 'shape.updated',
+              data: { id, properties },
+              origin: 'domain',
+              processed: false,
+            });
+          } else {
+            console.error(`Failed to update shape with ID ${id}`);
           }
-          this.adapter.update(id, properties).then(success => {
-            if (success) {
-              const existingShape = this.shapes.get(id);
-              if (existingShape) {
-                Object.assign(existingShape, properties);
-                this.shapes.set(id, existingShape);
-                Engine.getInstance().emit({ type: 'shape.updated', data: { id, properties }, origin: 'domain', processed: false });
-              } else {
-                console.error(`Shape with ID ${id} not found for update`);
-              }
-            } else {
-              console.error(`Failed to update shape with ID ${id}`);
-            }
-          }).catch(error => {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(`Error updating shape with ID ${id}: ${message}`);
-          });
           break;
         }
 
@@ -109,17 +102,42 @@ export class Library {
           const type = this.getShapeType(shapeName);
           console.log(`[${new Date().toISOString()}] Library processing shape.selected: ${shapeName}, type: ${type}`);
 
-          try {
-            console.log(`[${new Date().toISOString()}] Library emitting shape.type.determined for ${shapeName}, origin: domain`);
-            Engine.getInstance().emit({
-              type: 'shape.type.determined',
-              data: { shapeName, type },
-              origin: 'domain',
-              processed: false, // New event, not processed
-            });
-          } finally {
-            this.eventProcessing = false;
+          Engine.getInstance().emit({
+            type: 'shape.type.determined',
+            data: { shapeName, type },
+            origin: 'domain',
+            processed: false,
+          });
+          break;
+        }
+
+        case 'shapes.add': {
+          const shapes: InputShapeData[] = event.data.shapes;
+          const addedShapes: ShapeData[] = [];
+
+          for (const inputData of shapes) {
+            const shapeType = this.getShapeType(inputData.shapeName);
+            const shapeId = this.adapter.createShape(shapeType, inputData.x, inputData.y);
+            if (inputData.props) {
+              this.adapter.update(shapeId, inputData.props);
+            }
+
+            const shapeData: ShapeData = {
+              id: shapeId,
+              type: shapeType,
+              x: inputData.x,
+              y: inputData.y,
+              ...inputData.props,
+            };
+            addedShapes.push(shapeData);
           }
+
+          Engine.getInstance().emit({
+            type: 'shapes.added',
+            data: { shapes: addedShapes },
+            origin: 'domain',
+            processed: false,
+          });
           break;
         }
 
@@ -127,16 +145,16 @@ export class Library {
           console.warn(`[${new Date().toISOString()}] Unhandled event type in Library: ${event.type}`);
       }
     } catch (error) {
-      console.error('Error in event processing:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Error in event processing: ${message}`);
     } finally {
       this.eventProcessing = false;
     }
   }
 
-  async get(id: string): Promise<Simple2DShape | Complex2DShape | undefined> {
+  get(id: string): BaseShape | undefined {
     try {
-      const shape = await this.adapter.get(id);
-      return shape;
+      return this.adapter.get(id);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`Error retrieving shape with ID ${id}: ${message}`);
@@ -144,17 +162,27 @@ export class Library {
     }
   }
 
-  getAllShapes(): Array<Simple2DShape | Complex2DShape> {
-    return Array.from(this.shapes.values());
+  getAllShapes(): BaseShape[] {
+    return this.adapter.getAll();
+  }
+
+  addShapes(shapes: InputShapeData[]): void {
+    Engine.getInstance().emit({
+      type: 'shapes.add',
+      data: { shapes },
+      origin: 'domain',
+      processed: false,
+    });
   }
 
   private getShapeType(shapeName: string): 'simple' | 'complex' {
     const simpleShapes = ['rectangle', 'square', 'circle'];
     const complexShapes = ['star', 'polygon', 'triangle'];
 
-    if (simpleShapes.includes(shapeName.toLowerCase())) {
+    const normalizedName = shapeName.toLowerCase();
+    if (simpleShapes.includes(normalizedName)) {
       return 'simple';
-    } else if (complexShapes.includes(shapeName.toLowerCase())) {
+    } else if (complexShapes.includes(normalizedName)) {
       return 'complex';
     } else {
       console.warn(`Unknown shape: ${shapeName}, defaulting to simple`);

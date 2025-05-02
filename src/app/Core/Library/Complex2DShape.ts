@@ -1,41 +1,37 @@
-export class Complex2DShape {
-    // Attributes
-    id!: string;
-    type!: 'complex';
-    x!: number;
-    y!: number;
-    height!: number;
-    width!: number;
-    innerRadius!: number;
-    outerRadius!: number;
-    color!: string;
+import Konva from 'konva';
+import { BaseShape } from './Models/BaseShape';
+
+export class Complex2DShape implements BaseShape {
   
-     shapes: Map<string, Complex2DShape> = new Map();
   
-    // Methods
-    async create(shape: Complex2DShape): Promise<boolean> {
-      // To be implemented
-      return Promise.resolve(false);
-    }
-  
-    async delete(id: string): Promise<boolean> {
-      // To be implemented
-      return Promise.resolve(false);
-    }
-  
-    async isSelected(id: string): Promise<boolean> {
-      // To be implemented
-      return Promise.resolve(false);
-    }
-  
-    async update(id: string, properties: Partial<Complex2DShape>): Promise<boolean> {
-      // To be implemented
-      return Promise.resolve(false);
-    }
-  
-    async get(id: string): Promise<Complex2DShape> {
-      // To be implemented
-      throw new Error('Not implemented');
-    }
+  public type: string = 'complex';
+  createShape(x: number, y: number): void {
+    throw new Error('Method not implemented.');
   }
+  updateShape(x: number, y: number): void {
+    throw new Error('Method not implemented.');
+  }
+  updateFromProperties(properties: any): void {
+    throw new Error('Method not implemented.');
+  }
+  getShape(): Konva.Node {
+    throw new Error('Method not implemented.');
+  }
+  getId(): string {
+    throw new Error('Method not implemented.');
+  }
+  setId(id: string): void {
+    throw new Error('Method not implemented.');
+  }
+  getProperties() {
+    throw new Error('Method not implemented.');
+  }
+  delete(): void {
+    throw new Error('Method not implemented.');
+  }
+  isSelected(): boolean {
+    throw new Error('Method not implemented.');
+  }
+
+ }
   

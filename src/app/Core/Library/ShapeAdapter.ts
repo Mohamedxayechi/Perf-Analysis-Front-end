@@ -1,48 +1,64 @@
 import { Injectable } from '@angular/core';
-import { Simple2DShape } from './Simple2DShape'
+import { Simple2DShape } from './Simple2DShape';
 import { Complex2DShape } from './Complex2DShape';
+import { BaseShape } from './Models/BaseShape';
+
 @Injectable({
   providedIn: 'root',
 })
 export class ShapeAdapterClass {
-  private adapter: Simple2DShape | Complex2DShape;
+  private shapes: Map<string, BaseShape> = new Map();
 
-  constructor() {
-    // Default to simple shapes
-    this.adapter = new Simple2DShape();
+  constructor() {}
+
+  setAdapter(type: 'simple' | 'complex', x: number, y: number): string {
+    const shape: BaseShape = type === 'simple' ? new Simple2DShape() : new Complex2DShape();
+    const id = shape.getId();
+    shape.createShape(x, y);
+    this.shapes.set(id, shape);
+    return id;
   }
 
-  setAdapter(type: 'simple' | 'complex'): void {
-    this.adapter = type === 'simple' ? new Simple2DShape() : new Complex2DShape();
+  createShape(type: 'simple' | 'complex', x: number, y: number): string {
+    return this.setAdapter(type, x, y);
   }
 
-  async create(shape: Simple2DShape | Complex2DShape): Promise<boolean> {
-    if (this.adapter instanceof Simple2DShape && shape.type === 'simple') {
-      return this.adapter.create(shape);
-    } else if (this.adapter instanceof Complex2DShape && shape.type === 'complex') {
-      return this.adapter.create(shape);
+  update(id: string, properties: Partial<Record<keyof BaseShape, any>>): boolean {
+    const shape = this.shapes.get(id);
+    if (!shape) {
+      throw new Error(`Shape with ID ${id} not found`);
     }
-    throw new Error('Invalid shape type for current adapter');
+    shape.updateFromProperties(properties);
+    return true;
   }
 
-  async delete(id: string): Promise<boolean> {
-    return this.adapter.delete(id);
-  }
-
-  async isSelected(id: string): Promise<boolean> {
-    return this.adapter.isSelected(id);
-  }
-
-  async update(id: string, properties: Partial<Simple2DShape> | Partial<Complex2DShape>): Promise<boolean> {
-    if (this.adapter instanceof Simple2DShape && (!properties.type || properties.type === 'simple')) {
-      return this.adapter.update(id, properties as Partial<Simple2DShape>);
-    } else if (this.adapter instanceof Complex2DShape && (!properties.type || properties.type === 'complex')) {
-      return this.adapter.update(id, properties as Partial<Complex2DShape>);
+  delete(id: string): boolean {
+    const shape = this.shapes.get(id);
+    if (!shape) {
+      throw new Error(`Shape with ID ${id} not found`);
     }
-    throw new Error('Invalid properties type for current adapter');
+    shape.delete();
+    this.shapes.delete(id);
+    return true;
   }
 
-  async get(id: string): Promise<Simple2DShape | Complex2DShape> {
-    return this.adapter.get(id);
+  isSelected(id: string): boolean {
+    const shape = this.shapes.get(id);
+    if (!shape) {
+      throw new Error(`Shape with ID ${id} not found`);
+    }
+    return shape.isSelected();
+  }
+
+  get(id: string): BaseShape {
+    const shape = this.shapes.get(id);
+    if (!shape) {
+      throw new Error(`Shape with ID ${id} not found`);
+    }
+    return shape;
+  }
+
+  getAll(): BaseShape[] {
+    return Array.from(this.shapes.values());
   }
 }
