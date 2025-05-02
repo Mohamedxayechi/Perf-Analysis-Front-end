@@ -1,0 +1,62 @@
+<!-- Main container for the project creation form -->
+<div class="container">
+  <!-- Reactive form bound to projectForm with submit event handler -->
+  <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+    <!-- Form title -->
+    <h2>Create a New Project</h2>
+    
+    <!-- Project name input field with validation -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Project Name</mat-label>
+      <input
+        matInput
+        id="projectName"
+        formControlName="projectName"
+        placeholder="Enter project name"
+        aria-required="true"
+      />
+      <!-- Error message for required validation -->
+      <mat-error *ngIf="projectForm.get('projectName')?.hasError('required') && projectForm.get('projectName')?.touched">
+        Project name is required
+      </mat-error>
+      <!-- Error message for maximum length validation -->
+      <mat-error *ngIf="projectForm.get('projectName')?.hasError('maxlength') && projectForm.get('projectName')?.touched">
+        Project name cannot exceed 100 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Description textarea field with optional input -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description (Optional)</mat-label>
+      <textarea
+        matInput
+        id="description"
+        formControlName="description"
+        placeholder="Enter project description"
+        rows="3"
+      ></textarea>
+      <!-- Error message for maximum length validation -->
+      <mat-error *ngIf="projectForm.get('description')?.hasError('maxlength') && projectForm.get('description')?.touched">
+        Description cannot exceed 500 characters
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Video upload component for selecting a video file -->
+    <div>
+      <app-upload-file></app-upload-file>
+    </div>
+
+    <!-- Submit button container -->
+    <div class="button-container">
+      <!-- Submit button with dynamic text and disabled state -->
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="projectForm.invalid || !videoSelected || isSubmitting"
+      >
+        {{ isSubmitting ? 'Creating...' : 'Create Project' }}
+      </button>
+    </div>
+  </form>
+</div>

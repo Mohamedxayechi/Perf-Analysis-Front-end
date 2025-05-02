@@ -1,0 +1,81 @@
+name: "CodeQL for Angular"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  analyze:
+    name: Analyze (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Check for lock file to determine package manager
+    - name: Check for lock file
+      id: check-lock-file
+      run: |
+        if [ -f "yarn.lock" ]; then
+          echo "package-manager=yarn" >> $GITHUB_OUTPUT
+        elif [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ]; then
+          echo "package-manager=npm" >> $GITHUB_OUTPUT
+        else
+          echo "package-manager=npm" >> $GITHUB_OUTPUT
+          echo "no-lock-file=true" >> $GITHUB_OUTPUT
+        fi
+
+    # Set up Node.js environment (after checking lock file)
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.20.0' # Fixed Node.js version
+        cache: ${{ steps.check-lock-file.outputs.package-manager == 'yarn' && 'yarn' || 'npm' }}
+
+    # Install Yarn if needed
+    - name: Install Yarn
+      if: steps.check-lock-file.outputs.package-manager == 'yarn'
+      run: npm install -g yarn@1.22.22
+
+    # Install dependencies with npm
+    - name: Install dependencies (npm)
+      if: steps.check-lock-file.outputs.package-manager == 'npm'
+      run: |
+        if [ "${{ steps.check-lock-file.outputs.no-lock-file }}" == "true" ]; then
+          npm install
+        else
+          npm ci
+        fi
+
+    # Install dependencies with Yarn
+    - name: Install dependencies (Yarn)
+      if: steps.check-lock-file.outputs.package-manager == 'yarn'
+      run: yarn install --frozen-lockfile
+
+    # Optional: Build the Angular project (uncomment if needed)
+    # - name: Build Angular project
+    #   run: ${{ steps.check-lock-file.outputs.package-manager }} run build --if-present
+
+    # Initialize CodeQL
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # queries: security-extended,security-and-quality
+
+    # Perform CodeQL Analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{ matrix.language }}"
