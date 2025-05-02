@@ -1,0 +1,191 @@
+/* Container for the entire toolbar */
+
+.toolbar-container {
+  height: 100%;
+  width: 130px;
+  background: linear-gradient(180deg, #252525, #1e1e1e);
+  border-right: 1px solid #444;
+  color: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+
+/* Individual toolbar section (2D and 3D sections) */
+.toolbar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+}
+
+/* Section title (e.g., "2D" and "3D") */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0;
+  color: #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+/* Underline effect for section title */
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: #4a90e2;
+  border-radius: 1px;
+}
+
+/* Container for tool buttons */
+.tool-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 80%;
+  justify-items: center;
+  padding: 0 5px;
+}
+
+/* Wrapper for tool buttons with dropdowns */
+.tool-button-wrapper {
+  position: relative;
+}
+
+/* Individual tool button */
+.tool-button {
+  background: #2a2a2a;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+/* Hover effect for tool button */
+.tool-button:hover {
+  background: #4a90e2;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+/* Material icon inside tool button */
+mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  color: #d0d0d0;
+  transition: color 0.3s ease;
+}
+
+/* Hover effect for material icon */
+.tool-button:hover mat-icon {
+  color: #fff;
+}
+
+/* Common styles for all dropdown menus (line styles, polygon shapes, 3D shapes) */
+.dropdown-menu {
+  position: fixed;
+  left: 135px;
+  background: #91909021;
+  z-index: 100;
+  box-shadow: 0 4px 4px rgba(68, 68, 68, 0.4);
+  animation: slideIn 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Arrow for dropdown menu */
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #2a2a2a;
+}
+
+/* Animation for dropdown menu slide-in effect */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Line style and shape option (common for dropdown items) */
+.line-style-option,
+.shape-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  color: #d0d0d0;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+/* Hover effect for line style and shape options */
+.line-style-option:hover,
+.shape-option:hover {
+  background: #4a90e2;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Preview for line styles */
+.line-preview {
+  width: 35px;
+  height: 3px;
+}
+
+/* Specific line style: Solid */
+.solid-line {
+  background: #fff;
+}
+
+/* Specific line style: Dashed */
+.dashed-line {
+  background: linear-gradient(to right, #fff 50%, transparent 50%);
+  background-size: 8px 3px;
+}
+
+/* Specific line style: Dotted */
+.dotted-line {
+  background: linear-gradient(to right, #fff 3px, transparent 3px);
+  background-size: 6px 3px;
+}
+
+/* Specific line style: Wavy */
+.wavy-line {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 3" preserveAspectRatio="none"><path d="M0,1.5 Q8.75,0 17.5,1.5 T35,1.5" stroke="white" stroke-width="1.5" fill="none"/></svg>');
+  background-size: 35px 3px;
+}
+
+/* Specific line style: Zigzag */
+.zigzag-line {
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 3" preserveAspectRatio="none"><path d="M0,1.5 L8.75,0 L17.5,1.5 L26.25,0 L35,1.5" stroke="white" stroke-width="1.5" fill="none"/></svg>');
+  background-size: 35px 3px;
+}
+
+/* Preview for shape options */
+.shape-preview {
+  width: 20px;
+  height: 20px;
+  background: #fff;
+}

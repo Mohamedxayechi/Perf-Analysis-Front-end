@@ -1,0 +1,78 @@
+<!-- Container for the properties panel and toggle button -->
+<div class="properties-panel-container">
+  <!-- Button to toggle the visibility of the properties panel, always visible -->
+  <button mat-icon-button
+          (click)="onToolButtonClick()"
+          aria-label="Afficher/Masquer le panneau des propriétés"
+          [ngClass]="{'button-hidden': !showPropertiesPanel}">
+    <!-- Icon that changes based on panel visibility (menu or arrow) -->
+    <mat-icon>{{ showPropertiesPanel ? 'arrow_forward' : 'menu' }}</mat-icon>
+  </button>
+
+  <!-- Properties panel with animation for show/hide -->
+  <div class="properties-panel" [@panelAnimation]="showPropertiesPanel ? 'visible' : 'hidden'">
+    <!-- Container for all property fields -->
+    <div class="properties-container">
+      <!-- Title for the properties panel -->
+      <h3>Propriétés</h3>
+      <!-- Input field for object name -->
+      <mat-form-field appearance="fill">
+        <mat-label>Nom:</mat-label>
+        <input matInput>
+      </mat-form-field>
+
+      <!-- Input field for object size -->
+      <mat-form-field appearance="fill">
+        <mat-label>Taille:</mat-label>
+        <input matInput>
+      </mat-form-field>
+
+      <!-- Section for position-related properties -->
+      <div class="position-section">
+        <!-- Label for the position section, changed to span -->
+        <div class="section-label">
+          <span>Position:</span> <!-- Changed from <label> to <span> -->
+        </div>
+        <!-- Container for position subfields (X, Y, Rotation) -->
+        <div class="subfields">
+          <!-- Input field for X position -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position X:</mat-label>
+            <input matInput>
+          </mat-form-field>
+
+          <!-- Input field for Y position -->
+          <mat-form-field appearance="fill">
+            <mat-label>Position Y:</mat-label>
+            <input matInput>
+          </mat-form-field>
+        </div>
+          </div>
+          
+          <!-- Rotation section moved outside position section -->
+          <div class="rotation-section">
+            <div class="section-label">
+            <span>Rotation:</span>
+           </div>
+           <div class="subfields">
+          <mat-form-field appearance="fill">
+            <mat-label>Rotation:</mat-label>
+            <input matInput>
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Section for color selection -->
+      <div class="color-field">
+        <!-- Read-only input field for color -->
+        <div class="section-label">
+          <span>Couleur:</span> 
+        </div>
+        <mat-form-field appearance="fill">
+          <mat-label>Couleur:</mat-label>
+          <input matInput readonly>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+</div>
