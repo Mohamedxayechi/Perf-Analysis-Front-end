@@ -1,0 +1,64 @@
+<!-- Main container for the file upload interface with drag-and-drop support -->
+<div class="upload-container"
+     [class.dragging]="isDragging"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDrop($event)"
+     role="region"
+     aria-label="File upload area">
+  
+  <!-- Upload area displayed when no file is selected -->
+  <div *ngIf="!selectedFile" class="upload-area">
+    <!-- Hidden file input for selecting videos via click -->
+    <input type="file"
+           accept="video/mp4,video/quicktime,video/x-msvideo"
+           (change)="onFileSelected($event)"
+           id="fileInput"
+           hidden
+           aria-hidden="true">
+    <!-- Label for file input, styled as the clickable upload area -->
+    <label for="fileInput" class="upload-label">
+      <!-- Instruction text shown when no file is selected and no validation error exists -->
+      <span *ngIf="!selectedFile && !validationError" aria-live="polite">
+        Drag and drop video files here or click to select
+      </span>
+      <!-- Error message displayed for invalid file selection -->
+      <span *ngIf="validationError" class="error" aria-live="assertive">
+        {{ validationError }}
+      </span>
+    </label>
+  </div>
+
+  <!-- Video preview section displayed when a valid file is selected -->
+  <div *ngIf="videoUrl && fileInfo" class="video-preview-container">
+    <!-- Cancel button to clear the selected video -->
+    <span *ngIf="selectedFile"
+          (click)="cancelUpload()"
+          class="cancel-cross"
+          aria-label="Cancel video upload"
+          role="button"
+          tabindex="0"
+          (keyup.enter)="cancelUpload()">
+      ✕
+    </span>
+    <!-- Video player for previewing the selected video -->
+    <video #videoPlayer
+           [src]="videoUrl"
+           controls
+           class="video-player"
+           aria-label="Video preview"></video>
+    <!-- File metadata display -->
+    <div class="file-info">
+      <h3>File Information</h3>
+      <p><strong>Name:</strong> {{ fileInfo.name }}</p>
+      <p><strong>Type:</strong> {{ fileInfo.type }}</p>
+      <p><strong>Size:</strong> {{ fileInfo.size }}</p>
+      <p><strong>Duration:</strong> {{ fileInfo.duration }}</p>
+    </div>
+  </div>
+
+  <!-- Status message for upload-related feedback -->
+  <div *ngIf="uploadStatus" class="status-message" aria-live="polite">
+    {{ uploadStatus }}
+  </div>
+</div>
