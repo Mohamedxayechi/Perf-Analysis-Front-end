@@ -17,21 +17,22 @@
           </ng-container>
           <ng-container *ngIf="tool.type === 'dropdown' && tool.menuKey">
             <div
-            class="{{ tool.menuKey === 'line' ? 'line-styles-dropdown' : 'polygon-shapes-dropdown' }} dropdown-menu"
-            *ngIf="tool.menuKey === currentMenu"
-          >
-            <div
-              class="{{ tool.menuKey === 'line' ? 'line-style-option' : 'shape-option' }}"
-              *ngFor="let item of getDropdownItems(tool.menuKey); trackBy: trackByValue"
-              (click)="selectItem(tool.menuKey, item.value)"
+              class="{{ tool.menuKey === 'line' ? 'line-styles-dropdown' : 'polygon-shapes-dropdown' }} dropdown-menu"
+              *ngIf="tool.menuKey === currentMenu"
             >
-              <span class="shape-preview {{ item.previewClass }}"></span> {{ item.label }}
+              <div
+                class="{{ tool.menuKey === 'line' ? 'line-style-option' : 'shape-option' }}"
+                *ngFor="let item of getDropdownItems(tool.menuKey); trackBy: trackByValue"
+                (click)="selectItem(tool.menuKey, item.value)"
+                (keyup)="onKeyUp($event, tool.menuKey, item.value)" 
+                tabindex="0" 
+              >
+                <span class="shape-preview {{ item.previewClass }}"></span> {{ item.label }}
+              </div>
             </div>
-          </div>
             <button class="tool-button" (click)="toggleMenu(tool.menuKey)">
               <mat-icon>{{ tool.icon }}</mat-icon>
             </button>
-     
           </ng-container>
         </div>
       </div>

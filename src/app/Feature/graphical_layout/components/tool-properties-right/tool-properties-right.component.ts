@@ -1,78 +1,93 @@
-import { Component } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { CommonModule } from '@angular/common';
-import { ToolPropertiesRightService } from '../../Services/tool-properties-right.service';
-import { Subscription } from 'rxjs';
-import { trigger, state, style, animate, transition } from '@angular/animations';
+// Import necessary Angular core modules and lifecycle hooks
+import { Component, OnInit, OnDestroy } from '@angular/core'; // Component for defining the component, OnInit and OnDestroy for lifecycle hooks
 
-// Component decorator defining metadata for the ToolPropertiesRightComponent
+// Import Angular Material modules for UI components
+import { MatIconModule } from '@angular/material/icon'; // For using Material icons
+import { MatFormFieldModule } from '@angular/material/form-field'; // For form field UI
+import { MatInputModule } from '@angular/material/input'; // For input fields
+import { MatButtonModule } from '@angular/material/button'; // For buttons
+import { CommonModule } from '@angular/common'; // Provides common Angular directives like ngIf, ngFor
+
+// Import custom service and RxJS Subscription
+import { ToolPropertiesRightService } from '../../Services/tool-properties-right.service'; // Service to manage tool properties panel state
+import { Subscription } from 'rxjs'; // For handling observable subscriptions
+
+// Import Angular animations for panel transitions
+import { trigger, state, style, animate, transition } from '@angular/animations'; // For defining animation triggers and states
+
+// Component decorator to define metadata for the ToolPropertiesRightComponent
 @Component({
-  selector: 'app-tool-properties-right', // Component selector for HTML
-  standalone: true, // Standalone component, no module required
+  selector: 'app-tool-properties-right', // Unique selector for the component
+  standalone: true, // Marks this as a standalone component (no NgModule required)
   imports: [
-    CommonModule, // Provides common Angular directives (e.g., *ngIf, *ngFor)
-    MatIconModule, // Material module for icons
-    MatFormFieldModule, // Material module for form fields
-    MatInputModule, // Material module for input fields
-    MatButtonModule // Material module for buttons
+    CommonModule, // Import common Angular directives
+    MatIconModule, // Import Material icon module
+    MatFormFieldModule, // Import Material form field module
+    MatInputModule, // Import Material input module
+    MatButtonModule // Import Material button module
   ],
-  templateUrl: './tool-properties-right.component.html', // Path to HTML template
-  styleUrls: ['./tool-properties-right.component.scss'], // Path to SCSS styles
+  templateUrl: './tool-properties-right.component.html', // Path to the component's HTML template
+  styleUrls: ['./tool-properties-right.component.scss'], // Path to the component's styles
   animations: [
-    // Animation trigger for properties panel show/hide
+    // Define animation trigger for the properties panel
     trigger('panelAnimation', [
-      // Visible state: fully opaque and in position
+      // State for when the panel is visible
       state('visible', style({
-        opacity: 1,
-        transform: 'translateX(0)'
+        opacity: 1, // Fully opaque
+        transform: 'translateX(0)' // No horizontal translation (panel is in place)
       })),
-      // Hidden state: transparent and slid to the right
+      // State for when the panel is hidden
       state('hidden', style({
-        opacity: 0,
-        transform: 'translateX(100%)'
+        opacity: 0, // Fully transparent
+        transform: 'translateX(100%)' // Move panel off-screen to the right
       })),
-      // Transition between states with 500ms animation
+      // Transition between visible and hidden states
       transition('visible <=> hidden', [
-        animate('500ms ease-in-out')
+        animate('500ms ease-in-out') // Animate over 500ms with easing
       ])
     ])
   ]
 })
-export class ToolPropertiesRightComponent {
-  // Flag to control visibility of the properties panel
+// Component class implementing OnInit and OnDestroy lifecycle hooks
+export class ToolPropertiesRightComponent implements OnInit, OnDestroy {
+  // Boolean to control the visibility of the properties panel
   showPropertiesPanel = false;
-  // Subscription to manage observable subscriptions
+
+  // Subscription to manage the observable from the service
   private subscription: Subscription;
-  // Flag for flash effect (unused in current code)
+
+  // Boolean to control a flash effect (not used in provided code logic)
   flash = false;
 
-  // Constructor injecting the ToolPropertiesRightService
+  // Constructor with dependency injection for the ToolPropertiesRightService
   constructor(private toolPropertiesRightService: ToolPropertiesRightService) {
+    // Initialize the subscription object
     this.subscription = new Subscription();
   }
 
-  // Lifecycle hook to initialize component
-  ngOnInit() {
-    this.subscribeToPropertiesPanel(); // Call method to set up subscription
+  // Lifecycle hook: Called after component initialization
+  ngOnInit(): void {
+    // Subscribe to the service to listen for panel visibility changes
+    this.subscribeToPropertiesPanel();
   }
 
-  // Subscribes to the showProperties$ observable to update panel visibility
+  // Method to subscribe to the service's showProperties$ observable
   subscribeToPropertiesPanel() {
+    // Update showPropertiesPanel based on the service's observable
     this.subscription = this.toolPropertiesRightService.showProperties$.subscribe((show) => {
-      this.showPropertiesPanel = show; // Update visibility based on service
+      this.showPropertiesPanel = show; // Update panel visibility
     });
   }
 
-  // Lifecycle hook to clean up subscriptions
-  ngOnDestroy() {
-    this.subscription.unsubscribe(); // Prevent memory leaks
+  // Lifecycle hook: Called when the component is destroyed
+  ngOnDestroy(): void {
+    // Unsubscribe to prevent memory leaks
+    this.subscription.unsubscribe();
   }
 
-  // Toggles the properties panel visibility via the service
+  // Method to handle button click for toggling the properties panel
   onToolButtonClick() {
+    // Call the service to toggle the panel's visibility
     this.toolPropertiesRightService.togglePropertiesPanel();
   }
 }

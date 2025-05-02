@@ -29,9 +29,9 @@
 
       <!-- Section for position-related properties -->
       <div class="position-section">
-        <!-- Label for the position section -->
+        <!-- Label for the position section, changed to span -->
         <div class="section-label">
-          <label>Position:</label>
+          <span>Position:</span> <!-- Changed from <label> to <span> -->
         </div>
         <!-- Container for position subfields (X, Y, Rotation) -->
         <div class="subfields">
@@ -46,7 +46,9 @@
             <mat-label>Position Y:</mat-label>
             <input matInput>
           </mat-form-field>
-
+          <div class="section-label">
+            <span>Rotation:</span> <!-- Changed from <label> to <span> -->
+          </div>
           <!-- Input field for rotation -->
           <mat-form-field appearance="fill">
             <mat-label>Rotation:</mat-label>
@@ -58,6 +60,9 @@
       <!-- Section for color selection -->
       <div class="color-field">
         <!-- Read-only input field for color -->
+        <div class="section-label">
+          <span>Couleur:</span> <!-- Changed from <label> to <span> -->
+        </div>
         <mat-form-field appearance="fill">
           <mat-label>Couleur:</mat-label>
           <input matInput readonly>

@@ -1,24 +1,18 @@
-<!-- Navigation bar for the top menu -->
 <nav class="top-menu">
-    <!-- Unordered list containing menu items -->
-    <ul class="menu-list">
-      <!-- Menu item, dynamically generated for each item in menuItems -->
-      <li *ngFor="let item of menuItems" class="menu-item">
-        <!-- Display the name of the menu item -->
-        {{ item.name }}
-        <!-- Dropdown container for submenu options -->
-        <div class="dropdown">
-          <!-- Unordered list for dropdown options -->
-          <ul class="dropdown-list">
-            <!-- Dropdown item, dynamically generated for each option -->
-            <li *ngFor="let option of item.options" 
-                class="dropdown-item"
-                (click)="selectOption(option)">
-              <!-- Display the option text -->
-              {{ option }}
-            </li>
-          </ul>
-        </div>
-      </li>
-    </ul>
-  </nav>
+  <ul class="menu-list">
+    <li *ngFor="let item of menuItems" class="menu-item" (click)="toggleDropdown(item)" (keydown)="handleKeydown($event, item)" tabindex="0">
+      {{ item.name }}
+      <div class="dropdown" [class.open]="item.isOpen">
+        <ul class="dropdown-list">
+          <li *ngFor="let option of item.options" 
+              class="dropdown-item"
+              (click)="selectOption(option)"
+              (keydown)="handleOptionKeydown($event, option)"
+              tabindex="0">
+            {{ option }}
+          </li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+</nav>
