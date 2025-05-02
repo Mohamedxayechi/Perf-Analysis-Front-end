@@ -58,6 +58,8 @@ export class ResizableDirective implements AfterViewInit {
           
           if (x < 0  || ( this.medias[this.index].video && event.rect.width >this.initialWidth)) {
             this.move = false;
+          } else {
+                this.move = true;
           }
           if (this.move) {
             Object.assign(target.style, {

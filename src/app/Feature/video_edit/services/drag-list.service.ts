@@ -15,7 +15,7 @@ export class DragListService {
     map((periods) => periods.reduce((sum, period) => sum + period.time, 0))
   );
 
-  constructor(private parameterService : ParameterService) {}
+  constructor(private parameterService: ParameterService) {}
 
   delete(index: number) {
     const current = this.mediasSubject.getValue();
@@ -32,7 +32,7 @@ export class DragListService {
   }
 
   splitMedia(index: number, splitTime: number) {
-    if (splitTime<=0 ){
+    if (splitTime <= 0) {
       console.error('splitTime must be greater than 0');
       return;
     }
@@ -49,36 +49,41 @@ export class DragListService {
 
     const { startTime, endTime } = media;
 
-    const accumulatedBefore = this.calculateAccumulatedTime(index);
-
-    if (startTime+accumulatedBefore > accumulatedBefore+splitTime && accumulatedBefore+splitTime >accumulatedBefore+endTime) {
-      console.error('splitTime must be between startTime and endTime');
+    if (splitTime < 0 || splitTime >= endTime - startTime) {
+      console.error('splitTime must be between 0 and media duration');
       return;
     }
 
     // Create two new items by slicing the original
-    const firstHalf = { ...media, endTime: splitTime+media.startTime,time:splitTime };
-    const secondHalf = { ...media, startTime: media.startTime+splitTime , time:media.time - splitTime };
-
+    const firstHalf = {
+      ...media,
+      endTime: splitTime + media.startTime,
+      time: splitTime,
+    };
+    const secondHalf = {
+      ...media,
+      startTime: media.startTime + splitTime,
+      time: media.time - splitTime,
+    };
 
     const updated = [...medias];
-    updated.splice(index, 1, firstHalf, secondHalf); 
+    updated.splice(index, 1, firstHalf, secondHalf);
     this.mediasSubject.next(updated);
   }
 
   resize(item: { index: number; width: number; timePerWidth: number }) {
     const newTime = item.width * item.timePerWidth;
     this.updateTime(item.index, newTime);
-
   }
   addMedia(media: Media) {
-    
     const current = this.mediasSubject.getValue();
     const updated = [...current, media];
     this.mediasSubject.next(updated);
   }
 
-  getVideoIndexAndStartTime(second: number): { index: number; localSecond: number } | null {
+  getVideoIndexAndStartTime(
+    second: number
+  ): { index: number; localSecond: number } | null {
     const medias = this.mediasSubject.getValue();
     let accumulatedTime = 0;
 
@@ -97,26 +102,28 @@ export class DragListService {
   }
 
   private getMedias(): Media[] {
-    return EXTERNAL_TIME_PERIODS.map((media) => (
-      {
+    return EXTERNAL_TIME_PERIODS.map((media) => ({
       ...media,
       startTime: media.startTime ?? 0,
       endTime: media.endTime ?? media.time,
     }));
   }
 
-  private updateTime(index: number, newTime: number):void {
+  private updateTime(index: number, newTime: number): void {
     const current = this.mediasSubject.getValue();
-    const updated = [...current]; 
+    const updated = [...current];
     const timeDiff = newTime - updated[index].time;
-    if(current[index].video && timeDiff>0 )
-      return; 
-    
-    updated[index] = { ...updated[index], time: newTime,endTime: updated[index].endTime! + timeDiff }; 
+    if (current[index].video && timeDiff > 0) return;
+
+    updated[index] = {
+      ...updated[index],
+      time: newTime,
+      endTime: updated[index].endTime! + timeDiff,
+    };
     this.mediasSubject.next(updated);
   }
 
-   calculateAccumulatedTime(index: number): number {
+  calculateAccumulatedTime(index: number): number {
     const medias = this.mediasSubject.getValue();
     let time = 0;
     for (let i = 0; i < index; i++) {
@@ -124,5 +131,4 @@ export class DragListService {
     }
     return time;
   }
-
 }

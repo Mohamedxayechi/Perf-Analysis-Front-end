@@ -182,7 +182,7 @@ export class MainCanvasComponent implements AfterViewInit {
   }
 
   private playMediaFrom(index: number, localSecond: number): void {
-    if (this.isPlaying || index >= this.medias.length) {
+    if ( index >= this.medias.length) {
       console.error('Invalid index or already playing media.');
       return;
     }
