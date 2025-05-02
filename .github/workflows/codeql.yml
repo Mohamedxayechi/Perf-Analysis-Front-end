@@ -55,7 +55,7 @@ jobs:
         if [ "${{ steps.check-lock-file.outputs.no-lock-file }}" == "true" ]; then
           npm install
         else
-          npm ci
+          npm i
         fi
 
     # Install dependencies with Yarn
