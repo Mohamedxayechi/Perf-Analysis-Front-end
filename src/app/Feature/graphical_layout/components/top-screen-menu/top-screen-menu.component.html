@@ -1,0 +1,18 @@
+<nav class="top-menu">
+  <ul class="menu-list">
+    <li *ngFor="let item of menuItems" class="menu-item" (click)="toggleDropdown(item)" (keydown)="handleKeydown($event, item)" tabindex="0">
+      {{ item.name }}
+      <div class="dropdown" [class.open]="item.isOpen">
+        <ul class="dropdown-list">
+          <li *ngFor="let option of item.options" 
+              class="dropdown-item"
+              (click)="$event.stopPropagation(); selectOption(option)"
+              (keydown)="handleOptionKeydown($event, option)"
+              tabindex="0">
+            {{ option }}
+          </li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+</nav>
