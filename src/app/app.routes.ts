@@ -5,12 +5,12 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { FormProjectComponent } from './Feature/createProject/components/form-project/form-project.component';
 import { HttpClientModule } from '@angular/common/http';
-import { UbloadFileComponent } from './Feature/uploadFile/components/ubload-file/ubload-file.component';
+import {UploadFileComponent } from './Feature/uploadFile/components/upload-file/upload-file.component';
 
 export const routes: Routes = [
     // { path: '', component: HomeComponent, pathMatch: 'full' }, 
     { path: 'create/project', component: FormProjectComponent }, 
-    { path: 'ubload/vd', component: UbloadFileComponent }, 
+    { path: 'ubload/vd', component: UploadFileComponent}
 
 
 

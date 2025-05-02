@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UploadService } from '../../services/upload-service.service';
+import { FileInfo } from '../../Interfaces/fileInfo';
 
 /**
  * Component responsible for handling video file uploads via drag-and-drop or file input.
@@ -10,17 +11,18 @@ import { UploadService } from '../../services/upload-service.service';
   selector: 'app-upload-file',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './ubload-file.component.html', // Note: Typo in 'ubload', should be 'upload'
-  styleUrls: ['./ubload-file.component.css']
+  templateUrl: './upload-file.component.html', // Fixed typo: 'ubload' to 'upload'
+  styleUrls: ['./upload-file.component.css']
 })
-export class UbloadFileComponent implements OnDestroy {
+
+export class UploadFileComponent implements OnDestroy {
   // Reference to the video player element in the template
   @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
 
   // State variables for file selection, video preview, and upload status
   selectedFile: File | null = null; // Currently selected video file
   videoUrl: string | null = null; // URL for previewing the selected video
-  fileInfo: any = null; // Metadata about the selected file (name, type, size, duration)
+  fileInfo: FileInfo | null = null; // Metadata about the selected file (name, type, size, duration)
   uploadStatus: string | null = null; // Status message for upload process
   validationError: string | null = null; // Error message for invalid file
   isDragging = false; // Tracks drag-and-drop state

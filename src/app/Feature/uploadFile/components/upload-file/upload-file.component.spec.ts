@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { UbloadFileComponent } from './ubload-file.component';
+import { UbloadFileComponent } from './upload-file.component';
 
 describe('UbloadFileComponent', () => {
   let component: UbloadFileComponent;

@@ -9,9 +9,9 @@ import { FormProjectService } from '../../services/form-project.service';
 import { SnackBarService } from '../../services/snack-bar.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { UbloadFileComponent } from '../../../uploadFile/components/ubload-file/ubload-file.component';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadService } from '../../../uploadFile/services/upload-service.service';
+import { UploadFileComponent } from '../../../uploadFile/components/upload-file/upload-file.component';
 
 /**
  * Component for creating and submitting a project form with video upload integration.
@@ -27,7 +27,7 @@ import { UploadService } from '../../../uploadFile/services/upload-service.servi
     MatInputModule,
     MatButtonModule,
     MatSnackBarModule,
-    UbloadFileComponent,
+    UploadFileComponent
   ],
   templateUrl: './form-project.component.html', // Note: Ensure file name matches
   styleUrls: ['./form-project.component.css']
@@ -129,7 +129,7 @@ export class FormProjectComponent implements OnInit, OnDestroy {
             this.isSubmitting = false;
           }
         });
-      } catch (error) {
+      } catch {
         // Handle localStorage or unexpected errors
         this.snackBarService.showError('Failed to save project to localStorage.');
         this.isSubmitting = false;
