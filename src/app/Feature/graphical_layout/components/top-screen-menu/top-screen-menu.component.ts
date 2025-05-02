@@ -2,6 +2,7 @@
 import { Component } from '@angular/core'; // Component for defining the component
 import { CommonModule } from '@angular/common'; // Provides common Angular directives like ngIf, ngFor
 import { Router } from '@angular/router'; // Router for navigating between routes
+import { MenuItem } from '../../interfaces/InterfaceToolGraphical';
 
 // Component decorator to define metadata for the TopScreenMenuComponent
 @Component({
@@ -44,43 +45,43 @@ export class TopScreenMenuComponent {
     }
   ];
 
-  // Toggles the dropdown for a specific menu item, closing others
-  toggleDropdown(item: any) {
-    this.menuItems.forEach(menu => {
-      if (menu !== item) {
-        menu.isOpen = false; // Close all other dropdowns
-      }
-    });
-    item.isOpen = !item.isOpen; // Toggle the clicked dropdown
-  }
-
-  // Handles selection of a dropdown option
-  selectOption(option: string) {
-    console.log(`Selected: ${option}`); // Log the selected option
-    if (option === 'New File') {
-      this.router.navigate(['/']); // Navigate to root route for 'New File'
+ // Toggles the dropdown for a specific menu item, closing others
+ toggleDropdown(item: MenuItem) {
+  this.menuItems.forEach(menu => {
+    if (menu !== item) {
+      menu.isOpen = false; // Close all other dropdowns
     }
-    this.closeAllDropdowns(); // Close all dropdowns after selection
-  }
+  });
+  item.isOpen = !item.isOpen; // Toggle the clicked dropdown
+}
 
-  // Closes all dropdown menus
-  closeAllDropdowns() {
-    this.menuItems.forEach(item => (item.isOpen = false)); // Set isOpen to false for all items
+// Handles selection of a dropdown option
+selectOption(option: string) {
+  console.log(`Selected: ${option}`); // Log the selected option
+  if (option === 'New File') {
+    this.router.navigate(['/']); // Navigate to root route for 'New File'
   }
+  this.closeAllDropdowns(); // Close all dropdowns after selection
+}
 
-  // Handles keyboard events for menu items (Enter or Space to toggle dropdown)
-  handleKeydown(event: KeyboardEvent, item: any) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault(); // Prevent default behavior (e.g., scrolling on Space)
-      this.toggleDropdown(item); // Toggle the dropdown
-    }
-  }
+// Closes all dropdown menus
+closeAllDropdowns() {
+  this.menuItems.forEach(item => (item.isOpen = false)); // Set isOpen to false for all items
+}
 
-  // Handles keyboard events for dropdown options (Enter or Space to select)
-  handleOptionKeydown(event: KeyboardEvent, option: string) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault(); // Prevent default behavior (e.g., scrolling on Space)
-      this.selectOption(option); // Select the option
-    }
+// Handles keyboard events for menu items (Enter or Space to toggle dropdown)
+handleKeydown(event: KeyboardEvent, item: MenuItem) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault(); // Prevent default behavior (e.g., scrolling on Space)
+    this.toggleDropdown(item); // Toggle the dropdown
   }
+}
+
+// Handles keyboard events for dropdown options (Enter or Space to select)
+handleOptionKeydown(event: KeyboardEvent, option: string) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault(); // Prevent default behavior (e.g., scrolling on Space)
+    this.selectOption(option); // Select the option
+  }
+}
 }

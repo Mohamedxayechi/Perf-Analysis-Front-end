@@ -46,10 +46,15 @@
             <mat-label>Position Y:</mat-label>
             <input matInput>
           </mat-form-field>
-          <div class="section-label">
-            <span>Rotation:</span> <!-- Changed from <label> to <span> -->
+        </div>
           </div>
-          <!-- Input field for rotation -->
+          
+          <!-- Rotation section moved outside position section -->
+          <div class="rotation-section">
+            <div class="section-label">
+            <span>Rotation:</span>
+           </div>
+           <div class="subfields">
           <mat-form-field appearance="fill">
             <mat-label>Rotation:</mat-label>
             <input matInput>
@@ -61,7 +66,7 @@
       <div class="color-field">
         <!-- Read-only input field for color -->
         <div class="section-label">
-          <span>Couleur:</span> <!-- Changed from <label> to <span> -->
+          <span>Couleur:</span> 
         </div>
         <mat-form-field appearance="fill">
           <mat-label>Couleur:</mat-label>

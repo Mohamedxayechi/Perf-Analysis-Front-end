@@ -18,3 +18,9 @@ export interface Section {
   title: string;
   tools: Tool[];
 }
+// Interface to define the structure of a menu item
+export interface MenuItem {
+  name: string;
+  options: string[];
+  isOpen: boolean;
+}
