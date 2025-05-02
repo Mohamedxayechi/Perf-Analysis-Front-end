@@ -12,11 +12,16 @@ import {
 import { DragListService } from '../services/drag-list.service';
 import { ParameterService } from '../services/parameter.service';
 import { EventsService } from '../services/events.service';
-
+interface Tick {
+  time: string | number;
+  x: number;
+}
 @Directive({
   selector: '[appTimelineCanvas]',
   standalone: true,
 })
+
+
 export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
    
   @Input() distancePerTime = 30;
@@ -38,8 +43,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
   private timeLineWidth = 0;
   private tickData: { x: number; time: string }[] = [];
 
+  
+
   //hover state
-  private hoveredTick = null;
+  private hoveredTick: Tick | null = null;
   private currentTickUnderMouse: { x: number; time: string } | null = null;
   private hoverStartTime: number | null = null;
   private hoverCheckInterval: ReturnType<typeof setInterval> | null = null;
@@ -236,7 +243,7 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
   }
 
   
-  private showTooltip(tick: any): void {
+  private showTooltip(tick: Tick): void {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.draw(this.context);
 

@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 })
 export class EventsService {
 
-  constructor() { }
+  
 
   private changeCursorSource = new Subject<number>();
   changeCursor$ = this.changeCursorSource.asObservable();

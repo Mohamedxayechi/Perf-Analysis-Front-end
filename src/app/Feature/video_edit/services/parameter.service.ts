@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +11,7 @@ export class ParameterService {
   private curosrXSource = new BehaviorSubject<number>(0);
   curosrX$ = this.curosrXSource.asObservable();
 
-  private isPlayingSource = new BehaviorSubject<Boolean>(false);
+  private isPlayingSource = new BehaviorSubject<boolean>(false);
   isPlaying$ = this.isPlayingSource.asObservable();
 
   setDistancePerTime(value: number) {
