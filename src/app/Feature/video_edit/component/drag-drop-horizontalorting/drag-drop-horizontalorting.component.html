@@ -1,0 +1,16 @@
+<div
+  cdkDropList
+  cdkDropListOrientation="horizontal"
+  class="horizontal-list"
+  (cdkDropListDropped)="drop($event)"
+  [ngStyle]="containerStyle"
+>
+  @for (item of medias; track item;let i=$index) {
+     <app-drag-list-elements
+      [item]="item"
+      [index]="i"
+      [distancePerTime]="distancePerTime"
+     ></app-drag-list-elements>
+  }
+  
+</div>

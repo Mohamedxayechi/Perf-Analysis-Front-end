@@ -1,0 +1,15 @@
+
+.horizontal-list {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  background: white;
+  border: solid 1px #ccc;
+  min-height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  padding-left: 15px;
+  
+}
+
+

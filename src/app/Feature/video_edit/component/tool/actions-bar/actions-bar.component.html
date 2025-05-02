@@ -1,0 +1,14 @@
+<div class="button-container d-flex justify-content-around align-items-center" >
+  <button mat-raised-button (click)="onSplit()">
+    <mat-icon>flip</mat-icon>
+    Split Clip
+  </button>
+  <button mat-fab aria-label="icon button with a delete icon" (click)="onTogglePlayPause()">
+    <mat-icon>{{ isPlaying ? "pause_circle" : "play_circle" }}</mat-icon>
+  </button>
+  <button mat-raised-button (click)="onClicImportMedia()">
+    <mat-icon>flip</mat-icon>
+    Import Media
+  </button>
+</div>
+

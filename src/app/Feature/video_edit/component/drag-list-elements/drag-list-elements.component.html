@@ -1,0 +1,16 @@
+<div
+  class="element-list"
+  cdkDrag
+  appResizable
+  [timePerWidth]="1/distancePerTime"
+  [index]="index"
+  [ngStyle]="dynamicElementStyle"
+>
+  <div class="menu">
+    <app-item-list-menu [index]="index"></app-item-list-menu>
+  </div>
+  <div class="container-list" cdkDragHandle>
+    
+  </div>
+</div>
+
