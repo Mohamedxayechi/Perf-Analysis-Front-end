@@ -1,0 +1,118 @@
+.upload-container {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.upload-container.dragging {
+  background-color: #f0f0f0;
+  border-color: #007bff;
+}
+
+.upload-area {
+  margin-bottom: 20px;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upload-label:hover {
+  background-color: #0056b3;
+}
+
+.status-message {
+  margin: 10px 0;
+  color: #333;
+  font-weight: bold;
+}
+
+.video-preview-container {
+  position: relative; /* To contain the absolutely positioned cancel-cross */
+  margin: 20px 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cancel-cross {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+  z-index: 10; /* Ensure it’s above the video */
+}
+
+.cancel-cross:hover {
+  background-color: #c82333;
+}
+
+.error {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.video-player {
+  max-width: 400px;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-info {
+  text-align: left;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 200px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-info h3 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.file-info p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .video-preview-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .video-player {
+    max-width: 100%;
+  }
+
+  .cancel-cross {
+    top: -10px;
+    right: 0; /* Adjust for smaller screens */
+  }
+}

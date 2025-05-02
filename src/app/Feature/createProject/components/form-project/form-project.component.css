@@ -1,0 +1,44 @@
+/* form-project.component.css */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+button[mat-flat-button] {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+button[mat-flat-button][disabled] {
+  background-color: #cccccc;
+}
+
+/* Ensure video upload component fits well */
+app-upload-file {
+  display: block;
+  margin: 20px 0;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 10px;
+  }
+}

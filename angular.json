@@ -62,7 +62,11 @@
             },
             "development": {
               "buildTarget": "Perf-analysis-Front-End:build:development"
-            }
+            },
+            "options": {
+                      "proxyConfig": "proxy.conf.json"
+                       }
+
           },
           "defaultConfiguration": "development"
         },
