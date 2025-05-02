@@ -117,7 +117,7 @@ export class ResizableDirective implements AfterViewInit {
 
   addResizeStyle() {
     const handle = this.renderer.createElement('div');
-    this.renderer.addClass(handle, 'resize-handle-container');
+
     this.renderer.appendChild(this.el.nativeElement, handle);
   
     // Left arrow

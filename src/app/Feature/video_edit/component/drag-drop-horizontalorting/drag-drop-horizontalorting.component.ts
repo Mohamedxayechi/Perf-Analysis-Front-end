@@ -45,4 +45,11 @@ export class DragDropHorizontalortingComponent implements OnInit {
   drop(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.medias, event.previousIndex, event.currentIndex);
   }
+
+  get containerStyle() {
+    return {
+      width: `${this.time * this.distancePerTime + this.spaceBefore}px`,
+      'padding-left': `${this.spaceBefore}px`
+    };
+  }
 }

@@ -1,8 +1,5 @@
-.example-button-row {
-    display: table-cell;
-    max-width: 600px;
-  }
-.example-button-container{
+
+.button-container{
   height: 10vh;
 }
 

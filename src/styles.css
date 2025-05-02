@@ -20,4 +20,12 @@
   .resize-handle-right {
     right: 0;
   }
-  /* styles.scss or any global file */
+  .placeholder-box {
+    width: 0;
+    display: inline-block;
+    background: #f0f0f0;
+    border: 1px dashed #ccc;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+  }
+  

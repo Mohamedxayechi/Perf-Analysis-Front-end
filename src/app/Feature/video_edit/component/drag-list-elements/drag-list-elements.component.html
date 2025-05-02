@@ -1,15 +1,10 @@
 <div
-  class="example-box"
+  class="element-list"
   cdkDrag
   appResizable
   [timePerWidth]="1/distancePerTime"
   [index]="index"
-  [ngStyle]="{
-    width: distancePerTime * item.time + 'px',
-    'background-size': distancePerTime + 'px 100%',
-    'background-image': 'url('+item.thumbnail+')'
-    
-  }"
+  [ngStyle]="dynamicElementStyle"
 >
   <div class="menu">
     <app-item-list-menu [index]="index"></app-item-list-menu>
