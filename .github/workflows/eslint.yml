@@ -32,7 +32,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Install SARIF formatter
         run: npm install @microsoft/eslint-formatter-sarif@3.1.0 --no-save
