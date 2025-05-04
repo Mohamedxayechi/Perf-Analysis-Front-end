@@ -9,7 +9,7 @@ import {UploadFileComponent } from './Feature/uploadFile/components/upload-file/
 
 export const routes: Routes = [
     // { path: '', component: HomeComponent, pathMatch: 'full' }, 
-    { path: 'create/project', component: FormProjectComponent }, 
+    { path: '', component: FormProjectComponent }, 
     { path: 'ubload/vd', component: UploadFileComponent}
 
 
