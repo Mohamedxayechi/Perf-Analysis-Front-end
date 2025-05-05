@@ -1,16 +1,10 @@
-import Konva from 'konva';
-
+//\src\app\Core\Library\Models\BaseShape.ts
+// ====================
 export interface BaseShape {
-
-  type: string;
-
-  createShape(x: number, y: number): void;
-  updateShape(x: number, y: number): void;
-  updateFromProperties(properties: any): void;
-  getShape(): Konva.Node;
-  delete(): void;
-  getId(): string;
-  setId(id: string): void;
-  getProperties(): any;
-  isSelected(): boolean;
+  id: string;
+  // x() and y() are inherited from Konva.Node
+  setPosition(x: number, y: number): void;
+  setCustomProperty<K extends string, V>(key: K, value: V): void;
+  getCustomProperty<K extends string, V>(key: K): V | undefined;
+  destroy(): void;
 }

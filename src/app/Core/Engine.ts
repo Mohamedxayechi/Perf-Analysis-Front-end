@@ -32,7 +32,7 @@ export class Engine {
     if (this.isInitialized) return;
 
     // Initialize and register core domains
-    this.registerDomain(new Display());
+     this.registerDomain(new Display());
     this.registerDomain(new Storage(new StorageAdapterClass()));
     this.registerDomain(new Library(new ShapeAdapterClass()));
 

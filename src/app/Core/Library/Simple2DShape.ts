@@ -1,59 +1,52 @@
+// src/app/models/Simple2DShape.ts
+
 import Konva from 'konva';
 import { BaseShape } from './Models/BaseShape';
-import { Canvas } from 'konva/types/Canvas';
-import { Node } from 'konva/types/Node';
+import { CustomPropertyHandler } from './Models/CustomPropertyHandler';
 
-export class Simple2DShape extends Konva.Node implements BaseShape {
-  public type: string = 'Simple';
+/**
+ * Base abstract class for shapes derived directly from Konva.Shape.
+ * Provides common ID, custom props handling, position setting, base appearance,
+ * and default drag behavior.
+ */
+export abstract class Simple2DShape extends Konva.Shape implements BaseShape {
+  public  readonly id: string;
+  private customProperties = new CustomPropertyHandler();
 
-  constructor() {
-    super();
-    const id = `shape_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    this.setId(id);
+  constructor(config: Konva.ShapeConfig & { id: string }) {
+    super({ ...config, draggable: true });
+    this.id = config.id;
+
+    this.configureAppearance();
+    this.on('dragend', this.onDragEnd);
   }
 
-  createShape(x: number, y: number): void {
-    this.position({ x, y });
+  private onDragEnd = () => {
+    // Implement logic or remove if not needed
+     console.log(`Shape ${this.id} moved to x: ${this.x()}, y: ${this.y()}`);
+  };
+
+  protected configureAppearance(): void {
+    this.stroke('black');
+    this.strokeWidth(1);
   }
 
-  updateShape(x: number, y: number): void {
-    this.position({ x, y });
-  }
-
-  updateFromProperties(properties: any): void {
-    this.setAttrs(properties);
-  }
-
-  getProperties(): any {
-    return this.getAttrs();
-  }
-
-  getShape(): Konva.Node {
+   setPosition(pos: { x: number; y: number }): this {
+    super.setPosition(pos);
     return this;
   }
 
-  getId(): string {
-    return this.id();
+  setCustomProperty<K extends string, V>(key: K, value: V): void {
+    this.customProperties.set(key, value);
   }
 
-  override setId(id: string): this {
-    super.setId(id);
-    return this;
+  getCustomProperty<K extends string, V>(key: K): V | undefined {
+    return this.customProperties.get(key);
   }
 
-  delete(): void {
-    this.destroy();
-  }
-
-  isSelected(): boolean {
-    return false;
-  }
-
-  drawScene(canvas?: Canvas, top?: Node): void {
-    throw new Error('Method not implemented.');
-  }
-
-  drawHit(canvas?: Canvas, top?: Node): void {
-    throw new Error('Method not implemented.');
+  override destroy(): this {
+    this.off('dragend', this.onDragEnd);
+    this.customProperties.clear();
+    return super.destroy();
   }
 }
