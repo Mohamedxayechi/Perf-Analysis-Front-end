@@ -1,5 +1,3 @@
-// src/app/models/Simple2DShape.ts
-
 import Konva from 'konva';
 import { BaseShape } from './Models/BaseShape';
 import { CustomPropertyHandler } from './Models/CustomPropertyHandler';
@@ -9,21 +7,19 @@ import { CustomPropertyHandler } from './Models/CustomPropertyHandler';
  * Provides common ID, custom props handling, position setting, base appearance,
  * and default drag behavior.
  */
-export abstract class Simple2DShape extends Konva.Shape implements BaseShape {
-  public  readonly id: string;
+export  class Simple2DShape extends Konva.Shape implements BaseShape {
   private customProperties = new CustomPropertyHandler();
-
+  type="Simple";
   constructor(config: Konva.ShapeConfig & { id: string }) {
     super({ ...config, draggable: true });
-    this.id = config.id;
+    this.id(config.id); // Use Konva's built-in setter
 
     this.configureAppearance();
     this.on('dragend', this.onDragEnd);
   }
 
   private onDragEnd = () => {
-    // Implement logic or remove if not needed
-     console.log(`Shape ${this.id} moved to x: ${this.x()}, y: ${this.y()}`);
+    console.log(`Shape ${this.id()} moved to x: ${this.x()}, y: ${this.y()}`);
   };
 
   protected configureAppearance(): void {
@@ -31,7 +27,7 @@ export abstract class Simple2DShape extends Konva.Shape implements BaseShape {
     this.strokeWidth(1);
   }
 
-   setPosition(pos: { x: number; y: number }): this {
+  override setPosition(pos: { x: number; y: number }): this {
     super.setPosition(pos);
     return this;
   }
