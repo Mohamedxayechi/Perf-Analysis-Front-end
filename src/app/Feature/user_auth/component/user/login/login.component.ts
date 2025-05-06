@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink,Router } from '@angular/router';
 import {  ToastrService } from 'ngx-toastr';
@@ -15,7 +15,7 @@ import { AuthService } from '../../../shared/services/auth.service';
   templateUrl: './login.component.html',
   styles: ``
 })
-export class LoginComponent implements OnInit{
+export class LoginComponent {
   form:FormGroup;
   isSubmitted =false;
   googleLoginClicked=false;
@@ -32,13 +32,6 @@ export class LoginComponent implements OnInit{
     })
   }
 
-  ngOnInit(): void {
-    this.authServie.checkAuth().subscribe({
-      next:()=>{
-        this.router.navigateByUrl("dashboard")
-      }
-     })
-  }
 
   hasDisplayableError(controlName: string): boolean {
     const control = this.form.get(controlName);

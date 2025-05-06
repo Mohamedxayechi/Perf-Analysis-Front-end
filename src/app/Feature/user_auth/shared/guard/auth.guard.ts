@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { AuthService } from '../services/auth.service';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -19,7 +19,7 @@ export const authGuard: CanActivateFn = (route) => {
       return true;
     }),
     catchError(() => {
-      return of(router.parseUrl("/signin"));
+      return of(router.parseUrl("/user/signin"));
     })
   );
 };

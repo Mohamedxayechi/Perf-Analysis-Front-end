@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -21,7 +21,7 @@ import { IdentityResult } from '../../../shared/model/User';
   templateUrl: './registration.component.html',
   styles: ``,
 })
-export class RegistrationComponent implements OnInit {
+export class RegistrationComponent {
   form: FormGroup;
   isSubmitted = false;
   isCodeFromUrl = false;
@@ -52,20 +52,7 @@ export class RegistrationComponent implements OnInit {
     );
   }
 
-  ngOnInit(): void {
-    this.authServie.checkAuth().subscribe({
-      next:()=>{
-        this.router.navigateByUrl("dashboard")
-      }
-     })
-    this.route.queryParams.subscribe((params) => {
-      const code = params['code'];
-      if (code) {
-        this.form.patchValue({ invitationCode: code });
-        this.isCodeFromUrl = true;
-      }
-    });
-  }
+
 
   passwordMatchValidator: ValidatorFn = (control: AbstractControl): null => {
     const password = control.get('password');

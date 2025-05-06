@@ -9,6 +9,10 @@ import { RegistrationComponent } from './Feature/user_auth/component/user/regist
 import { LoginComponent } from './Feature/user_auth/component/user/login/login.component';
 import { ForgotPasswordComponent } from './Feature/user_auth/component/user/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './Feature/user_auth/component/user/reset-password/reset-password.component';
+import { authGuard } from './Feature/user_auth/shared/guard/auth.guard';
+import { MainLayoutComponent } from './Feature/user_auth/component/layouts/main-layout/main-layout.component';
+import { DashboardComponent } from './Feature/user_auth/component/dashboard/dashboard.component';
+import { authRedirectGuard } from './Feature/user_auth/shared/guard/auth-redirect.guard';
 
 // import { authGuard } from './Feature/UserAuth/shared/auth.guard';
 
@@ -21,24 +25,24 @@ export const routes: Routes = [
 
         children: [
           { path: '', redirectTo: 'signin', pathMatch: 'full' },
-          { path: 'signup', component: RegistrationComponent },
-          { path: 'signin', component: LoginComponent },
-          { path: 'forgot-password', component: ForgotPasswordComponent },
-          { path: 'reset-password', component: ResetPasswordComponent }
+          { path: 'signup', component: RegistrationComponent,canActivate: [authRedirectGuard] },
+          { path: 'signin', component: LoginComponent,canActivate: [authRedirectGuard] },
+          { path: 'forgot-password', component: ForgotPasswordComponent, canActivate: [authRedirectGuard]},
+          { path: 'reset-password', component: ResetPasswordComponent ,canActivate: [authRedirectGuard]}
         ]
       },
-      // {
-      //   path:'',
-      //   component:MainLayoutComponent,
-      //   canActivate:[authGuard],
-      //   canActivateChild:[authGuard],
-      //   children:[
-      //     { 
-      //       path: 'dashboard',
-      //        component: DashboardComponent,
-             
-      //     },
-      //   },
+      {
+        path:'',
+        component:MainLayoutComponent,
+        canActivate:[authGuard],
+        canActivateChild:[authGuard],
+        children:[
+          { 
+            path: 'dashboard',
+             component: DashboardComponent,
+          },
+        ]
+        },
 ];
 @NgModule({
     imports: [RouterModule.forRoot(routes),HttpClientModule],

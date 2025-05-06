@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../shared/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { FirstKeyPipe } from '../../../shared/pipes/first-key.pipe';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule,FirstKeyPipe],
   templateUrl:'./reset-password.component.html'
 })
 export class ResetPasswordComponent {
@@ -32,18 +33,23 @@ export class ResetPasswordComponent {
 
     this.form = this.fb.group(
       {
-        password: ['', [Validators.required, Validators.minLength(6)]],
+        password: ['', [Validators.required, Validators.minLength(6),Validators.pattern(/(?=.*[^a-zA-Z0-9 ])/),]],
         confirmPassword: ['', Validators.required]
       },
-      { validators: this.passwordsMatch }
+      { validators: this.passwordMatchValidator }
     );
   }
 
-  passwordsMatch(formGroup: FormGroup) {
-    const password = formGroup.get('password')?.value;
-    const confirm = formGroup.get('confirmPassword')?.value;
-    return password === confirm ? null : { passwordMismatch: true };
-  }
+  passwordMatchValidator: ValidatorFn = (control: AbstractControl): null => {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+
+    if (password && confirmPassword && password.value != confirmPassword.value)
+      confirmPassword?.setErrors({ passwordMismatch: true });
+    else confirmPassword?.setErrors(null);
+
+    return null;
+  };
 
   onSubmit() {
     if (this.form.valid) {
@@ -52,12 +58,20 @@ export class ResetPasswordComponent {
         token: this.encodedToken,
         newPassword: this.form.value.password
       };
-      console.log(formData.token)
+
 
       this.authService.resetPassword(formData).subscribe({
         next: () => this.toastr.success('Password reset successful'),
         error: () => this.toastr.error('Password reset successful'),
       });
     }
+  }
+
+  hasDisplayableError(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return (
+      Boolean(control?.invalid) &&
+      ( Boolean(control?.touched) || Boolean(control?.dirty))
+    );
   }
 }
