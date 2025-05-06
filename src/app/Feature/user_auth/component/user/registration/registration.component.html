@@ -3,7 +3,7 @@
     Sign up
   </h2>
   <div *ngIf="!isCodeFromUrl">Already have an account?
-    <a routerLink="/signin" class="text-decoration-none fw-medium text-success d-inlin-block">Sign in</a>
+    <a routerLink="/user/signin" class="text-decoration-none fw-medium text-success d-inlin-block">Sign in</a>
   </div>
 </div>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -33,7 +33,7 @@
       </div>
     </div>
     <div class="mb-3">
-      <input class="form-control bg-body-secondary" placeholder="Password" formControlName="password">
+      <input class="form-control bg-body-secondary" placeholder="Password" formControlName="password" type="password">
       <div class="error-feedback" *ngIf="hasDisplayableError('password')">
         <ng-container [ngSwitch]="form.controls['password'].errors | firstKey">
           <div *ngSwitchCase="'required'">
@@ -49,7 +49,7 @@
       </div>
     </div>
     <div class="mb-3">
-      <input class="form-control bg-body-secondary" placeholder="Confirm Password" formControlName="confirmPassword">
+      <input class="form-control bg-body-secondary" placeholder="Confirm Password" formControlName="confirmPassword" type="password">
       <div class="error-feedback" 
       *ngIf="hasDisplayableError('confirmPassword') && form.controls['confirmPassword'].hasError('passwordMismatch')">
         Passwords doesn't match.

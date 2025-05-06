@@ -3,7 +3,7 @@
   <div>
     Don't have an account?
     <a
-      routerLink="/signup"
+      routerLink="/user/signup"
       class="text-decoration-none fw-medium text-success d-inlin-block"
       >Sign up</a
     >
@@ -30,6 +30,7 @@
       class="form-control bg-body-secondary"
       placeholder="Password"
       formControlName="password"
+      type="password"
     />
     <div
       class="error-feedback"
@@ -44,7 +45,7 @@
   <!-- Forgot password link -->
   <div class="mt-2 text-end">
     <a
-      routerLink="/forgot-password"
+      routerLink="/user/forgot-password"
       class="text-decoration-none text-success fw-medium"
       >Forgot password?</a
     >

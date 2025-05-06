@@ -3,6 +3,8 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../../shared/services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
@@ -12,7 +14,7 @@ import { RouterLink } from '@angular/router';
 export class ForgotPasswordComponent {
   form: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,private authService:AuthService,private toastr:ToastrService) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
     });
@@ -20,9 +22,17 @@ export class ForgotPasswordComponent {
 
   onSubmit(): void {
     if (this.form.valid) {
-      const email = this.form.value.email;
-      // TODO: Call your backend API to initiate password reset
-      console.log('Reset password email sent to:', email);
+      this.authService.forgotPassword(this.form.value).subscribe({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        next:(res:any)=>{
+          console.log(res)
+          this.toastr.success('If this email exists, a reset link was sent');
+          this.form.reset();
+        },
+        error:(err)=>
+          console.error(err)
+      }
+    )
     }
   }
 

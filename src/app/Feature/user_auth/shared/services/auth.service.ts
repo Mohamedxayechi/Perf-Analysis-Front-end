@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IdentityResult } from '../model/User';
@@ -9,7 +10,6 @@ import { environment } from '../environments/environment';
 export class AuthService {
   constructor(private http: HttpClient) {}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createUser(formData: any) {
     return this.http.post<IdentityResult>(
       environment.apiBaseUrl + '/signupperinvitation',
@@ -17,7 +17,6 @@ export class AuthService {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signin(formData: any) {
     return this.http.post(environment.apiBaseUrl + '/signin', formData, {
       withCredentials: true,
@@ -35,5 +34,12 @@ export class AuthService {
       {},
       { withCredentials: true }
     );
+  }
+
+  forgotPassword(fromData: any) {
+    return this.http.post(`${environment.apiBaseUrl}/forgot-password`, fromData);
+  }
+  resetPassword(formData:any){
+    return this.http.post(`${environment.apiBaseUrl}/reset-password`, formData)
   }
 }

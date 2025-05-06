@@ -8,6 +8,7 @@ import { UserComponent } from './Feature/user_auth/component/user/user.component
 import { RegistrationComponent } from './Feature/user_auth/component/user/registration/registration.component';
 import { LoginComponent } from './Feature/user_auth/component/user/login/login.component';
 import { ForgotPasswordComponent } from './Feature/user_auth/component/user/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './Feature/user_auth/component/user/reset-password/reset-password.component';
 
 // import { authGuard } from './Feature/UserAuth/shared/auth.guard';
 
@@ -17,10 +18,13 @@ export const routes: Routes = [
     { path: 'ubload/vd', component: UploadFileComponent},
     {
         path: 'user', component: UserComponent,
+
         children: [
+          { path: '', redirectTo: 'signin', pathMatch: 'full' },
           { path: 'signup', component: RegistrationComponent },
           { path: 'signin', component: LoginComponent },
-          { path: 'forgot-password', component: ForgotPasswordComponent }
+          { path: 'forgot-password', component: ForgotPasswordComponent },
+          { path: 'reset-password', component: ResetPasswordComponent }
         ]
       },
       // {
