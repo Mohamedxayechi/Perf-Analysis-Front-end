@@ -52,4 +52,6 @@ export const EXTERNAL_TIME_PERIODS: Media[] = [
       '/assets/thumbnails/6.png',
     video: '/assets/videos/6.mp4',
   },
+
+
 ];

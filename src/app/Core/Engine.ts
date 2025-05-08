@@ -1,8 +1,8 @@
 import { Display } from './Display/Display';
 import { Storage } from './Storage/Storage';
-import { StorageAdapterClass } from './Storage/StorageAdapterClass';
+
 import { Library } from './Library/Library';
-import { ShapeAdapterClass } from './Library/ShapeAdapter';
+
 import { EventEmitter } from './Utility/EventEmitter';
 import { eventBus, EventPayload } from './Utility/event-bus';
 
@@ -32,9 +32,9 @@ export class Engine {
     if (this.isInitialized) return;
 
     // Initialize and register core domains
-     this.registerDomain(new Display());
-    this.registerDomain(new Storage(new StorageAdapterClass()));
-    this.registerDomain(new Library(new ShapeAdapterClass()));
+      this.registerDomain(new Display());
+    //  this.registerDomain(new Storage());
+    //  this.registerDomain(new Library());
 
     this.isInitialized = true;
     console.log('[${new Date().toISOString()}] Engine initialized with core domains');

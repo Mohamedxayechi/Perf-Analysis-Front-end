@@ -2,34 +2,25 @@ import Konva from 'konva';
 import { Simple2DShape } from '../Simple2DShape';
 import { BaseShape } from './BaseShape';
 
-type KonvaNodeConstructor<T extends Konva.Shape = Konva.Shape> = new (...args: any[]) => T;
+type KonvaNodeConstructor<T extends Konva.Node = Konva.Node> = new (...args: any[]) => T;
 
-type MixinResult<TBase extends KonvaNodeConstructor> = TBase & {
-  new (...args: ConstructorParameters<TBase>): BaseShape & InstanceType<TBase>;
-};
-
-/**
- * Mixin function to combine Simple2DShape functionality (ID, custom props, base appearance, etc.)
- * with a specific Konva Node class (like Konva.Circle, Konva.Star).
- *
- * @param Base The specific Konva constructor (e.g., Konva.Circle).
- * @returns A new class that extends the Base Konva class and incorporates Simple2DShape logic.
- */
-export function Simple2DShapeMixin<TBase extends KonvaNodeConstructor>(Base: TBase) {
-  class Mixed extends Base {
-    constructor(config: Konva.ShapeConfig & { id: string }) {
-      super(config); // Call the Konva Base class constructor
-      // Initialize Simple2DShape properties
-      Object.assign(this, new Simple2DShape(config));
+export function Simple2DShapeMixin<TBase extends KonvaNodeConstructor<Konva.Shape>>(
+  Base: TBase
+) {
+  class Mixed extends Simple2DShape {
+    constructor(config: Konva.ShapeConfig & ConstructorParameters<TBase>[0] & { id: string }) {
+      super(config as Konva.ShapeConfig & { id: string });
+      const konvaInstance = new Base(config as ConstructorParameters<TBase>[0]);
+      Object.assign(this, konvaInstance);
     }
 
-    // Override methods as needed to ensure compatibility
-    hitFunc(ctx: Konva.Context, shape: this): void {
-      super.hitFunc?.(ctx, shape);
+    override setPosition(pos: { x: number; y: number }): this {
+      super.setPosition(pos);
+      return this;
     }
-
-    // Optional: Override configureAppearance or other methods from Simple2DShape
   }
 
-  return Mixed as MixinResult<TBase>;
+  return Mixed as unknown as new (
+    config: Konva.ShapeConfig & ConstructorParameters<TBase>[0] & { id: string }
+  ) => Simple2DShape & BaseShape & InstanceType<TBase>;
 }

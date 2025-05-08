@@ -1,112 +1,102 @@
-// // ====================
-// // src/app/models/complex-2d-shape.ts
-// // ====================
-// import Konva from 'konva';
-// import { BaseShape } from './Models/BaseShape';
-// import { CustomPropertyHandler } from './Models/CustomPropertyHandler';
+import Konva from 'konva';
+import { BaseShape } from './Models/BaseShape';
+import { CustomPropertyHandler } from './Models/CustomPropertyHandler';
 
-// // Configuration for the complex shape
-// export interface ComplexShapeConfig extends Konva.GroupConfig {
-//     id: string;
-//     x: number;
-//     y: number;
-//     radius: number; // Used for the internal circle
-//     fill: string;   // Used for the internal circle
-// }
+// Configuration for the complex shape
+export interface ComplexShapeConfig extends Konva.ContainerConfig {
+  id: string;
+  x: number;
+  y: number;
+  radius: number; // Used for the internal circle
+  fill: string; // Used for the internal circle
+}
 
-// /**
-//  * Represents a complex shape composed of multiple Konva nodes (using Konva.Group).
-//  * Implements BaseShape directly (doesn't use the mixin).
-//  */
-// export class Complex2DShape extends Konva.Group implements BaseShape {
-//   public readonly id: string;
-//   private customProperties = new CustomPropertyHandler();
-//   private circle: Konva.Circle; // Keep reference to internal circle
-//   private label: Konva.Text;   // Keep reference to internal label
+/**
+ * Represents a complex shape composed of multiple Konva nodes (using Konva.Group).
+ * Implements BaseShape directly (doesn't use the mixin).
+ */
+export class Complex2DShape extends Konva.Group implements BaseShape {
+    type="Complexe";
+  private customProperties = new CustomPropertyHandler();
+  private circle: Konva.Circle; // Keep reference to internal circle
+  private label: Konva.Text; // Keep reference to internal label
 
-//   constructor(config: ComplexShapeConfig) {
-//     // Pass positional/draggable config to Konva.Group constructor
-//     super({ x: config.x, y: config.y, draggable: true, ...config });
-//     this.id = config.id;
+  constructor(config: ComplexShapeConfig) {
+    // Pass config to Konva.Group constructor, avoiding duplicate x/y
+    super({ draggable: true, ...config });
+    this.id(config.id); // Use Konva.Group's id setter
 
-//     // Create internal components relative to the group's origin (0,0)
-//     this.circle = new Konva.Circle({
-//       radius: config.radius,
-//       fill: config.fill,
-//       // name: 'internalCircle' // Optional: for finding later
-//     });
+    // Create internal circle with shadow properties
+    this.circle = new Konva.Circle({
+      radius: config.radius,
+      fill: config.fill,
+      shadowColor: 'rgba(0, 0, 0, 0.4)', // Apply shadow to circle
+      shadowBlur: 8,
+      shadowOffset: { x: 4, y: 4 },
+      shadowEnabled: true,
+    });
 
-//     // Center the label text above the circle
-//     const labelYOffset = -config.radius - 15; // Position above circle + padding
-//     this.label = new Konva.Text({
-//       text: config.id,
-//       fontSize: 12,
-//       fill: 'black',
-//       y: labelYOffset,
-//       width: config.radius * 2, // Width for alignment
-//       align: 'center',
-//       offsetX: config.radius,   // Offset X by half width to center text at group's X=0
-//       // name: 'internalLabel' // Optional
-//     });
+    // Center the label text above the circle
+    const labelYOffset = -config.radius - 15; // Position above circle + padding
+    this.label = new Konva.Text({
+      text: config.id,
+      fontSize: 12,
+      fill: 'black',
+      y: labelYOffset,
+      width: config.radius * 2, // Width for alignment
+      align: 'center',
+      offsetX: config.radius, // Offset X by half width to center text at group's X=0
+    });
 
-//     this.add(this.circle, this.label); // Add children to the group
+    this.add(this.circle, this.label); // Add children to the group
 
-//     // Configure appearance for the group itself and add listeners
-//     this.configureAppearance();
-//     this.on('click', this.toggleScale);
-//     this.on('dragend', this.onDragEnd); // Add dragend listener similar to Simple2DShape
-//   }
+    // Configure additional appearance settings if needed
+    this.configureAppearance();
+    this.on('click', this.toggleScale);
+    this.on('dragend', this.onDragEnd);
+  }
 
-//   private onDragEnd = () => {
-//      // console.log(ComplexShape ${this.id} moved to x: ${this.x()}, y: ${this.y()}); // Log removed
-//   };
+  private onDragEnd = () => {
+    // Log position after drag, consistent with Simple2DShape
+    console.log(`Shape ${this.id()} moved to x: ${this.x()}, y: ${this.y()}`);
+  };
 
-//   private toggleScale = () => {
-//     const scale = this.scaleX() === 1 ? 1.2 : 1;
-//     this.scale({ x: scale, y: scale });
-//     // console.log(Complex2DShape ${this.id} scaled to ${scale}); // Log removed
-//   };
+  private toggleScale = () => {
+    const scale = this.scaleX() === 1 ? 1.2 : 1;
+    this.scale({ x: scale, y: scale });
+  };
 
-//   /**
-//    * Configures appearance for the Group node itself (e.g., shadows affect all children).
-//    * Called once in the constructor.
-//    */
-//   protected configureAppearance(): void {
-//     // Example: Apply shadow to the entire group
-//     this.shadowColor('rgba(0, 0, 0, 0.4)');
-//     this.shadowBlur(8);
-//     this.shadowOffset({ x: 4, y: 4 });
-//     this.shadowEnabled(true); // Ensure group shadow is enabled
-//   }
+  /**
+   * Configures additional appearance for the group or its children.
+   * Called once in the constructor.
+   */
+  protected configureAppearance(): void {
+    // Example: Add styling to label or other group-level properties
+    // this.label.fontStyle('bold'); // Uncomment to style label
+  }
 
-//   // --- BaseShape Implementation ---
-//   setPosition(x: number, y: number): void {
-//     super.setPosition({ x, y });
-//     // console.log(Complex2DShape ${this.id} position set to x: ${x}, y: ${y}); // Log removed
-//   }
+  // --- BaseShape Implementation ---
+  override setPosition(pos: { x: number; y: number }): this {
+    super.setPosition(pos);
+    return this;
+  }
 
-//   setCustomProperty<K extends string, V>(key: K, value: V): void {
-//     this.customProperties.set(key, value);
-//   }
+  setCustomProperty<K extends string, V>(key: K, value: V): void {
+    this.customProperties.set(key, value);
+  }
 
-//   getCustomProperty<K extends string, V>(key: K): V | undefined {
-//     return this.customProperties.get(key);
-//   }
+  getCustomProperty<K extends string, V>(key: K): V | undefined {
+    return this.customProperties.get(key);
+  }
 
-//   /**
-//    * Destroys the group, its children, and cleans up listeners.
-//    */
-//   destroy(): void {
-//     this.off('click', this.toggleScale);
-//     this.off('dragend', this.onDragEnd);
-//     this.customProperties.clear();
-//     // Konva.Group's destroy automatically destroys children (circle, label)
-//     super.destroy();
-//   }
-
-//   // Override Konva's draw only if needed for custom per-frame logic.
-//   // draw(): this {
-//   //     return super.draw();
-//   // }
-// }
-
+  /**
+   * Destroys the group, its children, and cleans up listeners.
+   */
+  override destroy(): this {
+    this.off('click', this.toggleScale);
+    this.off('dragend', this.onDragEnd);
+    this.customProperties.clear();
+    // Konva.Group's destroy automatically destroys children (circle, label)
+    return super.destroy();
+  }
+}

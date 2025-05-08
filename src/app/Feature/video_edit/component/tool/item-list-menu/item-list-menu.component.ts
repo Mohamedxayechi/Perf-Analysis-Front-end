@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { DragListService } from '../../../services/drag-list.service';
+import { Engine } from '../../../../../Core/Engine'; // Adjust path as needed
 
 @Component({
     selector: 'app-item-list-menu',
@@ -12,14 +12,24 @@ import { DragListService } from '../../../services/drag-list.service';
     styles: ``
 })
 export class ItemListMenuComponent {
-  constructor(private dragListService: DragListService) {}
   @Input() index = 0;
 
   deleteItem() {
-    this.dragListService.delete(this.index);
+    Engine.getInstance().emit({
+      type: 'media.delete',
+      data: { index: this.index },
+      origin: 'component',
+      processed: false
+    });
   }
+
   duplicateItem() {
-    this.dragListService.duplicate(this.index);
+    Engine.getInstance().emit({
+      type: 'media.duplicate',
+      data: { index: this.index },
+      origin: 'component',
+      processed: false
+    });
     console.log(this.index);
   }
 }

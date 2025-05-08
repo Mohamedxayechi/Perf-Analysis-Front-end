@@ -33,7 +33,7 @@ export class EventEmitter {
 
   // Emit an event to the eventBus
   emit<T>(event: EventPayload<T>): void {
-    console.log(`[${new Date().toISOString()}] EventEmitter emitting: ${event.type}, origin: ${event.origin}`);
+    console.log(`[${new Date().toISOString()}] EventEmitter emitting: ${event.type}, origin: ${event.origin},${event}`);
     eventBus.next(event);
   }
 
