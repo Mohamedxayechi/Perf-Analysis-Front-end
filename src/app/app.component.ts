@@ -1,12 +1,13 @@
 
 
 import { Component } from '@angular/core';
-import { MainVideoEditComponent } from './Feature/video_edit/component/main-video-edit/main-video-edit.component';
+import { RouterOutlet } from '@angular/router';
+
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MainVideoEditComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

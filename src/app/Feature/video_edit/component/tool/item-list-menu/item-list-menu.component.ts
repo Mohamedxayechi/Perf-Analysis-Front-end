@@ -20,6 +20,5 @@ export class ItemListMenuComponent {
   }
   duplicateItem() {
     this.dragListService.duplicate(this.index);
-    console.log(this.index);
   }
 }
