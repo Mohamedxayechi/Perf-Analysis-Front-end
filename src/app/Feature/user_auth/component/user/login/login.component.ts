@@ -8,17 +8,16 @@ import { AuthService } from '../../../shared/services/auth.service';
 
 
 
+
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './login.component.html',
-  styles: ``
+  templateUrl: './login.component.html'
 })
 export class LoginComponent {
   form:FormGroup;
   isSubmitted =false;
-  googleLoginClicked=false;
   constructor(
     private formBuilder : FormBuilder,
     private authServie :AuthService,

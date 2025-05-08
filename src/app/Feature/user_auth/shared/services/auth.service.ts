@@ -42,9 +42,9 @@ export class AuthService {
     return req$;
   }
 
-  get currentAuth() {
-    return this.authState$.value;
-  }
+  // get currentAuth() {
+  //   return this.authState$.value;
+  // }
   logout(): Observable<any> {
     this.authState$.next(null); // Clear cached auth state
     return this.http.post(

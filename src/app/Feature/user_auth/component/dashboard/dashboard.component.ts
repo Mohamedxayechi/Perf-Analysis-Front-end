@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { claimReq } from '../../shared/utils/claim-req-utils';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -9,5 +9,5 @@ import { claimReq } from '../../shared/utils/claim-req-utils';
   styles: ``
 })
 export class DashboardComponent  {
-  claimReq=claimReq
+  
 }

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { CanActivateFn } from '@angular/router';
-import { map, catchError, of } from 'rxjs';
+import { CanActivateFn, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 export const authRedirectGuard: CanActivateFn = () => {
@@ -9,13 +9,13 @@ export const authRedirectGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return authService.checkAuth().pipe(
-    map((res) => {
-      authService.authState$.next(res);
-      router.navigateByUrl('/dashboard');
-      return false;
+    tap((res) => {
+      if (res) {
+        // Navigate to dashboard if already authenticated
+         router.navigateByUrl('/dashboard');
+      }
     }),
-    catchError(() => {
-      return of(true);
-    })
+    map((res) => !res), // block access if authenticated (redirected)
+    catchError(() => of(true)) // allow if error (not authenticated)
   );
 };
