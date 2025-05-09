@@ -24,15 +24,18 @@ export class Display implements OnDestroy {
   };
 
   constructor() {
-  
-    this.setupSubscriptions();
+    // No subscriptions in constructor
   }
 
-  private setupSubscriptions(): void {
+  setupSubscriptions(): void {
+    console.log(`[${new Date().toISOString()}] Display: Setting up subscriptions`);
     this.subscription.add(
       MediaModel.medias$.subscribe((medias) => {
         this.medias = medias;
-        console.log(`[${new Date().toISOString()}] Display: Media list updated, count: ${medias.length}, medias:`, medias.map(m => m.label));
+        console.log(
+          `[${new Date().toISOString()}] Display: Media list updated, count: ${medias.length}, medias:`,
+          medias.map((m) => m.label)
+        );
         this.emitEvent({
           type: 'media.imported',
           data: { updatedMedias: medias },
@@ -158,9 +161,36 @@ export class Display implements OnDestroy {
     }
   }
 
+  private handleInitialize(medias: Media[] | undefined): void {
+    if (!medias || !Array.isArray(medias)) {
+      console.error(`[${new Date().toISOString()}] Display: Invalid medias for initialization`);
+      return;
+    }
+  
+    // Delegate initialization to MediaModel and get the updated media list
+    const { updatedMedias } = MediaModel.initializeMedias(medias);
+  
+    // Log the initialized media list
+    console.log(
+      `[${new Date().toISOString()}] Display: Initialized media list with ${updatedMedias.length} items:`,
+      updatedMedias.map((m) => m.label)
+    );
+  
+    // Emit event asynchronously to avoid event processing conflicts
+    setTimeout(() => {
+      this.emitEvent({
+        type: 'media.initialized',
+        data: { updatedMedias },
+        origin: 'domain',
+      });
+    }, 0);
+  }
+
   private handleResize(index: number | undefined, time: number | undefined): void {
     if (typeof index !== 'number' || typeof time !== 'number' || time <= 0) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid resize data, index: ${index}, time: ${time}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid resize data, index: ${index}, time: ${time}`
+      );
       return;
     }
     const result = MediaModel.resize(index, time);
@@ -194,7 +224,9 @@ export class Display implements OnDestroy {
     if (!this.state.isPlaying) {
       this.state.isPlaying = true;
       MediaModel.togglePlayPause();
-      console.log(`[${new Date().toISOString()}] Display: Playback started at ${this.state.currentTime}`);
+      console.log(
+        `[${new Date().toISOString()}] Display: Playback started at ${this.state.currentTime}`
+      );
       this.emitEvent({
         type: 'playback.playing',
         data: { currentTime: this.state.currentTime },
@@ -207,7 +239,9 @@ export class Display implements OnDestroy {
     if (this.state.isPlaying) {
       this.state.isPlaying = false;
       MediaModel.togglePlayPause();
-      console.log(`[${new Date().toISOString()}] Display: Playback paused at ${this.state.currentTime}`);
+      console.log(
+        `[${new Date().toISOString()}] Display: Playback paused at ${this.state.currentTime}`
+      );
       this.emitEvent({
         type: 'playback.paused',
         data: { currentTime: this.state.currentTime },
@@ -218,7 +252,9 @@ export class Display implements OnDestroy {
 
   private seek(time: number): void {
     if (time < 0 || time > this.state.duration) {
-      console.warn(`[${new Date().toISOString()}] Display: Invalid seek time ${time}, duration: ${this.state.duration}`);
+      console.warn(
+        `[${new Date().toISOString()}] Display: Invalid seek time ${time}, duration: ${this.state.duration}`
+      );
       return;
     }
     this.state.currentTime = time;
@@ -242,35 +278,6 @@ export class Display implements OnDestroy {
     this.emitEvent({
       type: 'display.durationUpdated',
       data: { duration: this.state.duration },
-      origin: 'domain',
-    });
-  }
-
-  private handleInitialize(medias: Media[] | undefined): void {
-    if (!medias || !Array.isArray(medias)) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid medias for initialization`);
-      return;
-    }
-    // Ensure startTime and endTime are set
-    let accumulatedTime = 0;
-    const initializedMedias = medias.map((media) => {
-      const startTime = accumulatedTime;
-      const endTime = startTime + (media.time || 0);
-      accumulatedTime = endTime;
-      return {
-        ...media,
-        startTime,
-        endTime,
-        thumbnail: media.thumbnail || '',
-        video: media.video || undefined,
-        image: media.image || undefined,
-      };
-    });
-    MediaModel.initializeMedias(initializedMedias);
-    console.log(`[${new Date().toISOString()}] Display: Initialized media list with ${initializedMedias.length} items:`, initializedMedias.map(m => m.label));
-    this.emitEvent({
-      type: 'media.initialized',
-      data: { medias: initializedMedias },
       origin: 'domain',
     });
   }
@@ -435,7 +442,9 @@ export class Display implements OnDestroy {
 
   private handleDistancePerTimeUpdate(distancePerTime: number): void {
     this.distancePerTime = distancePerTime;
-    console.log(`[${new Date().toISOString()}] Display: distancePerTime updated to ${distancePerTime}`);
+    console.log(
+      `[${new Date().toISOString()}] Display: distancePerTime updated to ${distancePerTime}`
+    );
     this.emitEvent({
       type: 'parameters.distancePerTimeUpdated',
       data: { distancePerTime },
@@ -460,7 +469,9 @@ export class Display implements OnDestroy {
   private playFromSecond(globalSecond: number): void {
     const result = MediaModel.getVideoIndexAndStartTime(globalSecond);
     if (!result) {
-      console.warn(`[${new Date().toISOString()}] Display: Second is beyond total media duration: ${globalSecond}`);
+      console.warn(
+        `[${new Date().toISOString()}] Display: Second is beyond total media duration: ${globalSecond}`
+      );
       this.stopPlayback();
       return;
     }
@@ -525,7 +536,9 @@ export class Display implements OnDestroy {
   private playMediaFrom(index: number, localSecond: number): void {
     const medias = MediaModel.mediasSubject.getValue();
     if (index >= medias.length || index < 0) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid index ${index} or no media available`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid index ${index} or no media available`
+      );
       this.stopPlayback();
       return;
     }
@@ -536,7 +549,9 @@ export class Display implements OnDestroy {
     const endTime = media.endTime ?? media.time;
     const accumulatedBefore = MediaModel.calculateAccumulatedTime(index);
 
-    console.log(`[${new Date().toISOString()}] Display: Playing media at index ${index}, localSecond: ${localSecond}, label: ${media.label}`);
+    console.log(
+      `[${new Date().toISOString()}] Display: Playing media at index ${index}, localSecond: ${localSecond}, label: ${media.label}`
+    );
     this.emitEvent({
       type: 'playback.mediaPlayed',
       data: { media, index, localSecond, accumulatedBefore },

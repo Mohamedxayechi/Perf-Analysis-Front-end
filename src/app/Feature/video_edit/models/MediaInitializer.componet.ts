@@ -58,12 +58,28 @@ export class MediaInitializerComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    console.log(`[${new Date().toISOString()}] MediaInitializer: Emitting media.initialize with ${this.EXTERNAL_TIME_PERIODS.length} medias`);
-    Engine.getInstance().emit({
-      type: 'media.initialize',
-      data: { medias: this.EXTERNAL_TIME_PERIODS },
-      origin: 'component',
-      processed: false,
-    });
+    this.emitMediaInitialize();
+  }
+
+  private emitMediaInitialize(): void {
+    const engine = Engine.getInstance();
+    if (engine.isInitialized) {
+      console.log(
+        `[${new Date().toISOString()}] MediaInitializer: Emitting media.initialize with ${
+          this.EXTERNAL_TIME_PERIODS.length
+        } medias`
+      );
+      engine.emit({
+        type: 'media.initialize',
+        data: { medias: this.EXTERNAL_TIME_PERIODS },
+        origin: 'component',
+        processed: false,
+      });
+    } else {
+      console.log(
+        `[${new Date().toISOString()}] MediaInitializer: Engine not initialized, retrying in 100ms`
+      );
+      setTimeout(() => this.emitMediaInitialize(), 100);
+    }
   }
 }

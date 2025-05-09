@@ -17,7 +17,7 @@ export class MediaModel {
   static totalTime$ = MediaModel.totalTimeSubject.asObservable();
   static isPlaying$ = MediaModel.isPlayingSubject.asObservable();
 
-  static initializeMedias(medias: Media[]): void {
+  static initializeMedias(medias: Media[]): { updatedMedias: Media[] }  {
     console.log(`[${new Date().toISOString()}] MediaModel.initializeMedias: Initializing with ${medias.length} medias`);
     let accumulatedTime = 0;
     const updatedMedias = medias.filter(m => m.time > 0).map((media) => {
@@ -35,6 +35,7 @@ export class MediaModel {
     });
     MediaModel.mediasSubject.next(updatedMedias);
     MediaModel.totalTimeSubject.next(accumulatedTime);
+    return { updatedMedias };
   }
 
   static resize(index: number, time: number): { updatedMedias: Media[] } {

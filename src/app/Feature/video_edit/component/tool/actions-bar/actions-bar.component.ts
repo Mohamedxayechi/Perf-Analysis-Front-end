@@ -39,7 +39,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
           switch (event.type) {
             case 'media.initialized':
               if (event.data?.medias) {
-                this.medias = event.data.medias;
+                this.medias = [...event.data.updatedMedias];
                 console.log(`[${new Date().toISOString()}] ActionsBar: Initialized medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
               }
               break;

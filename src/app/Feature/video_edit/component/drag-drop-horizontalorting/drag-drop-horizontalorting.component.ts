@@ -25,7 +25,7 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
   constructor() {}
 
   ngOnInit(): void {
-    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Initializing`);
+   
     this.setupEngineListeners();
   }
 
@@ -34,16 +34,22 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
-          if (event.processed) return;
+          console.log(`[${new Date().toISOString()}] ${event.data}DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
+         
 
           switch (event.type) {
             case 'media.initialized':
-              if (event.data?.medias) {
-                this.medias = [...event.data.medias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias on initialization, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+              console.log('AAAAAAAAAAAAAAAtriggrerd');
+              if (event.data?.updatedMedias) {
+                this.medias = [...event.data.updatedMedias];
+                console.log(
+                  `[${new Date().toISOString()}] DragDropHorizontalSorting: Updated medias on initialization, count: ${this.medias.length}, medias:`,
+                  this.medias.map((m) => m.label)
+                );
               } else {
-                console.warn(`[${new Date().toISOString()}] DragDropHorizontalorting: No medias in media.initialized event`);
+                console.warn(
+                  `[${new Date().toISOString()}] DragDropHorizontalSorting: No updatedMedias in media.initialized event`
+                );
               }
               break;
 
