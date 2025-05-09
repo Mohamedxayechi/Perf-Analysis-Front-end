@@ -1,82 +1,53 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import Konva from 'konva';
-import { ParameterService } from '../../services/parameter.service';
-import { DragListService } from '../../services/drag-list.service';
+import { Subscription } from 'rxjs';
 import { Media } from '../../models/time-period.model';
-import { EventsService } from '../../services/events.service';
-import {  MatDividerModule } from '@angular/material/divider';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Engine } from '../../../../Core/Engine';
+import { EventPayload } from '../../../../Core/Utility/event-bus';
 
 @Component({
-    selector: 'app-main-canvas',
-    standalone: true,
-    imports: [MatButtonModule, MatDividerModule, MatIconModule],
-    templateUrl: './main-canvas.component.html',
-    styleUrl: './main-canvas.component.css'
+  selector: 'app-main-canvas',
+  standalone: true,
+  imports: [MatButtonModule, MatDividerModule, MatIconModule],
+  templateUrl: './main-canvas.component.html',
+  styleUrl: './main-canvas.component.css',
 })
-export class MainCanvasComponent implements AfterViewInit {
+export class MainCanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mainCanvasContainer', { static: false })
-  
   canvasContainerRef!: ElementRef<HTMLCanvasElement>;
 
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>; 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   cursorX = 0;
-  distancePerTime = 0;
+  distancePerTime = 50;
   private canvas!: HTMLCanvasElement;
-  private video!: HTMLVideoElement;
   private stage!: Konva.Stage;
   private layer!: Konva.Layer;
   private konvaImage!: Konva.Image;
 
-
   private medias: Media[] = [];
-  private firstIndex = 0;
-  private localSecondinit = 0;
-   isPlaying = false;
-  private animateFrame=0;
-  
+  isPlaying = false;
+  private subscription: Subscription = new Subscription();
 
-  constructor(
-    private parameterService: ParameterService,
-    private dragListService: DragListService,
-    private eventsService: EventsService
-  ) {
-    this.parameterService.distancePerTime$.subscribe((distance) => {
-      this.distancePerTime = distance;
-    });
-    this.dragListService.medias$.subscribe((medias) => {
-      this.medias = medias;
-    });
+  constructor() {}
 
-    this.parameterService.curosrX$.subscribe((cursorX) => {
-      this.cursorX = cursorX;
-    });
-
-    this.eventsService.changeCursor$.subscribe((curosrX) => {
-      if (this.isPlaying) this.rePlay(curosrX / this.distancePerTime);
-    });
-    this.eventsService.playPause$.subscribe(() => {
-      this.togglePlayPause();
-    });
-    this.eventsService.triggerFileInput.subscribe(() => {
-      this.fileInput.nativeElement.click();
-    });
-    this.parameterService.isPlaying$.subscribe((isPlaying) => {
-      this.isPlaying = Boolean(isPlaying);
-    })
+  ngOnInit(): void {
+    console.log(`[${new Date().toISOString()}] MainCanvas: Initializing`);
+    this.setupEngineListeners();
   }
 
   ngAfterViewInit(): void {
     this.canvas = this.canvasContainerRef.nativeElement;
     this.stage = new Konva.Stage({
-      container: this.canvas.parentElement! as HTMLDivElement, 
+      container: this.canvas.parentElement! as HTMLDivElement,
       width: 500,
       height: 500,
     });
 
-     this.konvaImage = new Konva.Image({
+    this.konvaImage = new Konva.Image({
       x: 0,
       y: 0,
       width: 200,
@@ -84,193 +55,248 @@ export class MainCanvasComponent implements AfterViewInit {
       draggable: true,
       image: undefined,
     });
-  
+
     this.layer = new Konva.Layer();
     this.stage.add(this.layer);
     this.layer.add(this.konvaImage);
   }
 
-  playFromSecond(globalSecond: number): void {
-    const result = this.dragListService.getVideoIndexAndStartTime(globalSecond);
-    if (!result) {
-      console.warn('Second is beyond total media duration.');
-      return;
-    }
+  private setupEngineListeners(): void {
+    this.subscription.add(
+      Engine.getInstance()
+        .getEvents()
+        .on('*', (event: EventPayload) => {
+          console.log(`[${new Date().toISOString()}] MainCanvas received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
+          if (event.processed) return;
 
-    const { index, localSecond } = result;
-    this.playMediaFrom(index, localSecond);
-    this.firstIndex = index;
-    this.localSecondinit = localSecond;
+          switch (event.type) {
+            case 'playback.toggled':
+              this.isPlaying = event.data?.isPlaying || false;
+              console.log(`[${new Date().toISOString()}] MainCanvas: Playback toggled, isPlaying: ${this.isPlaying}, currentSecond: ${event.data?.currentSecond}`);
+              if (event.data?.isPlaying && event.data?.currentSecond !== undefined) {
+                Engine.getInstance().emit({
+                  type: 'playback.playFromSecond',
+                  data: { globalSecond: event.data.currentSecond },
+                  origin: 'component',
+                  processed: false,
+                });
+              } else {
+                this.konvaImage.image(undefined);
+                this.layer.batchDraw();
+              }
+              break;
+            case 'media.initialized':
+              if (event.data?.medias) {
+                this.medias = event.data.medias;
+                console.log(`[${new Date().toISOString()}] MainCanvas: Initialized medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+              }
+              break;
+            case 'media.imported':
+              if (event.data?.updatedMedias) {
+                this.medias = event.data.updatedMedias;
+                console.log(`[${new Date().toISOString()}] MainCanvas: Updated medias after import, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+              }
+              break;
+            case 'media.resized.completed':
+              if (event.data?.updatedMedias) {
+                this.medias = event.data.updatedMedias;
+                console.log(`[${new Date().toISOString()}] MainCanvas: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
+              }
+              break;
+            case 'playback.seeked':
+              if (event.data?.currentTime !== undefined) {
+                Engine.getInstance().emit({
+                  type: 'playback.replay',
+                  data: { globalSecond: event.data.currentTime },
+                  origin: 'component',
+                  processed: false,
+                });
+              }
+              break;
+            case 'playback.mediaPlayed':
+              if (event.data?.media && event.data?.index !== undefined && event.data?.localSecond !== undefined) {
+                this.renderMedia(event.data.media, event.data.index, event.data.localSecond, event.data.accumulatedBefore);
+              }
+              break;
+            case 'playback.stopped':
+              this.konvaImage.image(undefined);
+              this.layer.batchDraw();
+              this.isPlaying = false;
+              break;
+            case 'cursor.updated':
+              this.cursorX = event.data?.cursorX || this.cursorX;
+              console.log(`[${new Date().toISOString()}] MainCanvas: Cursor updated to ${this.cursorX}`);
+              break;
+            case 'media.import.trigger':
+              this.fileInput.nativeElement.click();
+              break;
+            case 'parameters.distancePerTimeUpdated':
+              this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
+              console.log(`[${new Date().toISOString()}] MainCanvas: distancePerTime updated to ${this.distancePerTime}`);
+              break;
+            default:
+              console.warn(`[${new Date().toISOString()}] MainCanvas: Unhandled event: ${event.type}`);
+          }
+        })
+    );
   }
 
-  stopPlayback(): void {
-    if (this.animateFrame) {
-      cancelAnimationFrame(this.animateFrame);
-      this.animateFrame = 0;
-    }
-    if (this.video) {
-      this.video.pause();
-      this.parameterService.setIsPlaying(false);
-    } else if (this.konvaImage) {
-      this.parameterService.setIsPlaying(false);
-    }
-  }
-  
   MediaSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const mediaURL = URL.createObjectURL(file);
-      if (file.type.startsWith('video')) {
-        this.getVideoThumbnail(file).then(({ thumbnail, duration }) => {
-          const media: Media = {
-            video: mediaURL,
-            time: duration,
-            label: '',
-            thumbnail,
-            startTime: 0,
-            endTime: duration,
-          };
-          this.dragListService.addMedia(media);
+    const files = (event.target as HTMLInputElement).files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        Engine.getInstance().emit({
+          type: 'media.import',
+          data: { file },
+          origin: 'component',
+          processed: false,
         });
-      } else if (file.type.startsWith('image')) {
-        const media: Media = {
-          image: mediaURL, 
-          time: 5, 
-          label: '',
-          thumbnail: mediaURL,
-          startTime: 0,
-          endTime: 5, 
-        };
-        this.dragListService.addMedia(media);
-      }
+      });
+      (event.target as HTMLInputElement).value = '';
     }
   }
 
-  private rePlay(globalSecond: number): void {
-    this.stopPlayback();
-    this.playFromSecond(globalSecond);
-  }
-
-  private getVideoThumbnail(file: File, seekTo = 1): Promise<{ thumbnail: string; duration: number }> {
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      const canvas = document.createElement('canvas');
-  
-      video.preload = 'metadata';
-      video.src = URL.createObjectURL(file);
-      video.crossOrigin = 'anonymous';
-      video.muted = true;
-      video.playsInline = true;
-  
-      video.onloadedmetadata = () => {
-        const duration = video.duration;
-        video.currentTime = Math.min(seekTo, duration / 2);
-      };
-  
-      video.onseeked = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const thumbnail = canvas.toDataURL('image/png');
-        resolve({ thumbnail, duration: video.duration });
-      };
-  
-      video.onerror = () => reject('Error while loading video');
+  togglePlayPause(): void {
+    const currentSecond = this.cursorX / this.distancePerTime;
+    console.log(`[${new Date().toISOString()}] MainCanvas: Emitting playback.toggle, currentSecond: ${currentSecond}, isPlaying: ${this.isPlaying}`);
+    Engine.getInstance().emit({
+      type: 'playback.toggle',
+      data: { currentSecond },
+      origin: 'component',
+      processed: false,
     });
   }
 
-  private playMediaFrom(index: number, localSecond: number): void {
-    if ( index >= this.medias.length) {
-      console.error('Invalid index or already playing media.');
-      return;
-    }
-  
-    this.stopPlayback();
-    const media = this.medias[index];
+  changeCursor(cursorX: number): void {
+    console.log(`[${new Date().toISOString()}] MainCanvas: Emitting cursor.changed with cursorX: ${cursorX}`);
+    Engine.getInstance().emit({
+      type: 'cursor.changed',
+      data: { cursorX },
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  openFileDialog(): void {
+    console.log(`[${new Date().toISOString()}] MainCanvas: Emitting media.import.trigger`);
+    Engine.getInstance().emit({
+      type: 'media.import.trigger',
+      data: {},
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  private renderMedia(media: Media, index: number, localSecond: number, accumulatedBefore: number): void {
     const startTime = media.startTime ?? 0;
     const endTime = media.endTime ?? media.time;
     const duration = endTime - startTime;
-    const accumulatedBefore = this.dragListService.calculateAccumulatedTime(index);
-  
+
     if (media.video) {
-      this.video = document.createElement('video');
-      this.video.src = media.video;
-      this.video.crossOrigin = 'anonymous';
-  
-      this.video.addEventListener('loadedmetadata', () => {
+      const video = document.createElement('video');
+      video.src = media.video;
+      video.crossOrigin = 'anonymous';
+
+      video.addEventListener('loadedmetadata', () => {
         const seekTime = startTime + localSecond;
-        this.video.currentTime = seekTime;
-  
-        this.video.play().then(() => {
-          this.parameterService.setIsPlaying(true);
-          this.konvaImage.image(this.video);
+        video.currentTime = seekTime;
+
+        video.play().then(() => {
+          this.konvaImage.image(video);
           this.layer.batchDraw();
-  
+
           const renderVideoFrame = () => {
-            if (!this.isPlaying) return;
-  
-            this.konvaImage.image(this.video);
+            if (!this.isPlaying) {
+              console.log(`[${new Date().toISOString()}] MainCanvas: Stopping renderVideoFrame, isPlaying: ${this.isPlaying}`);
+              return;
+            }
+
+            this.konvaImage.image(video);
             this.konvaImage.getLayer()?.batchDraw();
-  
-            const currentGlobalSecond = accumulatedBefore + (this.video.currentTime - startTime);
-            this.parameterService.setCurosrX(currentGlobalSecond * this.distancePerTime);
-  
-            if (this.video.currentTime >= endTime) {
-              this.stopPlayback();
-              this.playMediaFrom(index + 1, 0);
+
+            const currentGlobalSecond = accumulatedBefore + (video.currentTime - startTime);
+            this.changeCursor(currentGlobalSecond * this.distancePerTime);
+
+            if (video.currentTime >= endTime) {
+              console.log(`[${new Date().toISOString()}] MainCanvas: Video ended at index ${index}, advancing to next`);
+              Engine.getInstance().emit({
+                type: 'playback.stop',
+                data: {},
+                origin: 'component',
+                processed: false,
+              });
+              Engine.getInstance().emit({
+                type: 'playback.playFromSecond',
+                data: { globalSecond: currentGlobalSecond + 0.016 },
+                origin: 'component',
+                processed: false,
+              });
             } else {
-              this.animateFrame = requestAnimationFrame(renderVideoFrame);
+              requestAnimationFrame(renderVideoFrame);
             }
           };
-  
-          this.animateFrame = requestAnimationFrame(renderVideoFrame);
+
+          requestAnimationFrame(renderVideoFrame);
         }).catch((err) => {
-          console.error('Video play failed:', err);
+          console.error(`[${new Date().toISOString()}] MainCanvas: Video play failed for ${media.video}:`, err);
         });
       });
-  
-      this.video.load();
+
+      video.addEventListener('error', (err) => {
+        console.error(`[${new Date().toISOString()}] MainCanvas: Video load error for ${media.video}:`, err);
+      });
+
+      video.load();
     } else if (media.image) {
       const image = new window.Image();
       image.src = media.image;
-  
+
       image.onload = () => {
-        this.parameterService.setIsPlaying(true);
         this.konvaImage.image(image);
         this.layer.batchDraw();
-  
+
+        let currentLocalSecond = localSecond;
         const renderImageFrame = () => {
-          if (!this.isPlaying) return;
-  
-          localSecond += 0.016; // ~60 FPS = 1/60 ≈ 0.016s
-          const currentGlobalSecond = accumulatedBefore + localSecond;
-          this.parameterService.setCurosrX(currentGlobalSecond * this.distancePerTime);
-  
-          if (localSecond >= duration) {
-            this.stopPlayback();
-            this.playMediaFrom(index + 1, 0);
+          if (!this.isPlaying) {
+            console.log(`[${new Date().toISOString()}] MainCanvas: Stopping renderImageFrame, isPlaying: ${this.isPlaying}`);
+            return;
+          }
+
+          currentLocalSecond += 0.016;
+          const currentGlobalSecond = accumulatedBefore + currentLocalSecond;
+          this.changeCursor(currentGlobalSecond * this.distancePerTime);
+
+          if (currentLocalSecond >= duration) {
+            console.log(`[${new Date().toISOString()}] MainCanvas: Image ended at index ${index}, advancing to next`);
+            Engine.getInstance().emit({
+              type: 'playback.stop',
+              data: {},
+              origin: 'component',
+              processed: false,
+            });
+            Engine.getInstance().emit({
+              type: 'playback.playFromSecond',
+              data: { globalSecond: currentGlobalSecond + 0.016 },
+              origin: 'component',
+              processed: false,
+            });
           } else {
-            this.animateFrame = requestAnimationFrame(renderImageFrame);
+            requestAnimationFrame(renderImageFrame);
           }
         };
-  
-        this.animateFrame = requestAnimationFrame(renderImageFrame);
+
+        requestAnimationFrame(renderImageFrame);
       };
-    }
-  }
-  
-  togglePlayPause(): void {
-    if (this.isPlaying) {
-      this.stopPlayback();
+
+      image.onerror = () => {
+        console.error(`[${new Date().toISOString()}] MainCanvas: Image load error for ${media.image}`);
+      };
     } else {
-      const currentSecond = this.cursorX / this.distancePerTime;
-      this.playFromSecond(currentSecond);
+      console.warn(`[${new Date().toISOString()}] MainCanvas: No video or image for media at index ${index}, label: ${media.label}`);
     }
   }
 
-  
-  
-
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
 }

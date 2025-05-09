@@ -1,23 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { Engine } from '../../../Core/Engine'; // Adjust path as needed
- 
- interface Media {
-    label: string;
-    time: number;
-    thumbnail: string;
-    video?: string;
-    image?: string; 
-    startTime?: number;
-    endTime?: number; 
-  }
-  
+import { Engine } from '../../../Core/Engine';
+
+interface Media {
+  label: string;
+  time: number;
+  thumbnail: string;
+  video?: string;
+  image?: string;
+  startTime?: number;
+  endTime?: number;
+}
+
 @Component({
   selector: 'app-media-initializer',
   standalone: true,
-  template: ``, // No template needed, as it only emits an event
-  styles: ``
+  template: ``,
+  styles: ``,
 })
-
 export class MediaInitializerComponent implements OnInit {
   private readonly EXTERNAL_TIME_PERIODS: Media[] = [
     {
@@ -59,11 +58,12 @@ export class MediaInitializerComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    console.log(`[${new Date().toISOString()}] MediaInitializer: Emitting media.initialize with ${this.EXTERNAL_TIME_PERIODS.length} medias`);
     Engine.getInstance().emit({
       type: 'media.initialize',
       data: { medias: this.EXTERNAL_TIME_PERIODS },
       origin: 'component',
-      processed: false
+      processed: false,
     });
   }
 }

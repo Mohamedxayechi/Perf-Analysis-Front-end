@@ -1,7 +1,7 @@
 
 
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MainVideoEditComponent } from './Feature/video_edit/component/main-video-edit/main-video-edit.component';
 import { Engine } from '../app/Core/Engine';
 import { MediaInitializerComponent } from "./Feature/video_edit/models/MediaInitializer.componet";
@@ -12,9 +12,15 @@ import { MediaInitializerComponent } from "./Feature/video_edit/models/MediaInit
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
-  title = 'Perf-analysis-Front-End';
-  ngOnInit(): void {
+export class AppComponent implements OnInit {
+  constructor() {
+    // Initialize Engine in constructor to ensure it’s ready before component lifecycle
     Engine.getInstance().init();
+  
+    console.log(`[${new Date().toISOString()}] AppComponent: Engine initialized`);
+  }
+
+  ngOnInit(): void {
+    // Additional setup if needed
   }
 }

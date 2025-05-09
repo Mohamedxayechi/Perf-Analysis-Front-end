@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { ResizableDirective } from '../../directives/resizeable.directive';
 import { CommonModule } from '@angular/common';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
@@ -18,7 +18,7 @@ import { Media } from '../../models/time-period.model';
   templateUrl: './drag-list-elements.component.html',
   styleUrl: './drag-list-elements.component.css',
 })
-export class DragListElementsComponent {
+export class DragListElementsComponent implements OnInit, OnDestroy {
   @Input() distancePerTime = 50;
   @Input() index = 0;
   @Input() item: Media = {
@@ -28,11 +28,21 @@ export class DragListElementsComponent {
     time: 0,
     thumbnail: '',
   };
+
+  ngOnInit(): void {
+    console.log(`[${new Date().toISOString()}] DragListElements initialized for index ${this.index}, label: ${this.item.label}`);
+  }
+
+  ngOnDestroy(): void {
+    console.log(`[${new Date().toISOString()}] DragListElements destroyed for index ${this.index}`);
+  }
+
   get dynamicElementStyle() {
+    const width = this.distancePerTime * (this.item.time || 0);
     return {
-      width: this.distancePerTime * this.item.time + 'px',
-      'background-size': this.distancePerTime + 'px 100%',
-      'background-image': 'url(' + this.item.thumbnail + ')',
+      width: `${width > 0 ? width : 50}px`, // Fallback width
+      'background-size': `${this.distancePerTime}px 100%`,
+      'background-image': this.item.thumbnail ? `url(${this.item.thumbnail})` : 'none',
     };
   }
 }

@@ -3,8 +3,6 @@ import { CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-dro
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { DragListElementsComponent } from '../drag-list-elements/drag-list-elements.component';
-import { DragListService } from '../../services/drag-list.service';
-import { ParameterService } from '../../services/parameter.service';
 import { Media } from '../../models/time-period.model';
 import { Engine } from '../../../../Core/Engine';
 import { EventPayload } from '../../../../Core/Utility/event-bus';
@@ -24,30 +22,10 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
   @Input() distancePerTime = 50;
   time = 30;
 
-  constructor(
-    private dragListService: DragListService,
-    private parameterService: ParameterService
-  ) {}
+  constructor() {}
 
   ngOnInit(): void {
-    this.subscription.add(
-      this.dragListService.medias$.subscribe((medias) => {
-        this.medias = medias;
-      })
-    );
-
-    this.subscription.add(
-      this.dragListService.totalTime$.subscribe((total) => {
-        this.time = total;
-      })
-    );
-
-    this.subscription.add(
-      this.parameterService.distancePerTime$.subscribe((distance) => {
-        this.distancePerTime = distance;
-      })
-    );
-
+    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Initializing`);
     this.setupEngineListeners();
   }
 
@@ -56,34 +34,72 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] DragDropHorizontalorting received event: ${event.type}`);
+          console.log(`[${new Date().toISOString()}] DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
+          if (event.processed) return;
 
           switch (event.type) {
             case 'media.initialized':
               if (event.data?.medias) {
                 this.medias = [...event.data.medias];
-                console.log(`[${new Date().toISOString()}] Updated medias on initialization: ${this.medias.length} items`);
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias on initialization, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+              } else {
+                console.warn(`[${new Date().toISOString()}] DragDropHorizontalorting: No medias in media.initialized event`);
+              }
+              break;
+
+            case 'media.imported':
+              if (event.data?.updatedMedias) {
+                this.medias = [...event.data.updatedMedias];
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after import, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+              } else {
+                console.warn(`[${new Date().toISOString()}] DragDropHorizontalorting: No updatedMedias in media.imported event`);
               }
               break;
 
             case 'media.deleted':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] Updated medias after delete at index ${event.data.index}`);
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after delete at index ${event.data.index}, count: ${this.medias.length}`);
               }
               break;
 
-              case 'media.duplicated':
-                if (event.data?.updatedMedias) {
-                  this.medias = [...event.data.updatedMedias];
-                  console.log(`[${new Date().toISOString()}] Updated medias after duplicate at index ${event.data.index}, new count: ${this.medias.length}`);
-                } else {
-                  console.warn(`[${new Date().toISOString()}] No updatedMedias in media.duplicated event`);
-                }
-                break;
+            case 'media.duplicated':
+              if (event.data?.updatedMedias) {
+                this.medias = [...event.data.updatedMedias];
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after duplicate at index ${event.data.index}, count: ${this.medias.length}`);
+              }
+              break;
+
+            case 'media.splitted':
+              if (event.data?.updatedMedias) {
+                this.medias = [...event.data.updatedMedias];
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after split at index ${event.data.index}, splitTime: ${event.data.splitTime}`);
+              }
+              break;
+
+            case 'media.resized.completed':
+              if (event.data?.updatedMedias) {
+                this.medias = [...event.data.updatedMedias];
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
+              }
+              break;
+
+            case 'display.durationUpdated':
+              if (event.data?.duration) {
+                this.time = event.data.duration;
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated total time to ${this.time}`);
+              }
+              break;
+
+            case 'parameters.distancePerTimeUpdated':
+              if (event.data?.distancePerTime) {
+                this.distancePerTime = event.data.distancePerTime;
+                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated distancePerTime to ${this.distancePerTime}`);
+              }
+              break;
 
             default:
-              console.warn(`[${new Date().toISOString()}] Unhandled event in DragDropHorizontalorting: ${event.type}`);
+              console.warn(`[${new Date().toISOString()}] DragDropHorizontalorting: Unhandled event: ${event.type}`);
           }
         })
     );
@@ -91,9 +107,20 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
 
   drop(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.medias, event.previousIndex, event.currentIndex);
+    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Reordered medias, new order:`, this.medias.map(m => m.label));
     Engine.getInstance().emit({
       type: 'media.reordered',
       data: { medias: this.medias },
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  updateDistancePerTime(distancePerTime: number): void {
+    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
+    Engine.getInstance().emit({
+      type: 'parameters.distancePerTimeUpdated',
+      data: { distancePerTime },
       origin: 'component',
       processed: false,
     });
