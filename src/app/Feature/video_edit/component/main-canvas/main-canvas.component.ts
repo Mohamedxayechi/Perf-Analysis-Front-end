@@ -88,34 +88,7 @@ export class MainCanvasComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.layer.batchDraw();
               }
               break;
-            case 'media.initialized':
-              if (event.data?.medias) {
-                this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] MainCanvas: Initialized medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
-              }
-              break;
-            case 'media.imported':
-              // Enhanced check for the media.imported event payload
-              if (event.data && event.data.updatedMedias) {
-                if (Array.isArray(event.data.updatedMedias)) {
-                  this.medias = event.data.updatedMedias;
-                  console.log(`[${new Date().toISOString()}] MainCanvas: Updated medias after import, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
-                  // If change detection is an issue (e.g. OnPush strategy or operations outside Angular zone),
-                  // you might need to uncomment the following line:
-                  // this.cdr.detectChanges();
-                } else {
-                  console.warn(`[${new Date().toISOString()}] MainCanvas: 'media.imported' event.data.updatedMedias is not an array. Received:`, event.data.updatedMedias);
-                }
-              } else {
-                console.warn(`[${new Date().toISOString()}] MainCanvas: 'media.imported' event received without 'updatedMedias' in data, or data itself is missing. Event data:`, event.data);
-              }
-              break;
-            case 'media.resized.completed':
-              if (event.data?.updatedMedias) {
-                this.medias = event.data.updatedMedias;
-                console.log(`[${new Date().toISOString()}] MainCanvas: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
-              }
-              break;
+       
             case 'playback.seeked':
               if (event.data?.currentTime !== undefined) {
                 Engine.getInstance().emit({
@@ -148,11 +121,9 @@ export class MainCanvasComponent implements OnInit, AfterViewInit, OnDestroy {
               console.log(`[${new Date().toISOString()}] MainCanvas: distancePerTime updated to ${this.distancePerTime}`);
               break;
             default:
-              // console.warn(`[${new Date().toISOString()}] MainCanvas: Unhandled event: ${event.type}`); // Keep if you want to log all unhandled
+              
           }
-          // Mark event as processed by this component if it makes sense for your event bus logic
-          // For example, if certain events should only be handled once.
-          // event.processed = true; // Be cautious with this, depends on overall event strategy
+          
         })
     );
   }
