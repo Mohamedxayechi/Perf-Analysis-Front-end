@@ -27,8 +27,11 @@ export class AuthService {
   }
 
   checkAuth(force = false): Observable<any> {
+    console.log("auth",this.authState$.value)
     if (!force && this.authState$.value) {
-      return of(this.authState$.value); 
+      
+      return of(this.authState$.value);
+       
     }
   
     const req$ = this.http.get(`${environment.apiBaseUrl}/check-auth`, { withCredentials: true }).pipe(
@@ -42,9 +45,6 @@ export class AuthService {
     return req$;
   }
 
-  // get currentAuth() {
-  //   return this.authState$.value;
-  // }
   logout(): Observable<any> {
     this.authState$.next(null); // Clear cached auth state
     return this.http.post(

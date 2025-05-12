@@ -116,7 +116,7 @@
         >
           Next
         </button>
-        <button *ngIf="isUser"
+        <button *ngIf="isUser || !isCodeFromUrl"
         mat-flat-button
         color="primary"
         type="submit"

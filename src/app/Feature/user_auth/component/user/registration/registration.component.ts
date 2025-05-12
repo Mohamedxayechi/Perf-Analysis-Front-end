@@ -67,10 +67,6 @@ export class RegistrationComponent implements OnInit {
       },
       { validators: this.passwordMatchValidator }
     );
-
-
-      
-    
   }
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
@@ -85,6 +81,9 @@ export class RegistrationComponent implements OnInit {
           this.form.get('createGroupName')?.clearValidators();
           this.form.get('createGroupName')?.updateValueAndValidity();
         } else this.isAdmin = true;
+      } else {
+        this.form.get('createGroupName')?.clearValidators();
+        this.form.get('createGroupName')?.updateValueAndValidity();
       }
     });
   }
