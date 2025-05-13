@@ -47,26 +47,26 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] MainVideoEdit received event: ${event.type}`);
+          // console.log(`[${new Date().toISOString()}] MainVideoEdit received event: ${event.type}`);
           switch (event.type) {
             case 'display.durationUpdated':
               if (event.data?.duration) {
                 this.time = event.data.duration;
                 this.updateWidth();
-                console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated time to ${this.time}`);
+                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated time to ${this.time}`);
               }
               break;
             case 'parameters.distancePerTimeUpdated':
               if (event.data?.distancePerTime) {
                 this.distancePerTime = event.data.distancePerTime;
                 this.updateWidth();
-                console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated distancePerTime to ${this.distancePerTime}`);
+                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated distancePerTime to ${this.distancePerTime}`);
               }
               break;
             case 'cursor.updated':
               if (event.data?.cursorX !== undefined) {
                 this.cursorX = event.data.cursorX;
-                console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated cursorX to ${this.cursorX}`);
+                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated cursorX to ${this.cursorX}`);
               }
               break;
             default:
@@ -78,17 +78,17 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
 
   private updateWidth(): void {
     this.width = this.distancePerTime * this.time;
-    console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated width to ${this.width}`);
+    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated width to ${this.width}`);
   }
 
   onWidthChange(width: number): void {
     this.width = width;
-    console.log(`[${new Date().toISOString()}] MainVideoEdit: Width changed to ${width}`);
+    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Width changed to ${width}`);
   }
 
   onScaleChange(scale: number): void {
     this.scale = parseFloat(scale.toFixed(2));
-    console.log(`[${new Date().toISOString()}] MainVideoEdit: Scale changed to ${this.scale}`);
+    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Scale changed to ${this.scale}`);
   }
 
   onCursorMove(cursorX: number): void {

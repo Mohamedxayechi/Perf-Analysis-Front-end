@@ -33,39 +33,39 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] ActionsBar received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
+          // console.log(`[${new Date().toISOString()}] ActionsBar received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
           if (event.processed) return;
 
           switch (event.type) {
             case 'media.initialized':
               if (event.data?.medias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] ActionsBar: Initialized medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+                // console.log(`[${new Date().toISOString()}] ActionsBar: Initialized medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
               }
               break;
             case 'media.imported':
               if (event.data?.updatedMedias) {
                 this.medias = event.data.updatedMedias;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+                // console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
               }
               break;
             case 'media.resized.completed':
               if (event.data?.updatedMedias) {
                 this.medias = event.data.updatedMedias;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
+                // console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
               }
               break;
             case 'cursor.updated':
               this.cursorX = event.data?.cursorX || this.cursorX;
-              console.log(`[${new Date().toISOString()}] ActionsBar: Cursor updated to ${this.cursorX}`);
+              // console.log(`[${new Date().toISOString()}] ActionsBar: Cursor updated to ${this.cursorX}`);
               break;
             case 'playback.toggled':
               this.isPlaying = event.data?.isPlaying || false;
-              console.log(`[${new Date().toISOString()}] ActionsBar: isPlaying updated to ${this.isPlaying}`);
+              // console.log(`[${new Date().toISOString()}] ActionsBar: isPlaying updated to ${this.isPlaying}`);
               break;
             case 'parameters.distancePerTimeUpdated':
               this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
-              console.log(`[${new Date().toISOString()}] ActionsBar: distancePerTime updated to ${this.distancePerTime}`);
+              // console.log(`[${new Date().toISOString()}] ActionsBar: distancePerTime updated to ${this.distancePerTime}`);
               break;
             default:
               console.warn(`[${new Date().toISOString()}] ActionsBar: Unhandled event: ${event.type}`);
@@ -76,7 +76,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onSplit(): void {
     const time = this.cursorX / this.distancePerTime;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting media.split, time: ${time}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting media.split, time: ${time}`);
     Engine.getInstance().emit({
       type: 'media.split',
       data: { time },
@@ -87,7 +87,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onTogglePlayPause(): void {
     const currentSecond = this.cursorX / this.distancePerTime;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting playback.toggle, currentSecond: ${currentSecond}, isPlaying: ${this.isPlaying}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting playback.toggle, currentSecond: ${currentSecond}, isPlaying: ${this.isPlaying}`);
     Engine.getInstance().emit({
       type: 'playback.toggle',
       data: { currentSecond },
@@ -97,7 +97,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   onClicImportMedia(): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting media.import.trigger`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting media.import.trigger`);
     Engine.getInstance().emit({
       type: 'media.import.trigger',
       data: {},
@@ -107,7 +107,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   updateDistancePerTime(distancePerTime: number): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
     Engine.getInstance().emit({
       type: 'parameters.distancePerTimeUpdated',
       data: { distancePerTime },

@@ -83,7 +83,7 @@ export class ResizableDirective implements AfterViewInit {
 
           if (this.move) {
             const newTime = event.rect.width / this.timePerWidth;
-            console.log(`[${new Date().toISOString()}] ResizableDirective: Emitting media.resized for index ${this.index}, newTime: ${newTime}`);
+            // console.log(`[${new Date().toISOString()}] ResizableDirective: Emitting media.resized for index ${this.index}, newTime: ${newTime}`);
             Engine.getInstance().emit({
               type: 'media.resized',
               data: { index: this.index, time: newTime },

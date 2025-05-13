@@ -88,7 +88,7 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     if (this.timeLineWidth < parentWidth) {
       this.timeLineWidth = parentWidth;
       this.distancePerTime = parentWidth / this.time;
-      console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting parameters.distancePerTimeUpdated with ${this.distancePerTime}`);
+      // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting parameters.distancePerTimeUpdated with ${this.distancePerTime}`);
       Engine.getInstance().emit({
         type: 'parameters.distancePerTimeUpdated',
         data: { distancePerTime: this.distancePerTime },
@@ -204,7 +204,7 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     this.isDraggingCursor = true;
     const x = (event.offsetX - this.spaceBeforLine) / this.scale;
     this.cursorX = Math.max(0, Math.min(x, this.timeLineWidth / this.scale));
-    console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
+    // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
     Engine.getInstance().emit({
       type: 'cursor.changed',
       data: { cursorX: this.cursorX },
@@ -218,7 +218,7 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
 
     const x = (event.offsetX - this.spaceBeforLine) / this.scale;
     this.cursorX = Math.max(0, Math.min(x, this.timeLineWidth / this.scale));
-    console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
+    // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
     Engine.getInstance().emit({
       type: 'cursor.changed',
       data: { cursorX: this.cursorX },

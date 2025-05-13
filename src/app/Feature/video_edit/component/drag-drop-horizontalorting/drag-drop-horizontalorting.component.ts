@@ -34,18 +34,18 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] ${event.data}DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
+          // console.log(`[${new Date().toISOString()}] ${event.data}DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
          
 
           switch (event.type) {
             case 'media.initialized':
-              console.log('AAAAAAAAAAAAAAAtriggrerd');
+              
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(
-                  `[${new Date().toISOString()}] DragDropHorizontalSorting: Updated medias on initialization, count: ${this.medias.length}, medias:`,
-                  this.medias.map((m) => m.label)
-                );
+                // console.log(
+                //   `[${new Date().toISOString()}] DragDropHorizontalSorting: Updated medias on initialization, count: ${this.medias.length}, medias:`,
+                //   this.medias.map((m) => m.label)
+                // );
               } else {
                 console.warn(
                   `[${new Date().toISOString()}] DragDropHorizontalSorting: No updatedMedias in media.initialized event`
@@ -56,7 +56,7 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
             case 'media.imported':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after import, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after import, count: ${this.medias.length}, medias:`, this.medias.map(m => m.label));
               } else {
                 console.warn(`[${new Date().toISOString()}] DragDropHorizontalorting: No updatedMedias in media.imported event`);
               }
@@ -65,42 +65,42 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
             case 'media.deleted':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after delete at index ${event.data.index}, count: ${this.medias.length}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after delete at index ${event.data.index}, count: ${this.medias.length}`);
               }
               break;
 
             case 'media.duplicated':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after duplicate at index ${event.data.index}, count: ${this.medias.length}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after duplicate at index ${event.data.index}, count: ${this.medias.length}`);
               }
               break;
 
             case 'media.splitted':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after split at index ${event.data.index}, splitTime: ${event.data.splitTime}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after split at index ${event.data.index}, splitTime: ${event.data.splitTime}`);
               }
               break;
 
             case 'media.resized.completed':
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated medias after resize at index ${event.data.index}, new time: ${event.data.time}`);
               }
               break;
 
             case 'display.durationUpdated':
               if (event.data?.duration) {
                 this.time = event.data.duration;
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated total time to ${this.time}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated total time to ${this.time}`);
               }
               break;
 
             case 'parameters.distancePerTimeUpdated':
               if (event.data?.distancePerTime) {
                 this.distancePerTime = event.data.distancePerTime;
-                console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated distancePerTime to ${this.distancePerTime}`);
+                // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Updated distancePerTime to ${this.distancePerTime}`);
               }
               break;
 
@@ -113,7 +113,7 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
 
   drop(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.medias, event.previousIndex, event.currentIndex);
-    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Reordered medias, new order:`, this.medias.map(m => m.label));
+    // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Reordered medias, new order:`, this.medias.map(m => m.label));
     Engine.getInstance().emit({
       type: 'media.reordered',
       data: { medias: this.medias },
@@ -123,7 +123,7 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
   }
 
   updateDistancePerTime(distancePerTime: number): void {
-    console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
+    // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
     Engine.getInstance().emit({
       type: 'parameters.distancePerTimeUpdated',
       data: { distancePerTime },

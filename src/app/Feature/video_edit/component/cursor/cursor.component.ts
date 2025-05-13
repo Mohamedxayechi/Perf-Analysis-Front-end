@@ -31,20 +31,20 @@ export class CursorComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          console.log(`[${new Date().toISOString()}] CursorComponent received event: ${event.type}`);
+          // console.log(`[${new Date().toISOString()}] CursorComponent received event: ${event.type}`);
           switch (event.type) {
             case 'cursor.updated':
               if (event.data?.cursorX !== undefined) {
                 this.cursorX = event.data.cursorX;
                 this.updateSeconds();
-                console.log(`[${new Date().toISOString()}] CursorComponent: Updated cursorX to ${this.cursorX}`);
+                // console.log(`[${new Date().toISOString()}] CursorComponent: Updated cursorX to ${this.cursorX}`);
               }
               break;
             case 'parameters.distancePerTimeUpdated':
               if (event.data?.distancePerTime) {
                 this.distancePerTime = event.data.distancePerTime;
                 this.updateSeconds();
-                console.log(`[${new Date().toISOString()}] CursorComponent: Updated distancePerTime to ${this.distancePerTime}`);
+                // console.log(`[${new Date().toISOString()}] CursorComponent: Updated distancePerTime to ${this.distancePerTime}`);
               }
               break;
             default:
@@ -56,7 +56,7 @@ export class CursorComponent implements OnInit, OnDestroy {
 
   private updateSeconds(): void {
     this.seconds = this.distancePerTime > 0 ? this.cursorX / this.distancePerTime : 0;
-    console.log(`[${new Date().toISOString()}] CursorComponent: Updated seconds to ${this.seconds}`);
+    // console.log(`[${new Date().toISOString()}] CursorComponent: Updated seconds to ${this.seconds}`);
   }
 
   startDrag(event: MouseEvent): void {

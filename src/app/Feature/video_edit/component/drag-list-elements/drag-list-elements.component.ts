@@ -30,11 +30,11 @@ export class DragListElementsComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
-    console.log(`[${new Date().toISOString()}] DragListElements initialized for index ${this.index}, label: ${this.item.label}`);
+    // console.log(`[${new Date().toISOString()}] DragListElements initialized for index ${this.index}, label: ${this.item.label}`);
   }
 
   ngOnDestroy(): void {
-    console.log(`[${new Date().toISOString()}] DragListElements destroyed for index ${this.index}`);
+   
   }
 
   get dynamicElementStyle() {
