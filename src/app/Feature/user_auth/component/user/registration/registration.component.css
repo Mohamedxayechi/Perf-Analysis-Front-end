@@ -1,0 +1,14 @@
+
+
+::ng-deep .mat-horizontal-stepper-header .mat-step-label {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+    max-width: none !important;
+  }
+  
+  ::ng-deep .mat-horizontal-stepper-header .mat-step-label {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
