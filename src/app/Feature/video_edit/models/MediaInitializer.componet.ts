@@ -21,7 +21,7 @@ export class MediaInitializerComponent implements OnInit {
   private readonly EXTERNAL_TIME_PERIODS: Media[] = [
     {
       label: 'Bronze age',
-      time: 2,
+      time: 5,
       thumbnail: '/assets/thumbnails/1.png',
       video: '/assets/videos/1.mp4',
     },
