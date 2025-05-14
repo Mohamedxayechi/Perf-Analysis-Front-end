@@ -35,7 +35,7 @@ export class Display implements OnDestroy {
         this.medias = medias;
         console.log(
           `[${new Date().toISOString()}] Display: Media list updated, count: ${medias.length}, medias:`,
-          medias.map((m) => ({ label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
+          medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail, startTime: m.startTime, endTime: m.endTime }))
         );
         this.emitEvent({
           type: 'media.imported',
@@ -213,6 +213,12 @@ export class Display implements OnDestroy {
       return;
     }
     const result = MediaModel.delete(index);
+    if (result.deletedMedia?.video?.startsWith('blob:')) {
+      URL.revokeObjectURL(result.deletedMedia.video);
+    }
+    if (result.deletedMedia?.image?.startsWith('blob:')) {
+      URL.revokeObjectURL(result.deletedMedia.image);
+    }
     console.log(
       `[${new Date().toISOString()}] Display: Handled delete at index ${index}, deleted media: ${result.deletedMedia?.label || 'none'}`
     );
@@ -273,7 +279,7 @@ export class Display implements OnDestroy {
     if (file) {
       const mediaURL = URL.createObjectURL(file);
       console.log(
-        `[${new Date().toISOString()}] Display: Created mediaURL: ${mediaURL} for file: ${file.name}`
+        `[${new Date().toISOString()}] Display: Created mediaURL: ${mediaURL} for file: ${file.name}, type: ${file.type}`
       );
       if (file.type.startsWith('video')) {
         this.getVideoThumbnail(file).then(({ thumbnail, duration }) => {
@@ -288,7 +294,8 @@ export class Display implements OnDestroy {
           MediaModel.add(media);
           const updatedMedias = MediaModel.mediasSubject.getValue();
           console.log(
-            `[${new Date().toISOString()}] Display: Imported video media, new count: ${updatedMedias.length}`
+            `[${new Date().toISOString()}] Display: Imported video media, new count: ${updatedMedias.length}, media:`,
+            { label: media.label, video: media.video, thumbnail: media.thumbnail }
           );
           this.emitEvent({
             type: 'media.imported',
@@ -296,7 +303,7 @@ export class Display implements OnDestroy {
             origin: 'domain',
           });
         }).catch((err) => {
-          console.error(`[${new Date().toISOString()}] Display: Failed to import video: ${err}`);
+          console.error(`[${new Date().toISOString()}] Display: Failed to import video: ${file.name}, error: ${err}`);
         });
       } else if (file.type.startsWith('image')) {
         const media: Media = {
@@ -306,17 +313,21 @@ export class Display implements OnDestroy {
           thumbnail: mediaURL,
           startTime: 0,
           endTime: 5,
+          isThumbnailOnly: false, // Explicitly allow image playback
         };
         MediaModel.add(media);
         const updatedMedias = MediaModel.mediasSubject.getValue();
         console.log(
-          `[${new Date().toISOString()}] Display: Imported image media, new count: ${updatedMedias.length}`
+          `[${new Date().toISOString()}] Display: Imported image media, new count: ${updatedMedias.length}, media:`,
+          { label: media.label, image: media.image, thumbnail: media.thumbnail }
         );
         this.emitEvent({
           type: 'media.imported',
           data: { updatedMedias },
           origin: 'domain',
         });
+      } else {
+        console.error(`[${new Date().toISOString()}] Display: Unsupported file type: ${file.type}`);
       }
     } else {
       this.handleFileInputTrigger();
@@ -349,7 +360,8 @@ export class Display implements OnDestroy {
     }
     MediaModel.initializeMedias(medias);
     console.log(
-      `[${new Date().toISOString()}] Display: Media list reordered, count: ${medias.length}`
+      `[${new Date().toISOString()}] Display: Media list reordered, count: ${medias.length}, medias:`,
+      medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
     );
     this.emitEvent({
       type: 'media.imported',
@@ -438,7 +450,8 @@ export class Display implements OnDestroy {
 
   private playFromSecond(globalSecond: number): void {
     console.log(
-      `[${new Date().toISOString()}] Display: playFromSecond called with globalSecond: ${globalSecond}`
+      `[${new Date().toISOString()}] Display: playFromSecond called with globalSecond: ${globalSecond}, medias:`,
+      this.medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
     );
     if (!isFinite(globalSecond) || globalSecond < 0) {
       console.warn(
@@ -448,10 +461,6 @@ export class Display implements OnDestroy {
     }
 
     const medias = MediaModel.mediasSubject.getValue();
-    console.log(
-      `[${new Date().toISOString()}] Display: Media list, count: ${medias.length}, medias:`,
-      medias.map((m) => ({ label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
-    );
     if (medias.length === 0) {
       console.error(
         `[${new Date().toISOString()}] Display: No medias available to play`
@@ -524,12 +533,20 @@ export class Display implements OnDestroy {
     this.stopPlayback();
     this.currentMediaIndex = index;
     const media = this.medias[index];
+    if (!media || (!media.video && !media.image)) {
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid media at index ${index}, no video or image provided`
+      );
+      this.tryNextMedia(index + 1, MediaModel.calculateAccumulatedTime(index));
+      return;
+    }
+
     const startTime = media.startTime ?? 0;
     const endTime = media.endTime ?? media.time ?? Infinity;
     const duration = endTime - startTime;
     const accumulatedBefore = MediaModel.calculateAccumulatedTime(index);
     console.log(
-      `[${new Date().toISOString()}] Display: Media details: label: ${media.label}, duration: ${duration}, accumulatedBefore: ${accumulatedBefore}, startTime: ${startTime}, endTime: ${endTime}, video: ${media.video}, image: ${media.image}, thumbnail: ${media.thumbnail}`
+      `[${new Date().toISOString()}] Display: Media details: label: ${media.label}, duration: ${duration}, accumulatedBefore: ${accumulatedBefore}, startTime: ${startTime}, endTime: ${endTime}, video: ${media.video}, image: ${media.image}, thumbnail: ${media.thumbnail}, isThumbnailOnly: ${media.isThumbnailOnly}`
     );
 
     if (media.video) {
@@ -661,9 +678,10 @@ export class Display implements OnDestroy {
       console.log(
         `[${new Date().toISOString()}] Display: Setting up image for ${media.label}, src: ${media.image}`
       );
-      if (media.image === media.thumbnail) {
+      // Only skip if explicitly marked as thumbnail-only
+      if (media.isThumbnailOnly) {
         console.warn(
-          `[${new Date().toISOString()}] Display: Skipping image rendering for ${media.label} as it matches thumbnail: ${media.image}`
+          `[${new Date().toISOString()}] Display: Skipping image rendering for ${media.label} as it is marked thumbnail-only: ${media.image}`
         );
         this.tryNextMedia(index + 1, accumulatedBefore + duration);
         return;
@@ -685,7 +703,7 @@ export class Display implements OnDestroy {
         });
         this.emitEvent({
           type: 'render.frame',
-          data: { mediaElement: image, width: image.width, height: image.height },
+          data: { mediaElement: image, width: image.width, height: image.height, currentTime: localSecond },
           origin: 'domain',
           processed: false,
         });
@@ -817,5 +835,9 @@ export class Display implements OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     this.stopPlayback();
+    this.medias.forEach(media => {
+      if (media.video?.startsWith('blob:')) URL.revokeObjectURL(media.video);
+      if (media.image?.startsWith('blob:')) URL.revokeObjectURL(media.image);
+    });
   }
 }
