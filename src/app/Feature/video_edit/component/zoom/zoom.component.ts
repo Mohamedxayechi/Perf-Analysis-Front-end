@@ -1,8 +1,8 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { Engine } from '../../../../Core/Engine'
+import { Engine } from '../../../../Core/Engine';
 import { EventPayload } from '../../../../Core/Utility/event-bus';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-zoom',
@@ -13,28 +13,28 @@ import { EventPayload } from '../../../../Core/Utility/event-bus';
 })
 export class ZoomComponent implements OnInit, OnDestroy {
   @Input() zoom = 1;
-  @Input() minScale = 0.1; // Updated to match template's zoom <= 0.1 condition
+  @Input() minScale = 0.1;
   @Input() maxScale = 2;
   @Input() stepScale = 0.1;
+  @Output() zoomChange = new EventEmitter<number>(); // Add Output for zoomChange
 
   private subscription: Subscription | null = null;
 
   constructor() {}
 
   ngOnInit(): void {
-    // Subscribe to zoom.changed events from Engine
     this.subscription = Engine.getInstance()
       .getEvents()
       .on('zoom.changed', (event: EventPayload) => {
         if (event.data?.zoom !== undefined) {
           this.zoom = event.data.zoom;
+          this.zoomChange.emit(this.zoom); // Emit zoomChange when zoom updates
           console.log(
             `[${new Date().toISOString()}] ZoomComponent: Zoom updated to ${this.zoom}`
           );
         }
       });
 
-    // Request initial zoom state
     Engine.getInstance().emit({
       type: 'zoom.get',
       data: {},
@@ -47,7 +47,6 @@ export class ZoomComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Clean up subscription
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -84,6 +83,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
       origin: 'component',
       processed: false,
     });
+    this.zoomChange.emit(this.zoom); // Emit zoomChange when zoom changes
     console.log(
       `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.change with zoom ${this.zoom}`
     );
