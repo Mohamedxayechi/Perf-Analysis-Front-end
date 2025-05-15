@@ -224,27 +224,30 @@ export class MediaModel {
     MediaModel.isPlayingSubject.next(!currentIsPlaying);
   }
 
-  static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number; startTime: number } | null {
-    const medias = MediaModel.mediasSubject.getValue();
-    let accumulated = 0;
-    for (let i = 0; i < medias.length; i++) {
-      const media = medias[i];
-      const duration = media.time;
-      if (globalSecond >= accumulated && globalSecond < accumulated + duration) {
-        return {
-          index: i,
-          localSecond: globalSecond - accumulated,
-          startTime: media.startTime,
-        };
-      }
-      accumulated += duration;
-    }
-    console.warn(
-      `[${new Date().toISOString()}] MediaModel: No media found for globalSecond: ${globalSecond}`
-    );
-    return null;
-  }
+  
+static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number } | null {
+  const medias = this.mediasSubject.getValue();
+  let accumulatedTime = 0;
 
+  for (let i = 0; i < medias.length; i++) {
+    const media = medias[i];
+    const startTime = media.startTime ?? accumulatedTime;
+    const endTime = media.endTime ?? (startTime + (media.time ?? 0));
+    if (globalSecond >= startTime && globalSecond < endTime) {
+      console.log(`[${new Date().toISOString()}] MediaModel: Found media at index ${i}`, {
+        globalSecond,
+        startTime,
+        endTime,
+        localSecond: globalSecond - startTime,
+        label: media.label,
+      });
+      return { index: i, localSecond: globalSecond - startTime };
+    }
+    accumulatedTime = endTime;
+  }
+  console.warn(`[${new Date().toISOString()}] MediaModel: No media found for globalSecond ${globalSecond}`);
+  return null;
+}
   static calculateAccumulatedTime(index: number): number {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
