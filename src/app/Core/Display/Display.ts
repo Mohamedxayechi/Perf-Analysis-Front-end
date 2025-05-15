@@ -147,20 +147,38 @@ export class Display implements OnDestroy {
   }
 
   private handleSplit(time: number | undefined): void {
-    if (typeof time !== 'number' || time < 0) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid time for split: ${time}`);
+    let splitTime = typeof time === 'number' && time > 0 ? time : this.state.currentTime;
+    console.log(`[${new Date().toISOString()}] Display: Handling split, input time: ${time}, using splitTime: ${splitTime}, cursorTime: ${this.state.currentTime}`);
+
+    if (splitTime <= 0) {
+      console.warn(`[${new Date().toISOString()}] Display: Invalid split time: ${splitTime}, aborting`);
       return;
     }
-    const result = MediaModel.getVideoIndexAndStartTime(time);
+
+    const result = MediaModel.getVideoIndexAndStartTime(splitTime);
     if (!result) {
-      console.warn(`[${new Date().toISOString()}] Display: No media found at time ${time} for split`);
+      console.warn(`[${new Date().toISOString()}] Display: No media found at time ${splitTime} for split`);
       return;
     }
+
     const { index, localSecond } = result;
-    const splitResult = MediaModel.splitMedia(index, localSecond);
-    console.log(`[${new Date().toISOString()}] Display: Handled split at time ${time}, index ${index}, splitTime ${localSecond}`);
-    this.emitEvent({ type: 'media.splitted', data: { time, index, splitTime: localSecond, updatedMedias: splitResult.updatedMedias }, origin: 'domain' });
+    try {
+      const splitResult = MediaModel.splitMedia(index, localSecond);
+      if (!splitResult.updatedMedias.length || splitResult.updatedMedias === this.medias) {
+        console.warn(`[${new Date().toISOString()}] Display: Split failed for index ${index}, splitTime ${localSecond}, no changes made`);
+        return;
+      }
+      console.log(`[${new Date().toISOString()}] Display: Handled split at time ${splitTime}, index ${index}, splitTime ${localSecond}, updated medias: ${splitResult.updatedMedias.length}`);
+      this.emitEvent({
+        type: 'media.splitted',
+        data: { time: splitTime, index, splitTime: localSecond, updatedMedias: splitResult.updatedMedias },
+        origin: 'domain',
+      });
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] Display: Split error for index ${index}, splitTime ${localSecond}: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
+
 
   private handleResize(index: number | undefined, time: number | undefined): void {
     if (typeof index !== 'number' || typeof time !== 'number' || time <= 0) {

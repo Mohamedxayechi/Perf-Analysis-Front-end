@@ -1,40 +1,91 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { Engine } from '../../../../Core/Engine'
+import { EventPayload } from '../../../../Core/Utility/event-bus';
 
 @Component({
-    selector: 'app-zoom',
-    standalone: true,
-    imports: [FormsModule],
-    templateUrl: './zoom.component.html',
-    styles: ``
+  selector: 'app-zoom',
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: './zoom.component.html',
+  styles: ``,
 })
-
-export class ZoomComponent {
+export class ZoomComponent implements OnInit, OnDestroy {
   @Input() zoom = 1;
-  @Input() minScale = 1;
-  @Input() maxScale = 1;
+  @Input() minScale = 0.1; // Updated to match template's zoom <= 0.1 condition
+  @Input() maxScale = 2;
   @Input() stepScale = 0.1;
-  @Output() zoomChange = new EventEmitter<number>();
-  zoomIn() {
-    if (this.zoom < 2) {
-      this.zoom = parseFloat((this.zoom + this.stepScale).toFixed(1));
-      this.applyZoom();
+
+  private subscription: Subscription | null = null;
+
+  constructor() {}
+
+  ngOnInit(): void {
+    // Subscribe to zoom.changed events from Engine
+    this.subscription = Engine.getInstance()
+      .getEvents()
+      .on('zoom.changed', (event: EventPayload) => {
+        if (event.data?.zoom !== undefined) {
+          this.zoom = event.data.zoom;
+          console.log(
+            `[${new Date().toISOString()}] ZoomComponent: Zoom updated to ${this.zoom}`
+          );
+        }
+      });
+
+    // Request initial zoom state
+    Engine.getInstance().emit({
+      type: 'zoom.get',
+      data: {},
+      origin: 'component',
+      processed: false,
+    });
+    console.log(
+      `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.get`
+    );
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscription
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
   }
-  
-  zoomOut() {
-    if (this.zoom > 1) {
-      this.zoom = parseFloat((this.zoom - this.stepScale).toFixed(1));
-      this.applyZoom();
-    }
+
+  zoomIn(): void {
+    Engine.getInstance().emit({
+      type: 'zoom.in',
+      data: { stepScale: this.stepScale },
+      origin: 'component',
+      processed: false,
+    });
+    console.log(
+      `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.in with stepScale ${this.stepScale}`
+    );
   }
-  
-  onZoomChange() {
-    this.zoom = Math.max(1, Math.min(2, parseFloat(this.zoom.toFixed(1))));
-    this.applyZoom();
+
+  zoomOut(): void {
+    Engine.getInstance().emit({
+      type: 'zoom.out',
+      data: { stepScale: this.stepScale },
+      origin: 'component',
+      processed: false,
+    });
+    console.log(
+      `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.out with stepScale ${this.stepScale}`
+    );
   }
-  
-  applyZoom() {
-    this.zoomChange.emit(this.zoom);
+
+  onZoomChange(): void {
+    Engine.getInstance().emit({
+      type: 'zoom.change',
+      data: { zoom: this.zoom, minScale: this.minScale, maxScale: this.maxScale },
+      origin: 'component',
+      processed: false,
+    });
+    console.log(
+      `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.change with zoom ${this.zoom}`
+    );
   }
 }

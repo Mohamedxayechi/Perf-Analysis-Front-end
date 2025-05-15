@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Engine } from '../../../Core/Engine';
 
-interface Media {
+export interface Media {
   label: string;
   time: number;
   thumbnail: string;
