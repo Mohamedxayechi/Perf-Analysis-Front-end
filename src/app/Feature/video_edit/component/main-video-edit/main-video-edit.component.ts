@@ -23,7 +23,7 @@ import { Subscription } from 'rxjs';
     ActionsBarComponent,
   ],
   templateUrl: './main-video-edit.component.html',
-  styleUrl: './main-video-edit.component.scss',
+  styleUrls: ['./main-video-edit.component.scss'],
 })
 export class MainVideoEditComponent implements OnInit, OnDestroy {
   distancePerTime = 50;
@@ -47,26 +47,30 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
-          // console.log(`[${new Date().toISOString()}] MainVideoEdit received event: ${event.type}`);
           switch (event.type) {
             case 'display.durationUpdated':
               if (event.data?.duration) {
                 this.time = event.data.duration;
                 this.updateWidth();
-                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated time to ${this.time}`);
               }
               break;
             case 'parameters.distancePerTimeUpdated':
               if (event.data?.distancePerTime) {
                 this.distancePerTime = event.data.distancePerTime;
+                this.scale = this.distancePerTime / 50; // Sync scale with distancePerTime
                 this.updateWidth();
-                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated distancePerTime to ${this.distancePerTime}`);
               }
               break;
             case 'cursor.updated':
               if (event.data?.cursorX !== undefined) {
                 this.cursorX = event.data.cursorX;
-                // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated cursorX to ${this.cursorX}`);
+              }
+              break;
+            case 'zoom.changed': // Handle zoom changes from Display service
+              if (event.data?.zoom) {
+                this.scale = event.data.zoom;
+                this.distancePerTime = this.scale * 50;
+                this.updateWidth();
               }
               break;
             default:
@@ -77,18 +81,20 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
   }
 
   private updateWidth(): void {
-    this.width = this.distancePerTime * this.time;
-    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Updated width to ${this.width}`);
+    this.width = this.distancePerTime * this.time; // Width based on distancePerTime
+    // Optionally, apply scale to width if canvas uses it directly
+    // this.width = this.distancePerTime * this.time * this.scale;
   }
 
   onWidthChange(width: number): void {
     this.width = width;
-    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Width changed to ${width}`);
   }
 
   onScaleChange(scale: number): void {
     this.scale = parseFloat(scale.toFixed(2));
-    // console.log(`[${new Date().toISOString()}] MainVideoEdit: Scale changed to ${this.scale}`);
+    this.distancePerTime = this.scale * 50; // Update distancePerTime when scale changes
+    this.updateWidth();
+    this.updateDistancePerTime(this.distancePerTime); // Emit updated distancePerTime
   }
 
   onCursorMove(cursorX: number): void {

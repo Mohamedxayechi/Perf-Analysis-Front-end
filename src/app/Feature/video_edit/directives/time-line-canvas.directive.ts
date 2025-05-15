@@ -21,31 +21,27 @@ interface Tick {
   standalone: true,
 })
 export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
-  @Input() distancePerTime = 30;
+  @Input() distancePerTime = 50; // Default to 50 (matches Display)
   @Input() scale = 1;
-  @Input() minScale = 1;
-  @Input() maxScale = 2;
+  @Input() minScale = 0.1; // Match Display's min zoom
+  @Input() maxScale = 2; // Match Display's max zoom
   @Input() scaleStep = 0.1;
   @Input() spaceBeforLine = 15;
   @Input() cursorX = 0;
+  @Input() time = 0;
   @Output() widthEmitte = new EventEmitter<number>();
   @Output() scaleEmitte = new EventEmitter<number>();
   @Output() cursorMove = new EventEmitter<number>();
+
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
-
-  @Input() time = 0;
-
   private timeLineHeight = 40;
   private timeLineWidth = 0;
   private tickData: { x: number; time: string }[] = [];
-
-  // Hover state
   private hoveredTick: Tick | null = null;
   private currentTickUnderMouse: { x: number; time: string } | null = null;
   private hoverStartTime: number | null = null;
   private hoverCheckInterval: ReturnType<typeof setInterval> | null = null;
-
   private isDraggingCursor = false;
 
   constructor(private el: ElementRef<HTMLCanvasElement>) {
@@ -61,71 +57,58 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
     this.canvas.addEventListener('mouseleave', this.onMouseUp.bind(this));
     this.updateTimelineSize();
+    this.draw(this.context);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['time'] || changes['distancePerTime']) {
+    let needsRedraw = false;
+    if (changes['time'] || changes['distancePerTime'] || changes['scale']) {
       this.updateTimelineSize();
-      this.draw(this.context);
+      needsRedraw = true;
     }
-
-    if (changes['scale']) {
-      const prevScale = changes['scale'].previousValue ?? 1;
-      this.distancePerTime = (this.distancePerTime / prevScale) * this.scale;
-      this.updateTimelineSize();
+    if (changes['cursorX']) {
+      needsRedraw = true;
+    }
+    if (needsRedraw) {
       this.draw(this.context);
     }
   }
 
   private updateTimelineSize(): void {
     this.timeLineWidth = this.distancePerTime * this.time;
+    this.widthEmitte.emit(this.timeLineWidth);
   }
 
   private draw(context: CanvasRenderingContext2D): void {
     const canvas = this.el.nativeElement;
-    const parentWidth = canvas.parentElement?.clientWidth || this.timeLineWidth;
-
-    if (this.timeLineWidth < parentWidth) {
-      this.timeLineWidth = parentWidth;
-      this.distancePerTime = parentWidth / this.time;
-      // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting parameters.distancePerTimeUpdated with ${this.distancePerTime}`);
-      Engine.getInstance().emit({
-        type: 'parameters.distancePerTimeUpdated',
-        data: { distancePerTime: this.distancePerTime },
-        origin: 'component',
-        processed: false,
-      });
-    }
-
-    canvas.width = this.spaceBeforLine * 6 + this.timeLineWidth;
+    canvas.width = this.spaceBeforLine + this.timeLineWidth * this.scale; // Scale canvas width
     canvas.height = this.timeLineHeight;
 
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.translate(this.spaceBeforLine, 0);
+    context.scale(this.scale, 1); // Apply scale to drawing
 
     this.drawLineAndTicks(context);
+    this.drawCursor(context);
 
-    this.widthEmitte.emit(this.timeLineWidth);
+    if (this.hoveredTick) {
+      this.showTooltip(this.hoveredTick);
+    }
   }
 
   private drawLineAndTicks(context: CanvasRenderingContext2D): void {
     this.tickData = [];
 
+    // Draw timeline line
     context.beginPath();
     context.moveTo(0, 15);
-    context.lineTo(Math.ceil(this.time) * this.distancePerTime, 15);
+    context.lineTo(this.timeLineWidth, 15);
     context.strokeStyle = 'black';
-    context.lineWidth = 1;
+    context.lineWidth = 1 / this.scale; // Adjust line width for scale
     context.stroke();
 
-    let n = this.time;
-    if (Math.ceil(this.time) === this.time) {
-      n = this.time;
-    } else {
-      n = this.time + 1;
-    }
-
+    const n = Math.ceil(this.time);
     for (let i = 0; i <= n; i++) {
       const x = i * this.distancePerTime;
 
@@ -149,48 +132,49 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
       }
 
       // Time label
-      context.font = '10px Arial';
+      context.font = `10px Arial`;
       context.fillStyle = '#000';
       context.textAlign = 'center';
       context.fillText(i.toString(), x, 30);
     }
   }
 
+  private drawCursor(context: CanvasRenderingContext2D): void {
+    context.beginPath();
+    context.moveTo(this.cursorX, 0);
+    context.lineTo(this.cursorX, this.timeLineHeight);
+    context.strokeStyle = 'red';
+    context.lineWidth = 2 / this.scale; // Adjust for scale
+    context.stroke();
+  }
+
   private onCanvasScroll(event: WheelEvent): void {
     event.preventDefault();
-
-    this.scale =
+    const newScale =
       event.deltaY < 0
         ? Math.min(this.maxScale, this.scale + this.scaleStep)
         : Math.max(this.minScale, this.scale - this.scaleStep);
-
-    this.scaleEmitte.emit(this.scale);
+    this.scaleEmitte.emit(newScale);
   }
 
   private handleMouseMove(event: MouseEvent): void {
     const rect = this.canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left - this.spaceBeforLine;
+    const x = (event.clientX - rect.left - this.spaceBeforLine) / this.scale; // Adjust for scale
 
-    // Find the tick in ±5px margin
-    const tick = this.tickData.find((t) => Math.abs(x - t.x) <= 5);
-
-    // Not hovering near a tick
+    const tick = this.tickData.find((t) => Math.abs(x - t.x) <= 5 / this.scale);
     if (!tick) {
       this.resetHoverState();
       return;
     }
 
-    // Same tick still hovered
     if (this.currentTickUnderMouse && this.currentTickUnderMouse.x === tick.x) {
       return;
     }
 
-    // New tick hover start
     this.resetHoverState();
     this.currentTickUnderMouse = tick;
     this.hoverStartTime = Date.now();
 
-    // Start checking hover duration every 100ms
     this.hoverCheckInterval = setInterval(() => {
       const now = Date.now();
       if (this.hoverStartTime && now - this.hoverStartTime >= 500) {
@@ -202,29 +186,20 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
 
   private onMouseDown(event: MouseEvent): void {
     this.isDraggingCursor = true;
-    const x = (event.offsetX - this.spaceBeforLine) / this.scale;
-    this.cursorX = Math.max(0, Math.min(x, this.timeLineWidth / this.scale));
-    // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
-    Engine.getInstance().emit({
-      type: 'cursor.changed',
-      data: { cursorX: this.cursorX },
-      origin: 'component',
-      processed: false,
-    });
+    this.updateCursorPosition(event);
   }
 
   private onCanvasMouseMove(event: MouseEvent): void {
     if (!this.isDraggingCursor) return;
+    this.updateCursorPosition(event);
+  }
 
-    const x = (event.offsetX - this.spaceBeforLine) / this.scale;
-    this.cursorX = Math.max(0, Math.min(x, this.timeLineWidth / this.scale));
-    // console.log(`[${new Date().toISOString()}] TimelineCanvas: Emitting cursor.changed with cursorX: ${this.cursorX}`);
-    Engine.getInstance().emit({
-      type: 'cursor.changed',
-      data: { cursorX: this.cursorX },
-      origin: 'component',
-      processed: false,
-    });
+  private updateCursorPosition(event: MouseEvent): void {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left - this.spaceBeforLine) / this.scale;
+    this.cursorX = Math.max(0, Math.min(x, this.timeLineWidth));
+    this.cursorMove.emit(this.cursorX);
+    this.draw(this.context); // Redraw to update cursor
   }
 
   private onMouseUp(): void {
@@ -241,27 +216,25 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
 
     if (clearTooltip && this.hoveredTick) {
       this.hoveredTick = null;
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.draw(this.context);
     }
   }
 
   private showTooltip(tick: Tick): void {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.draw(this.context);
+    this.hoveredTick = tick;
+    this.draw(this.context); // Redraw to include tooltip
 
     const text = `⏱ time ${tick.time}`;
     this.context.save();
+    this.context.setTransform(1, 0, 0, 1, 0, 0); // Reset transform for tooltip
+    this.context.translate(this.spaceBeforLine, 0);
     this.context.font = '12px Arial';
     const textWidth = this.context.measureText(text).width;
 
     this.context.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    this.context.fillRect(tick.x, 0, textWidth + 50, 20);
-
+    this.context.fillRect(tick.x * this.scale, 0, textWidth + 10, 20); // Adjust x for scale
     this.context.fillStyle = '#fff';
-    this.context.fillText(text, tick.x + 50, 14);
+    this.context.fillText(text, tick.x * this.scale + 5, 14); // Adjust x for scale
     this.context.restore();
-
-    this.hoveredTick = tick;
   }
 }
