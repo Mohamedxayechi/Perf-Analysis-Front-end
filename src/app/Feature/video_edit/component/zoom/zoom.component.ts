@@ -16,24 +16,26 @@ export class ZoomComponent implements OnInit, OnDestroy {
   @Input() minScale = 0.1;
   @Input() maxScale = 2;
   @Input() stepScale = 0.1;
-  @Output() zoomChange = new EventEmitter<number>(); // Add Output for zoomChange
+  @Output() zoomChange = new EventEmitter<number>();
 
-  private subscription: Subscription | null = null;
+  private subscription: Subscription = new Subscription();
 
   constructor() {}
 
   ngOnInit(): void {
-    this.subscription = Engine.getInstance()
-      .getEvents()
-      .on('zoom.changed', (event: EventPayload) => {
-        if (event.data?.zoom !== undefined) {
-          this.zoom = event.data.zoom;
-          this.zoomChange.emit(this.zoom); // Emit zoomChange when zoom updates
-          console.log(
-            `[${new Date().toISOString()}] ZoomComponent: Zoom updated to ${this.zoom}`
-          );
-        }
-      });
+    this.subscription.add(
+      Engine.getInstance()
+        .getEvents()
+        .on('zoom.changed', (event: EventPayload) => {
+          if (event.data?.zoom !== undefined) {
+            this.zoom = parseFloat(event.data.zoom.toFixed(1));
+            this.zoomChange.emit(this.zoom);
+            console.log(
+              `[${new Date().toISOString()}] ZoomComponent: Zoom updated to ${this.zoom}`
+            );
+          }
+        })
+    );
 
     Engine.getInstance().emit({
       type: 'zoom.get',
@@ -47,9 +49,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.subscription.unsubscribe();
   }
 
   zoomIn(): void {
@@ -77,13 +77,14 @@ export class ZoomComponent implements OnInit, OnDestroy {
   }
 
   onZoomChange(): void {
+    this.zoom = Math.max(this.minScale, Math.min(this.maxScale, parseFloat(this.zoom.toFixed(1))));
     Engine.getInstance().emit({
       type: 'zoom.change',
       data: { zoom: this.zoom, minScale: this.minScale, maxScale: this.maxScale },
       origin: 'component',
       processed: false,
     });
-    this.zoomChange.emit(this.zoom); // Emit zoomChange when zoom changes
+    this.zoomChange.emit(this.zoom);
     console.log(
       `[${new Date().toISOString()}] ZoomComponent: Emitted zoom.change with zoom ${this.zoom}`
     );

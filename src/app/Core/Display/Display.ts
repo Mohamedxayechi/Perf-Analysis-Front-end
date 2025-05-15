@@ -26,7 +26,7 @@ export class Display implements OnDestroy {
   private medias: Media[] = [];
   private totalTime = 0;
   private cursorX = 0;
-  private distancePerTime = 50;
+  private distancePerTime = 50; // Default: 50 pixels per second (zoom = 1)
   private lastPausedTime = 0;
   private currentMediaIndex = -1;
   private eventProcessing = false;
@@ -91,6 +91,35 @@ export class Display implements OnDestroy {
         'playback.toggle': (data) => this.togglePlayPause(data?.currentSecond),
         'cursor.changed': (data) => this.handleCursorChange(data?.cursorX || 0),
         'parameters.distancePerTimeUpdated': (data) => this.handleDistancePerTimeUpdate(data?.distancePerTime || this.distancePerTime),
+        // Zoom event handlers
+        'zoom.get': () => {
+          const zoom = this.distancePerTime / 50;
+          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
+          console.log(`[${new Date().toISOString()}] Display: Handled zoom.get, zoom: ${zoom}`);
+        },
+        'zoom.in': (data) => {
+          const stepScale = data?.stepScale || 0.1;
+          this.distancePerTime = Math.min(this.distancePerTime + stepScale * 50, 100); // Max zoom = 2
+          const zoom = this.distancePerTime / 50;
+          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
+          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
+          console.log(`[${new Date().toISOString()}] Display: Handled zoom.in, stepScale: ${stepScale}, new zoom: ${zoom}`);
+        },
+        'zoom.out': (data) => {
+          const stepScale = data?.stepScale || 0.1;
+          this.distancePerTime = Math.max(this.distancePerTime - stepScale * 50, 5); // Min zoom = 0.1
+          const zoom = this.distancePerTime / 50;
+          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
+          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
+          console.log(`[${new Date().toISOString()}] Display: Handled zoom.out, stepScale: ${stepScale}, new zoom: ${zoom}`);
+        },
+        'zoom.change': (data) => {
+          const zoom = Math.max(data?.minScale || 0.1, Math.min(data?.maxScale || 2, data?.zoom || 1));
+          this.distancePerTime = zoom * 50;
+          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
+          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
+          console.log(`[${new Date().toISOString()}] Display: Handled zoom.change, new zoom: ${zoom}`);
+        },
       };
 
       const handler = handlers[event.type];
@@ -116,7 +145,7 @@ export class Display implements OnDestroy {
 
   private handleInitialize(medias: Media[] | undefined): void {
     if (!medias?.length) {
-      console.error(`[${new Date().toISOString()}](Display): Invalid medias for initialization`);
+      console.error(`[${new Date().toISOString()}] Display: Invalid medias for initialization`);
       return;
     }
     const { updatedMedias } = MediaModel.initializeMedias(medias);
@@ -178,7 +207,6 @@ export class Display implements OnDestroy {
       console.error(`[${new Date().toISOString()}] Display: Split error for index ${index}, splitTime ${localSecond}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-
 
   private handleResize(index: number | undefined, time: number | undefined): void {
     if (typeof index !== 'number' || typeof time !== 'number' || time <= 0) {
@@ -276,7 +304,6 @@ export class Display implements OnDestroy {
     if (this.state.isPlaying) {
       this.pausePlayback();
     } else {
-      // Prioritize state.currentTime (set by cursor) over lastPausedTime and currentSecond
       const playSecond = this.state.currentTime > 0 ? this.state.currentTime : (this.lastPausedTime > 0 ? this.lastPausedTime : (currentSecond ?? 0));
       console.log(`[${new Date().toISOString()}] Display: Attempting to play from second: ${playSecond}`);
       this.playFromSecond(playSecond);
@@ -521,7 +548,7 @@ export class Display implements OnDestroy {
     image.crossOrigin = 'anonymous';
 
     image.onload = () => {
-      console.log(`[${new Date().toISOString()}] Display: Image loaded: ${media.label}`, { width: image.width, height: image.height });
+      console.log(`[${new Date().toISOString()}] Display: Image loaded: ${media.label}`, { width: this.currentImage?.width, height: this.currentImage?.height });
       this.currentImage = image;
       this.state.isPlaying = true;
       this.state.currentTime = timing.accumulatedBefore + localSecond;
