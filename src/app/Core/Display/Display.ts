@@ -150,7 +150,7 @@ export class Display implements OnDestroy {
     }
     const { updatedMedias } = MediaModel.initializeMedias(medias);
     console.log(`[${new Date().toISOString()}] Display: Initialized media list`, { count: updatedMedias.length, labels: updatedMedias.map(m => m.label) });
-    setTimeout(() => this.emitEvent({ type: 'media.initialized', data: { updatedMedias }, origin: 'domain' }), 0);
+    Promise.resolve().then(() => this.emitEvent({ type: 'media.initialized', data: { updatedMedias }, origin: 'domain' }));
   }
 
   private handleDelete(index: number | undefined): void {
@@ -535,7 +535,7 @@ export class Display implements OnDestroy {
     this.updateTimer = setTimeout(updateCursor, 16);
   }
 
-  private renderImage(media: Media, index: number, localSecond: number, timing: { startTime: number; duration: number; accumulatedBefore: number }): void {
+private renderImage(media: Media, index: number, localSecond: number, timing: { startTime: number; duration: number; accumulatedBefore: number }): void {
     console.log(`[${new Date().toISOString()}] Display: Setting up image for ${media.label}`, { src: media.image });
     if (media.isThumbnailOnly) {
       console.warn(`[${new Date().toISOString()}] Display: Skipping image rendering for ${media.label} as it is marked thumbnail-only`, { src: media.image });
@@ -548,7 +548,7 @@ export class Display implements OnDestroy {
     image.crossOrigin = 'anonymous';
 
     image.onload = () => {
-      console.log(`[${new Date().toISOString()}] Display: Image loaded: ${media.label}`, { width: this.currentImage?.width, height: this.currentImage?.height });
+      console.log(`[${new Date().toISOString()}] Display: Image loaded: ${media.label}`, { width: image.width, height: image.height });
       this.currentImage = image;
       this.state.isPlaying = true;
       this.state.currentTime = timing.accumulatedBefore + localSecond;
