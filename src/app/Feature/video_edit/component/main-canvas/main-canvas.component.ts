@@ -196,7 +196,6 @@ export class MainCanvasComponent implements AfterViewInit {
           this.konvaImage.image(this.video);
           this.layer.batchDraw();
           this.stage.draw();
-         
           if (this.isPlaying) {
             renderVideoFrame();
           }
@@ -213,28 +212,19 @@ export class MainCanvasComponent implements AfterViewInit {
       }
     } else if (mediaElement instanceof HTMLImageElement) {
       this.video = null;
-      // Only render images if not playing or if the image is a valid media image (not a thumbnail)
-      if (!this.isPlaying || this.medias.some(m => m.image === mediaElement.src)) {
-        this.konvaImage.image(mediaElement);
-        this.layer.batchDraw();
-        this.stage.draw();
-        console.log(
-          `[${new Date().toISOString()}] MainCanvas: Image rendered, src: ${mediaElement.src}, width: ${mediaElement.width}, height: ${mediaElement.height}`
-        );
-      } else {
-        console.error(
-          `[${new Date().toISOString()}] MainCanvas: Skipped rendering image during video playback, src: ${mediaElement.src}, expected video`
-        );
-        this.konvaImage.image(null);
-        this.layer.batchDraw();
-        this.stage.draw();
-        console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to unexpected image`);
-      }
+      // Render the image regardless of playback state
+      this.konvaImage.image(mediaElement);
+      this.layer.batchDraw();
+      this.stage.draw();
+      console.log(
+        `[${new Date().toISOString()}] MainCanvas: Image rendered, src: ${mediaElement.src}, width: ${mediaElement.width}, height: ${mediaElement.height}`
+      );
     } else {
       console.error(
         `[${new Date().toISOString()}] MainCanvas: Invalid mediaElement type: ${mediaElement?.constructor.name}`
       );
       this.konvaImage.image(null);
+      this.video = null;
       this.layer.batchDraw();
       this.stage.draw();
       console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to invalid mediaElement`);
