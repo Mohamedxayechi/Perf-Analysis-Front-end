@@ -44,11 +44,18 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
   private hoverCheckInterval: ReturnType<typeof setInterval> | null = null;
   private isDraggingCursor = false;
 
+  /**
+   * Initializes the directive with a reference to the canvas element.
+   * @param el Reference to the host canvas element.
+   */
   constructor(private el: ElementRef<HTMLCanvasElement>) {
     this.canvas = this.el.nativeElement;
     this.context = this.canvas.getContext('2d')!;
   }
 
+  /**
+   * Sets up event listeners and initializes the canvas after the view is initialized.
+   */
   ngAfterViewInit(): void {
     this.canvas.addEventListener('wheel', this.onCanvasScroll.bind(this));
     this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
@@ -60,6 +67,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     this.draw(this.context);
   }
 
+  /**
+   * Handles input changes and redraws the canvas if necessary.
+   * @param changes The collection of input changes.
+   */
   ngOnChanges(changes: SimpleChanges): void {
     let needsRedraw = false;
     if (changes['time'] || changes['distancePerTime'] || changes['scale']) {
@@ -74,11 +85,18 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     }
   }
 
+  /**
+   * Updates the timeline width based on duration and distance per time, emitting the new width.
+   */
   private updateTimelineSize(): void {
     this.timeLineWidth = this.distancePerTime * this.time;
     this.widthEmitte.emit(this.timeLineWidth);
   }
 
+  /**
+   * Draws the timeline, including the line, ticks, cursor, and tooltip if applicable.
+   * @param context The 2D rendering context of the canvas.
+   */
   private draw(context: CanvasRenderingContext2D): void {
     const canvas = this.el.nativeElement;
     canvas.width = this.spaceBeforLine + this.timeLineWidth * this.scale;
@@ -97,6 +115,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     }
   }
 
+  /**
+   * Draws the timeline's main line and tick marks with labels.
+   * @param context The 2D rendering context of the canvas.
+   */
   private drawLineAndTicks(context: CanvasRenderingContext2D): void {
     this.tickData = [];
 
@@ -135,6 +157,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     }
   }
 
+  /**
+   * Draws the cursor line at the current cursor position.
+   * @param context The 2D rendering context of the canvas.
+   */
   private drawCursor(context: CanvasRenderingContext2D): void {
     context.beginPath();
     context.moveTo(this.cursorX, 0);
@@ -144,6 +170,11 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     context.stroke();
   }
 
+  /**
+   * Draws a tooltip displaying the time at the hovered tick.
+   * @param context The 2D rendering context of the canvas.
+   * @param tick The tick object containing position and time.
+   */
   private drawTooltip(context: CanvasRenderingContext2D, tick: Tick): void {
     const text = `⏱ time ${tick.time}`;
     context.save();
@@ -159,6 +190,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     context.restore();
   }
 
+  /**
+   * Handles mouse wheel events to adjust the timeline scale.
+   * @param event The wheel event containing scroll direction.
+   */
   private onCanvasScroll(event: WheelEvent): void {
     event.preventDefault();
     const newScale =
@@ -168,6 +203,10 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     this.scaleEmitte.emit(newScale);
   }
 
+  /**
+   * Handles mouse movement to display tooltips over timeline ticks.
+   * @param event The mouse event containing position data.
+   */
   private handleMouseMove(event: MouseEvent): void {
     const rect = this.canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left - this.spaceBeforLine) / this.scale;
@@ -197,16 +236,28 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     }, 100);
   }
 
+  /**
+   * Initiates cursor dragging on mouse down.
+   * @param event The mouse event triggering the drag.
+   */
   private onMouseDown(event: MouseEvent): void {
     this.isDraggingCursor = true;
     this.updateCursorPosition(event);
   }
 
+  /**
+   * Updates the cursor position during dragging.
+   * @param event The mouse event containing movement data.
+   */
   private onCanvasMouseMove(event: MouseEvent): void {
     if (!this.isDraggingCursor) return;
     this.updateCursorPosition(event);
   }
 
+  /**
+   * Calculates and emits the new cursor position based on mouse coordinates.
+   * @param event The mouse event containing position data.
+   */
   private updateCursorPosition(event: MouseEvent): void {
     const rect = this.canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left - this.spaceBeforLine) / this.scale;
@@ -215,10 +266,17 @@ export class TimelineCanvasDirective implements AfterViewInit, OnChanges {
     this.draw(this.context);
   }
 
+  /**
+   * Stops cursor dragging on mouse up or mouse leave.
+   */
   private onMouseUp(): void {
     this.isDraggingCursor = false;
   }
 
+  /**
+   * Resets the hover state for tooltips, optionally clearing the displayed tooltip.
+   * @param clearTooltip Whether to clear the currently displayed tooltip.
+   */
   private resetHoverState(clearTooltip = true): void {
     if (this.hoverCheckInterval) {
       clearInterval(this.hoverCheckInterval);

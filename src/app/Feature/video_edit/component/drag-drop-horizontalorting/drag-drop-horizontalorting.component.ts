@@ -24,22 +24,24 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
 
   constructor() {}
 
+  /**
+   * Initializes the component by setting up event listeners for media and timeline updates.
+   */
   ngOnInit(): void {
-   
     this.setupEngineListeners();
   }
 
+  /**
+   * Subscribes to engine events to update the media list, total time, and distance per time.
+   */
   private setupEngineListeners(): void {
     this.subscription.add(
       Engine.getInstance()
         .getEvents()
         .on('*', (event: EventPayload) => {
           // console.log(`[${new Date().toISOString()}] ${event.data}DragDropHorizontalorting received event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}`);
-         
-
           switch (event.type) {
             case 'media.initialized':
-              
               if (event.data?.updatedMedias) {
                 this.medias = [...event.data.updatedMedias];
                 // console.log(
@@ -111,6 +113,10 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Handles the drag-and-drop event to reorder media items and emits the updated list.
+   * @param event The drag-and-drop event containing previous and current indices.
+   */
   drop(event: CdkDragDrop<string[]>) {
     moveItemInArray(this.medias, event.previousIndex, event.currentIndex);
     // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Reordered medias, new order:`, this.medias.map(m => m.label));
@@ -122,6 +128,10 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Emits an event to update the distance per time (pixels per second) for the timeline.
+   * @param distancePerTime The new distance per time value.
+   */
   updateDistancePerTime(distancePerTime: number): void {
     // console.log(`[${new Date().toISOString()}] DragDropHorizontalorting: Emitting parameters.distancePerTimeUpdated with ${distancePerTime}`);
     Engine.getInstance().emit({
@@ -132,6 +142,10 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Computes the CSS styles for the container based on total time and distance per time.
+   * @returns An object containing the width and padding-left styles.
+   */
   get containerStyle() {
     return {
       width: `${this.time * this.distancePerTime + this.spaceBefore}px`,
@@ -139,6 +153,9 @@ export class DragDropHorizontalortingComponent implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Cleans up subscriptions when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

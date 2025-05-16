@@ -57,10 +57,16 @@ export class MediaInitializerComponent implements OnInit {
     },
   ];
 
+  /**
+   * Initializes the component and triggers media initialization.
+   */
   ngOnInit(): void {
     this.emitMediaInitialize();
   }
 
+  /**
+   * Emits an event to initialize the media list, retrying if the engine is not yet initialized.
+   */
   private emitMediaInitialize(): void {
     const engine = Engine.getInstance();
     if (engine.isInitialized) {

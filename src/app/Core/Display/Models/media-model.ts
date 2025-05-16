@@ -19,6 +19,11 @@ export class MediaModel {
   static totalTime$ = MediaModel.totalTimeSubject.asObservable();
   static isPlaying$ = MediaModel.isPlayingSubject.asObservable();
 
+  /**
+   * Initializes the media list with provided media items, filtering out invalid entries and setting start/end times.
+   * @param medias Array of media items to initialize.
+   * @returns Object containing the updated media list.
+   */
   static initializeMedias(medias: Media[]): { updatedMedias: Media[] } {
     console.log(
       `[${new Date().toISOString()}] MediaModel.initializeMedias: Initializing with ${medias.length} medias:`,
@@ -70,6 +75,12 @@ export class MediaModel {
     return { updatedMedias };
   }
 
+  /**
+   * Resizes the duration of a media item at the specified index and updates all subsequent media timings.
+   * @param index Index of the media item to resize.
+   * @param time New duration for the media item.
+   * @returns Object containing the updated media list.
+   */
   static resize(index: number, time: number): { updatedMedias: Media[] } {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || time <= 0) {
@@ -94,6 +105,11 @@ export class MediaModel {
     return { updatedMedias };
   }
 
+  /**
+   * Retrieves a media item at the specified index.
+   * @param index Index of the media item to retrieve.
+   * @returns The media item or null if the index is invalid.
+   */
   static getMedia(index: number): Media | null {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
@@ -103,6 +119,10 @@ export class MediaModel {
     return medias[index];
   }
 
+  /**
+   * Adds a new media item to the end of the media list and updates timings.
+   * @param media The media item to add.
+   */
   static add(media: Media): void {
     if (!media.video && !media.image) {
       console.error(
@@ -139,6 +159,11 @@ export class MediaModel {
     );
   }
 
+  /**
+   * Deletes a media item at the specified index and updates timings.
+   * @param index Index of the media item to delete.
+   * @returns Object containing the deleted media item (or null if invalid index) and the updated media list.
+   */
   static delete(index: number): { deletedMedia: Media | null; updatedMedias: Media[] } {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
@@ -162,6 +187,11 @@ export class MediaModel {
     return { deletedMedia, updatedMedias };
   }
 
+  /**
+   * Duplicates a media item at the specified index and updates timings.
+   * @param index Index of the media item to duplicate.
+   * @returns Object containing the duplicated media item (or null if invalid index) and the updated media list.
+   */
   static duplicate(index: number): { duplicatedMedia: Media | null; updatedMedias: Media[] } {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
@@ -185,6 +215,12 @@ export class MediaModel {
     return { duplicatedMedia, updatedMedias };
   }
 
+  /**
+   * Splits a media item at the specified index into two parts at the given split time.
+   * @param index Index of the media item to split.
+   * @param splitTime Time at which to split the media item.
+   * @returns Object containing the updated media list.
+   */
   static splitMedia(index: number, splitTime: number): { updatedMedias: Media[] } {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || splitTime <= 0) {
@@ -218,36 +254,49 @@ export class MediaModel {
     return { updatedMedias };
   }
 
+  /**
+   * Toggles the play/pause state of the media playback.
+   */
   static togglePlayPause(): void {
     const currentIsPlaying = MediaModel.isPlayingSubject.getValue();
     console.log(`[${new Date().toISOString()}] MediaModel: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
     MediaModel.isPlayingSubject.next(!currentIsPlaying);
   }
 
-  
-static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number } | null {
-  const medias = this.mediasSubject.getValue();
-  let accumulatedTime = 0;
+  /**
+   * Finds the media item and local time corresponding to a given global time.
+   * @param globalSecond The global time in seconds.
+   * @returns Object containing the media index and local time within the media, or null if not found.
+   */
+  static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number } | null {
+    const medias = this.mediasSubject.getValue();
+    let accumulatedTime = 0;
 
-  for (let i = 0; i < medias.length; i++) {
-    const media = medias[i];
-    const startTime = media.startTime ?? accumulatedTime;
-    const endTime = media.endTime ?? (startTime + (media.time ?? 0));
-    if (globalSecond >= startTime && globalSecond < endTime) {
-      console.log(`[${new Date().toISOString()}] MediaModel: Found media at index ${i}`, {
-        globalSecond,
-        startTime,
-        endTime,
-        localSecond: globalSecond - startTime,
-        label: media.label,
-      });
-      return { index: i, localSecond: globalSecond - startTime };
+    for (let i = 0; i < medias.length; i++) {
+      const media = medias[i];
+      const startTime = media.startTime ?? accumulatedTime;
+      const endTime = media.endTime ?? (startTime + (media.time ?? 0));
+      if (globalSecond >= startTime && globalSecond < endTime) {
+        console.log(`[${new Date().toISOString()}] MediaModel: Found media at index ${i}`, {
+          globalSecond,
+          startTime,
+          endTime,
+          localSecond: globalSecond - startTime,
+          label: media.label,
+        });
+        return { index: i, localSecond: globalSecond - startTime };
+      }
+      accumulatedTime = endTime;
     }
-    accumulatedTime = endTime;
+    console.warn(`[${new Date().toISOString()}] MediaModel: No media found for globalSecond ${globalSecond}`);
+    return null;
   }
-  console.warn(`[${new Date().toISOString()}] MediaModel: No media found for globalSecond ${globalSecond}`);
-  return null;
-}
+
+  /**
+   * Calculates the accumulated time up to the specified media index.
+   * @param index Index of the media item up to which to calculate the accumulated time.
+   * @returns The total accumulated time in seconds, or 0 if the index is invalid.
+   */
   static calculateAccumulatedTime(index: number): number {
     const medias = MediaModel.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
@@ -261,6 +310,10 @@ static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSe
     return accumulated;
   }
 
+  /**
+   * Retrieves the total duration of all media items.
+   * @returns The total time in seconds.
+   */
   static getTotalTime(): number {
     return MediaModel.totalTimeSubject.getValue();
   }

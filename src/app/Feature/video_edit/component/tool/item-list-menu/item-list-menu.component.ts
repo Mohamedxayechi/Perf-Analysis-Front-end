@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { Engine } from '../../../../../Core/Engine'; // Adjust path as needed
+import { Engine } from '../../../../../Core/Engine';
 
 @Component({
     selector: 'app-item-list-menu',
@@ -14,6 +14,9 @@ import { Engine } from '../../../../../Core/Engine'; // Adjust path as needed
 export class ItemListMenuComponent {
   @Input() index = 0;
 
+  /**
+   * Emits an event to delete the media item at the specified index.
+   */
   deleteItem() {
     Engine.getInstance().emit({
       type: 'media.delete',
@@ -23,6 +26,9 @@ export class ItemListMenuComponent {
     });
   }
 
+  /**
+   * Emits an event to duplicate the media item at the specified index and logs the index.
+   */
   duplicateItem() {
     Engine.getInstance().emit({
       type: 'media.duplicate',

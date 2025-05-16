@@ -20,8 +20,14 @@ export class ZoomComponent implements OnInit, OnDestroy {
 
   private subscription: Subscription = new Subscription();
 
+  /**
+   * Initializes the component.
+   */
   constructor() {}
 
+  /**
+   * Sets up event listeners for zoom changes and requests the current zoom level on initialization.
+   */
   ngOnInit(): void {
     this.subscription.add(
       Engine.getInstance()
@@ -48,10 +54,16 @@ export class ZoomComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Cleans up subscriptions when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
 
+  /**
+   * Emits an event to increase the zoom level by the specified step scale.
+   */
   zoomIn(): void {
     Engine.getInstance().emit({
       type: 'zoom.in',
@@ -64,6 +76,9 @@ export class ZoomComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Emits an event to decrease the zoom level by the specified step scale.
+   */
   zoomOut(): void {
     Engine.getInstance().emit({
       type: 'zoom.out',
@@ -76,6 +91,9 @@ export class ZoomComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Emits an event to update the zoom level to the specified value, ensuring it stays within bounds.
+   */
   onZoomChange(): void {
     this.zoom = Math.max(this.minScale, Math.min(this.maxScale, parseFloat(this.zoom.toFixed(1))));
     Engine.getInstance().emit({

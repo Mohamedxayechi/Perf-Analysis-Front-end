@@ -30,6 +30,9 @@ export class MainCanvasComponent implements AfterViewInit {
   private readonly CANVAS_WIDTH = 500;
   private readonly CANVAS_HEIGHT = 500;
 
+  /**
+   * Initializes the component and subscribes to the event bus for event handling.
+   */
   constructor() {
     console.log(`[${new Date().toISOString()}] MainCanvas: Constructor called, subscribing to eventBus`);
     eventBus.subscribe((event: EventPayload) => {
@@ -40,6 +43,9 @@ export class MainCanvasComponent implements AfterViewInit {
     });
   }
 
+  /**
+   * Sets up the Konva stage and layer after the view is initialized.
+   */
   ngAfterViewInit(): void {
     console.log(`[${new Date().toISOString()}] MainCanvas: ngAfterViewInit, setting up Konva stage`);
     this.stage = new Konva.Stage({
@@ -64,6 +70,10 @@ export class MainCanvasComponent implements AfterViewInit {
     );
   }
 
+  /**
+   * Handles incoming events from the event bus and processes them based on type.
+   * @param event The event payload to process.
+   */
   private handleEvent(event: EventPayload): void {
     // Only process render.frame from 'domain' origin (Display service)
     if (event.type === 'render.frame' && event.origin !== 'domain') {
@@ -124,6 +134,10 @@ export class MainCanvasComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Renders a frame on the canvas based on the provided media element.
+   * @param event The event payload containing the media element and dimensions.
+   */
   private handleRenderFrame(event: EventPayload): void {
     const { mediaElement, width, height } = event.data || {};
     console.log(
@@ -231,6 +245,10 @@ export class MainCanvasComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Updates the media list when new media is imported.
+   * @param event The event payload containing the updated media list.
+   */
   private handleMediaImported(event: EventPayload): void {
     const { updatedMedias } = event.data || {};
     if (Array.isArray(updatedMedias)) {
@@ -242,6 +260,10 @@ export class MainCanvasComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Handles file selection for media import and emits an event with the selected file.
+   * @param event The input event containing the selected file.
+   */
   MediaSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -258,6 +280,9 @@ export class MainCanvasComponent implements AfterViewInit {
     }
   }
 
+  /**
+   * Toggles playback state and emits an event with the current time.
+   */
   togglePlayPause(): void {
     console.log(
       `[${new Date().toISOString()}] MainCanvas: Emitting playback.toggle, cursorX: ${this.cursorX}`

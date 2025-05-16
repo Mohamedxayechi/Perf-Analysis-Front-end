@@ -21,12 +21,22 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   isPlaying = false;
   private subscription: Subscription = new Subscription();
 
+  /**
+   * Initializes the component with NgZone for handling events outside Angular's change detection.
+   * @param ngZone The NgZone service for running code outside Angular's zone.
+   */
   constructor(private ngZone: NgZone) {}
 
+  /**
+   * Sets up event listeners for engine events on component initialization.
+   */
   ngOnInit(): void {
     this.setupEngineListeners();
   }
 
+  /**
+   * Subscribes to engine events to update media list, cursor position, distance per time, and playback state.
+   */
   private setupEngineListeners(): void {
     this.subscription.add(
       Engine.getInstance()
@@ -58,6 +68,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Emits an event to split a media item at the current cursor time.
+   */
   onSplit(): void {
     const time = this.cursorX / this.distancePerTime;
     Engine.getInstance().emit({
@@ -68,6 +81,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Toggles playback state and emits an event with the current time.
+   */
   onTogglePlayPause(): void {
     this.isPlaying = !this.isPlaying; // Local toggle as fallback
     const currentSecond = this.cursorX / this.distancePerTime;
@@ -80,6 +96,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Emits an event to trigger the media import file picker.
+   */
   onClicImportMedia(): void {
     Engine.getInstance().emit({
       type: 'media.import.trigger',
@@ -88,6 +107,10 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Emits an event to update the distance per time (pixels per second) for the timeline.
+   * @param distancePerTime The new distance per time value.
+   */
   updateDistancePerTime(distancePerTime: number): void {
     Engine.getInstance().emit({
       type: 'parameters.distancePerTimeUpdated',
@@ -97,6 +120,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cleans up subscriptions when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

@@ -34,14 +34,23 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
   spaceBefore = 20;
   private subscription: Subscription = new Subscription();
 
+  /**
+   * Initializes the component and calculates the initial timeline width.
+   */
   constructor() {
     this.updateWidth();
   }
 
+  /**
+   * Sets up event listeners for engine events on component initialization.
+   */
   ngOnInit(): void {
     this.setupEngineListeners();
   }
 
+  /**
+   * Subscribes to engine events to update timeline duration, zoom, and cursor position.
+   */
   private setupEngineListeners(): void {
     this.subscription.add(
       Engine.getInstance()
@@ -80,16 +89,27 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Updates the timeline width based on the current duration and distance per time.
+   */
   private updateWidth(): void {
     this.width = this.distancePerTime * this.time; // Width based on distancePerTime
     // Optionally, apply scale to width if canvas uses it directly
     // this.width = this.distancePerTime * this.time * this.scale;
   }
 
+  /**
+   * Handles changes to the timeline width.
+   * @param width The new width value in pixels.
+   */
   onWidthChange(width: number): void {
     this.width = width;
   }
 
+  /**
+   * Handles changes to the zoom scale and updates the distance per time.
+   * @param scale The new scale value.
+   */
   onScaleChange(scale: number): void {
     this.scale = parseFloat(scale.toFixed(2));
     this.distancePerTime = this.scale * 50; // Update distancePerTime when scale changes
@@ -97,6 +117,10 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     this.updateDistancePerTime(this.distancePerTime); // Emit updated distancePerTime
   }
 
+  /**
+   * Emits an event when the cursor position changes.
+   * @param cursorX The new x-coordinate of the cursor in pixels.
+   */
   onCursorMove(cursorX: number): void {
     Engine.getInstance().emit({
       type: 'cursor.changed',
@@ -106,6 +130,10 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Emits an event to update the distance per time (pixels per second) for the timeline.
+   * @param distancePerTime The new distance per time value.
+   */
   updateDistancePerTime(distancePerTime: number): void {
     Engine.getInstance().emit({
       type: 'parameters.distancePerTimeUpdated',
@@ -115,6 +143,9 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cleans up subscriptions when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

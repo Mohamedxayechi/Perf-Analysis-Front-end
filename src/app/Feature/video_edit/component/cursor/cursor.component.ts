@@ -21,11 +21,17 @@ export class CursorComponent implements OnInit, OnDestroy {
 
   constructor() {}
 
+  /**
+   * Initializes the component by setting up event listeners and updating the seconds display.
+   */
   ngOnInit(): void {
     this.setupEngineListeners();
     this.updateSeconds();
   }
 
+  /**
+   * Subscribes to engine events to update cursor position and distance per time.
+   */
   private setupEngineListeners(): void {
     this.subscription.add(
       Engine.getInstance()
@@ -54,11 +60,18 @@ export class CursorComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Updates the seconds value based on the current cursor position and distance per time.
+   */
   private updateSeconds(): void {
     this.seconds = this.distancePerTime > 0 ? this.cursorX / this.distancePerTime : 0;
     // console.log(`[${new Date().toISOString()}] CursorComponent: Updated seconds to ${this.seconds}`);
   }
 
+  /**
+   * Initiates dragging of the cursor on mouse down.
+   * @param event The mouse event triggering the drag.
+   */
   startDrag(event: MouseEvent): void {
     event.preventDefault();
     this.isDragging = true;
@@ -66,6 +79,10 @@ export class CursorComponent implements OnInit, OnDestroy {
     document.addEventListener('mouseup', this.stopDrag);
   }
 
+  /**
+   * Handles cursor movement during dragging and emits updated cursor position.
+   * @param event The mouse event containing movement data.
+   */
   private handleDrag = (event: MouseEvent): void => {
     if (this.isDragging) {
       const newCursorX = event.clientX - this.spaceBefore; // Adjust for spaceBefore
@@ -80,12 +97,18 @@ export class CursorComponent implements OnInit, OnDestroy {
     }
   };
 
+  /**
+   * Stops the dragging operation and removes event listeners.
+   */
   private stopDrag = (): void => {
     this.isDragging = false;
     document.removeEventListener('mousemove', this.handleDrag);
     document.removeEventListener('mouseup', this.stopDrag);
   };
 
+  /**
+   * Cleans up subscriptions and event listeners when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     if (this.isDragging) {

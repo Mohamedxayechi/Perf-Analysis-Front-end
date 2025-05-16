@@ -1,10 +1,4 @@
-import {
-  Directive,
-  ElementRef,
-  AfterViewInit,
-  Renderer2,
-  Input,
-} from '@angular/core';
+import { Directive, ElementRef, AfterViewInit, Renderer2, Input } from '@angular/core';
 import { Engine } from '../../../Core/Engine';
 import { Media } from '../models/time-period.model';
 import interact from 'interactjs';
@@ -24,8 +18,16 @@ export class ResizableDirective implements AfterViewInit {
   private media: Media | null = null;
   private effectiveTimePerWidth: number = 50; // Fallback for validation
 
+  /**
+   * Initializes the directive with references to the element and renderer.
+   * @param el Reference to the host element.
+   * @param renderer Service for manipulating the DOM.
+   */
   constructor(private el: ElementRef, private renderer: Renderer2) {}
 
+  /**
+   * Sets up the resizable behavior and event listeners after the view is initialized.
+   */
   ngAfterViewInit(): void {
     // Validate timePerWidth
     this.effectiveTimePerWidth = this.timePerWidth;
@@ -164,6 +166,10 @@ export class ResizableDirective implements AfterViewInit {
       });
   }
 
+  /**
+   * Creates a placeholder element to maintain layout during left-edge resizing.
+   * @param target The target element being resized.
+   */
   private createPlaceholder(target: HTMLElement) {
     const parent = target.parentElement?.parentElement;
     if (!parent) {
@@ -185,6 +191,9 @@ export class ResizableDirective implements AfterViewInit {
     );
   }
 
+  /**
+   * Removes the placeholder element from the DOM if it exists.
+   */
   private removePlaceholder() {
     if (this.placeholder && this.placeholder.parentNode) {
       this.renderer.removeChild(this.placeholder.parentNode, this.placeholder);
@@ -195,6 +204,9 @@ export class ResizableDirective implements AfterViewInit {
     }
   }
 
+  /**
+   * Adds resize handles and styles to the host element for resizable behavior.
+   */
   addResizeStyle() {
     const handle = this.renderer.createElement('div');
     this.renderer.appendChild(this.el.nativeElement, handle);

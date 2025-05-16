@@ -18,7 +18,7 @@ import { Media } from '../../models/time-period.model';
   templateUrl: './drag-list-elements.component.html',
   styleUrl: './drag-list-elements.component.css',
 })
-export class DragListElementsComponent implements OnInit, OnDestroy {
+export class DragListElementsComponent  {
   @Input() distancePerTime = 50;
   @Input() index = 0;
   @Input() item: Media = {
@@ -29,14 +29,12 @@ export class DragListElementsComponent implements OnInit, OnDestroy {
     thumbnail: '',
   };
 
-  ngOnInit(): void {
-    // console.log(`[${new Date().toISOString()}] DragListElements initialized for index ${this.index}, label: ${this.item.label}`);
-  }
 
-  ngOnDestroy(): void {
-   
-  }
 
+  /**
+   * Computes dynamic CSS styles for the media element based on its duration and thumbnail.
+   * @returns An object containing width, background-size, and background-image styles.
+   */
   get dynamicElementStyle() {
     const width = this.distancePerTime * (this.item.time || 0);
     return {
