@@ -1,0 +1,9 @@
+    <div class="draggable-clip"
+      [attr.data-id]="clip.id"
+      [attr.data-layer]="getLayerFromClipId(clip.id)"
+      [attr.data-x]="clip.startTime*this.distancePerTime"
+      [attr.data-y]="getYFromLayerId((getLayerFromClipId(clip.id)?.id) || '')"
+      [style.transform]="getTransformClip(clip, getLayerIndexFromCurrentClip())"
+    >
+      {{ clip.source.name }}
+    </div>

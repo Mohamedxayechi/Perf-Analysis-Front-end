@@ -8,6 +8,7 @@ import { CursorComponent } from '../cursor/cursor.component';
 import { ActionsBarComponent } from '../tool/actions-bar/actions-bar.component';
 import { DragListService } from '../../services/drag-list.service';
 import { ParameterService } from '../../services/parameter.service';
+import { LayersComponent } from '../../../layers/component/layers/layers.component';
 
 @Component({
     selector: 'app-main-video-edit',
@@ -20,6 +21,7 @@ import { ParameterService } from '../../services/parameter.service';
         MainCanvasComponent,
         CursorComponent,
         ActionsBarComponent,
+        LayersComponent
     ],
     templateUrl: './main-video-edit.component.html',
     styleUrl: './main-video-edit.component.scss'

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-inferrable-types */
+
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import Konva from 'konva';
 import { ParameterService } from '../../services/parameter.service';

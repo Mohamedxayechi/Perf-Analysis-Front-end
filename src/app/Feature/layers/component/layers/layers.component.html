@@ -1,0 +1,18 @@
+<div [ngStyle]="containerStyle" class="timeline-container">
+  <!-- Render background rows for each list -->
+  <div>
+    <div
+      class="list-row"
+      *ngFor="let layer of timeLine.layers; let i = index"
+      [style.top]="i * this.layerHeight + 'px'"
+    >
+      <div class="list-label">Layer {{ i + 1 }}</div>
+    </div>
+  </div>
+
+  <!-- Render draggable items -->
+  @for (layer of timeLine.layers; track layer.id) { @for (clip of layer.clips;
+  track clip.id) {
+  <app-clip [clip]="clip" [distancePerTime]="distancePerTime" [layerHeight]="layerHeight"></app-clip>
+  }}
+</div>

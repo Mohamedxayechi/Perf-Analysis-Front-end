@@ -22,6 +22,7 @@
         [distancePerTime]="distancePerTime * scale"
         [spaceBefore]="spaceBefore"
       ></app-drag-drop-horizontalorting>
+      <app-layers></app-layers>
     </div>
     <app-zoom (zoomChange)="onScaleChange($event)" [zoom]="scale"></app-zoom>
   </div>

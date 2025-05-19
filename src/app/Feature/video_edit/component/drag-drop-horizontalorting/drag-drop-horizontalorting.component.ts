@@ -5,10 +5,11 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { DragListElementsComponent } from '../drag-list-elements/drag-list-elements.component';
+
 import { DragListService } from '../../services/drag-list.service';
 import { Media } from '../../models/time-period.model';
 import { ParameterService } from '../../services/parameter.service';
+import { DragListElementsComponent } from '../drag-list-element/drag-list-element.component';
 
 @Component({
     selector: 'app-drag-drop-horizontalorting',

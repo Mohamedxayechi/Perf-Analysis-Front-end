@@ -6,7 +6,7 @@ import { ItemListMenuComponent } from '../tool/item-list-menu/item-list-menu.com
 import { Media } from '../../models/time-period.model';
 
 @Component({
-  selector: 'app-drag-list-elements',
+  selector: 'app-drag-list-element',
   standalone: true,
   imports: [
     ResizableDirective,
@@ -15,8 +15,8 @@ import { Media } from '../../models/time-period.model';
     CdkDragHandle,
     ItemListMenuComponent,
   ],
-  templateUrl: './drag-list-elements.component.html',
-  styleUrl: './drag-list-elements.component.css',
+  templateUrl: './drag-list-element.component.html',
+  styleUrl: './drag-list-element.component.css',
 })
 export class DragListElementsComponent {
   @Input() distancePerTime = 50;
