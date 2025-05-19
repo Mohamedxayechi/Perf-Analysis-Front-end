@@ -1,5 +1,5 @@
 import { Display } from './Display/Display';
-import { Logs } from './Logs/Logs';
+
 import { Storage } from './Storage/Storage';
 // import { Library } from './Library/Library';
 
@@ -33,7 +33,7 @@ export class Engine {
 
     // Initialize and register core domains
     this.registerDomain(new Display());
-    this.registerDomain(new Logs());
+   
     // this.registerDomain(new Storage());
     // this.registerDomain(new Library());
 
