@@ -4,7 +4,7 @@ import { MediaInitializerComponent } from './Feature/video_edit/models/MediaInit
 import { HttpClientModule } from '@angular/common/http';
 import { Engine } from '../app/Core/Engine';
 import { Display } from '../app/Core/Display/Display';
-import { Logs } from '../app/Core/Logs/Logs';
+
 import { Domain } from '../app/Core/Engine';
 
 @Component({
@@ -20,7 +20,7 @@ export class AppComponent implements OnInit {
     // Get injected domain instances
     const domains: Domain[] = [
       this.injector.get(Display),
-      this.injector.get(Logs)
+    
     ];
     // Initialize Engine and override default domains
     engine.init(); // Run default init
