@@ -1,104 +1,59 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { eventBus, EventPayload } from '../Utility/event-bus';
+import { HttpClient } from '@angular/common/http';
+import { EventPayload } from '../Utility/event-bus';
 
 interface LogEntry {
-  '@timestamp': string;
-  event: {
-    type: string;
-    origin: string;
-    processed: boolean;
-    data?: any;
-  };
-  message: string;
+  timestamp: string;
+  eventType: string;
+  origin?: string;
+  correlationId?: string;
+  data?: any;
+  processed?: boolean;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class Logs implements OnDestroy {
-  private subscription = new Subscription();
-  private logEntries: LogEntry[] = [];
-  private readonly logFileName = 'application.log';
+  private backendUrl = 'http://localhost:5251/api/logs';
 
-  constructor() {
-    this.setupSubscriptions();
+  constructor(private http?: HttpClient) {
+    console.log(`[${new Date().toISOString()}] Logs: Service instantiated`);
   }
 
-  /**
-   * Sets up subscription to capture all events from the event bus.
-   */
-  private setupSubscriptions(): void {
-    console.log(`[${new Date().toISOString()}] Logs: Setting up subscriptions`);
-    this.subscription.add(
-      eventBus.subscribe((event: EventPayload) => this.handleEvent(event))
-    );
-  }
+  handleEvent(event: EventPayload): void {
+    console.log(`[${new Date().toISOString()}] Logs: Processing event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}, data:`, event.data);
 
-  /**
-   * Processes incoming events and adds them to the log entries.
-   * @param event The event payload to log.
-   */
-  private handleEvent(event: EventPayload): void {
-    const timestamp = new Date().toISOString();
     const logEntry: LogEntry = {
-      '@timestamp': timestamp,
-      event: {
-        type: event.type,
-        origin: event.origin || 'unknown',
-        processed: event.processed || false,
-        data: event.data,
-      },
-      message: `[${timestamp}] Event: ${event.type}, Origin: ${event.origin}, Data: ${JSON.stringify(event.data)}`,
+      timestamp: new Date().toISOString(),
+      eventType: event.type,
+      origin: event.origin,
+      correlationId: event.correlationId,
+      data: event.data,
+      processed: event.processed,
     };
 
-    console.log(`[${timestamp}] Logs: Captured event`, logEntry);
-    this.logEntries.push(logEntry);
+    this.sendLogToBackend(logEntry);
   }
 
-  /**
-   * Returns the current log entries for UI display.
-   */
-  public getLogs(): LogEntry[] {
-    return [...this.logEntries];
-  }
-
-  /**
-   * Generates and downloads the current log file with all entries in JSON Lines format.
-   */
-  public downloadLogFile(): void {
-    try {
-      const logContent = this.logEntries.map(entry => JSON.stringify(entry)).join('\n');
-      const blob = new Blob([logContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = this.logFileName;
-      a.click();
-
-      URL.revokeObjectURL(url);
-      a.remove();
-
-      console.log(`[${new Date().toISOString()}] Logs: Downloaded ${this.logFileName}`);
-    } catch (error) {
-      console.error(`[${new Date().toISOString()}] Logs: Failed to download log file`, error);
+  private sendLogToBackend(logEntry: LogEntry): void {
+    console.log(`[${new Date().toISOString()}] Logs: Preparing to send log:`, logEntry);
+    if (!this.http) {
+      console.warn(`[${new Date().toISOString()}] Logs: HttpClient not available, skipping backend log for event: ${logEntry.eventType}`);
+      return;
     }
+    this.http.post(this.backendUrl, logEntry).subscribe({
+      next: (response) => {
+        console.log(`[${new Date().toISOString()}] Logs: Successfully sent log for event: ${logEntry.eventType}`, response);
+      },
+      error: (error) => {
+        console.error(`[${new Date().toISOString()}] Logs: Failed to send log for event: ${logEntry.eventType}`);
+        console.error('Error details:', error.message, error.status, error.statusText);
+      },
+    });
   }
 
-  /**
-   * Clears all log entries (optional, for memory management or reset).
-   */
-  public clearLogs(): void {
-    this.logEntries = [];
-    console.log(`[${new Date().toISOString()}] Logs: Cleared all log entries`);
-  }
-
-  /**
-   * Cleans up subscriptions and resources on destruction.
-   */
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-    console.log(`[${new Date().toISOString()}] Logs: Unsubscribed from event bus`);
+    console.log(`[${new Date().toISOString()}] Logs: Cleaning up`);
   }
 }

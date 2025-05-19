@@ -1,12 +1,12 @@
 import { Display } from './Display/Display';
+import { Logs } from './Logs/Logs';
 import { Storage } from './Storage/Storage';
-
 // import { Library } from './Library/Library';
 
 import { EventEmitter } from './Utility/EventEmitter';
 import { eventBus, EventPayload } from './Utility/event-bus';
 
-interface Domain {
+export interface Domain {
   handleEvent(event: EventPayload): void;
 }
 
@@ -32,12 +32,13 @@ export class Engine {
     if (this.isInitialized) return;
 
     // Initialize and register core domains
-       this.registerDomain(new Display());
-    //  this.registerDomain(new Storage());
-    //  this.registerDomain(new Library());
+    this.registerDomain(new Display());
+    this.registerDomain(new Logs());
+    // this.registerDomain(new Storage());
+    // this.registerDomain(new Library());
 
     this.isInitialized = true;
-    // console.log('[${new Date().toISOString()}] Engine initialized with core domains');
+    // console.log(`[${new Date().toISOString()}] Engine initialized with core domains`);
   }
 
   emit<T>(event: EventPayload<T>): void {
