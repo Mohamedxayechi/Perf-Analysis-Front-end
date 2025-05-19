@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, Inject, Optional } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EventPayload } from '../Utility/event-bus';
 
@@ -17,7 +17,7 @@ interface LogEntry {
 export class Logs implements OnDestroy {
   private backendUrl = 'http://localhost:5251/api/logs';
 
-  constructor(private http?: HttpClient) {
+  constructor(@Optional() @Inject(HttpClient) private http?: HttpClient) {
     console.log(`[${new Date().toISOString()}] Logs: Service instantiated`);
   }
 
