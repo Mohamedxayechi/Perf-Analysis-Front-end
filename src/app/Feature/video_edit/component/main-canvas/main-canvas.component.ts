@@ -280,18 +280,5 @@ export class MainCanvasComponent implements AfterViewInit {
     }
   }
 
-  /**
-   * Toggles playback state and emits an event with the current time.
-   */
-  togglePlayPause(): void {
-    console.log(
-      `[${new Date().toISOString()}] MainCanvas: Emitting playback.toggle, cursorX: ${this.cursorX}`
-    );
-    Engine.getInstance().emit({
-      type: 'playback.toggle',
-      data: { currentSecond: this.cursorX / this.distancePerTime },
-      origin: 'component',
-      processed: false,
-    });
-  }
+
 }
