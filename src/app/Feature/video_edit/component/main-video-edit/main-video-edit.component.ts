@@ -73,6 +73,7 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
             case 'cursor.updated':
               if (event.data?.cursorX !== undefined) {
                 this.cursorX = event.data.cursorX;
+                
               }
               break;
             case 'zoom.changed': // Handle zoom changes from Display service

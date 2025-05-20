@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,11 +24,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   volume = 0.5;
   playbackSpeed = 1;
   availableSpeeds = [0.5, 1, 1.5, 2];
-  skipInterval = 5; // Default skip interval (5s)
-  availableSkipIntervals = [5, 10, 30]; // Options for skip interval
+  skipInterval = 5;
+  availableSkipIntervals = [5, 10, 30];
   private subscription: Subscription = new Subscription();
-
-  constructor(private ngZone: NgZone) {}
 
   ngOnInit(): void {
     console.log(`[${new Date().toISOString()}] ActionsBar: Available speeds:`, this.availableSpeeds);
@@ -37,42 +35,51 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   private setupEngineListeners(): void {
+    const eventsObservable = Engine.getInstance().getEvents();
+    console.log(`[${new Date().toISOString()}] ActionsBar: Subscribing to Engine events`);
     this.subscription.add(
-      Engine.getInstance()
-        .getEvents()
-        .on('*', (event: EventPayload) => {
-          if (event.processed) return;
-          this.ngZone.run(() => {
-            switch (event.type) {
-              case 'media.initialized':
-              case 'media.imported':
-              case 'media.resized.completed':
-                if (event.data?.updatedMedias) {
-                  this.medias = event.data.updatedMedias;
-                }
-                break;
-              case 'cursor.updated':
-                this.cursorX = event.data?.cursorX || this.cursorX;
-                break;
-              case 'parameters.distancePerTimeUpdated':
-                this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
-                break;
-              case 'playback.toggled':
-                this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
-                break;
-              case 'volume.changed':
-                this.volume = event.data?.volume ?? this.volume;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Volume updated, volume: ${this.volume}`);
-                break;
-              case 'playback.speed.changed':
-                this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
-                break;
+      eventsObservable.on('*', (event: EventPayload) => {
+        console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
+        if (event.processed) return;
+        switch (event.type) {
+          case 'media.initialized':
+          case 'media.imported':
+          case 'media.resized.completed':
+            if (event.data?.updatedMedias) {
+              this.medias = event.data.updatedMedias;
+              console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}`);
             }
-          });
-        })
+            break;
+       
+          case 'parameters.distancePerTimeUpdated':
+            this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Updated distancePerTime to ${this.distancePerTime}`);
+            break;
+          case 'playback.toggled':
+            this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
+            break;
+          case 'volume.changed':
+            this.volume = event.data?.volume ?? this.volume;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Volume updated, volume: ${this.volume}`);
+            break;
+          case 'playback.speed.changed':
+            this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
+            break;
+        }
+      })
     );
+
+    // Explicit subscriptions
+    this.subscription.add(
+      eventsObservable.on('cursor.updated', (event: EventPayload) => {
+        console.log(`[${new Date().toISOString()}] ActionsBar: Explicit cursor.updated, cursorX: ${event.data?.cursorX}`);
+        this.cursorX = event.data?.cursorX !== undefined ? event.data.cursorX : this.cursorX;
+        console.log(`[${new Date().toISOString()}] ActionsBar: Updated cursorX to ${this.cursorX}`);
+      })
+    );
+
   }
 
   onSplit(): void {
@@ -137,7 +144,6 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
       origin: 'component',
       processed: false,
     });
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitted playback.speed.changed event with speed: ${parsedSpeed}`);
   }
 
   onSkipIntervalChange(interval: number | string): void {
@@ -151,7 +157,22 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   skipForward(): void {
-    const currentSecond = this.cursorX / this.distancePerTime;
+    console.log(`[${new Date().toISOString()}] ActionsBar: Before skipForward, cursorX: ${this.cursorX}, distancePerTime: ${this.distancePerTime}`);
+    let currentSecond = this.cursorX / this.distancePerTime;
+    // Fallback: Use medias to estimate currentSecond
+    if (this.cursorX === 0 && this.medias.length > 0) {
+      const currentMedia = this.medias.find((m, i) => {
+        const startTime = m.startTime ?? 0;
+        const endTime = m.endTime ?? m.time ?? Infinity;
+        const currentTime = this.cursorX / this.distancePerTime;
+        return currentTime >= startTime && currentTime < endTime;
+      });
+      if (currentMedia?.startTime !== undefined) {
+        currentSecond = currentMedia.startTime;
+        this.cursorX = currentSecond * this.distancePerTime;
+        console.log(`[${new Date().toISOString()}] ActionsBar: Synced cursorX to ${this.cursorX} from media startTime: ${currentSecond}`);
+      }
+    }
     const newSecond = currentSecond + this.skipInterval;
     console.log(`[${new Date().toISOString()}] ActionsBar: Skipping forward ${this.skipInterval}s, from ${currentSecond} to ${newSecond}`);
     Engine.getInstance().emit({
@@ -163,7 +184,22 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   skipBackward(): void {
-    const currentSecond = this.cursorX / this.distancePerTime;
+    console.log(`[${new Date().toISOString()}] ActionsBar: Before skipBackward, cursorX: ${this.cursorX}, distancePerTime: ${this.distancePerTime}`);
+    let currentSecond = this.cursorX / this.distancePerTime;
+    // Fallback: Use medias to estimate currentSecond
+    if (this.cursorX === 0 && this.medias.length > 0) {
+      const currentMedia = this.medias.find((m, i) => {
+        const startTime = m.startTime ?? 0;
+        const endTime = m.endTime ?? m.time ?? Infinity;
+        const currentTime = this.cursorX / this.distancePerTime;
+        return currentTime >= startTime && currentTime < endTime;
+      });
+      if (currentMedia?.startTime !== undefined) {
+        currentSecond = currentMedia.startTime;
+        this.cursorX = currentSecond * this.distancePerTime;
+        console.log(`[${new Date().toISOString()}] ActionsBar: Synced cursorX to ${this.cursorX} from media startTime: ${currentSecond}`);
+      }
+    }
     const newSecond = Math.max(0, currentSecond - this.skipInterval);
     console.log(`[${new Date().toISOString()}] ActionsBar: Skipping backward ${this.skipInterval}s, from ${currentSecond} to ${newSecond}`);
     Engine.getInstance().emit({

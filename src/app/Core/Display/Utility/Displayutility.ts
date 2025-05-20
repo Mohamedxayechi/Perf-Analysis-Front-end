@@ -16,10 +16,10 @@ export class DispalyUtility {
    * @returns Object containing the updated media list.
    */
   static initializeMedias(medias: Media[]): { updatedMedias: Media[] } {
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility.initializeMedias: Initializing with ${medias.length} medias:`,
-      medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail, time: m.time }))
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility.initializeMedias: Initializing with ${medias.length} medias:`,
+    //   medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail, time: m.time }))
+    // );
     let accumulatedTime = 0;
     const updatedMedias = medias
       .filter((m) => {
@@ -52,17 +52,17 @@ export class DispalyUtility {
           image: media.image || undefined,
           isThumbnailOnly: media.isThumbnailOnly ?? false,
         };
-        console.log(
-          `[${new Date().toISOString()}] DispalyUtility: Initialized media ${i}:`,
-          { label: updatedMedia.label, startTime, endTime, video: updatedMedia.video, image: updatedMedia.image, thumbnail: updatedMedia.thumbnail, isThumbnailOnly: updatedMedia.isThumbnailOnly }
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] DispalyUtility: Initialized media ${i}:`,
+        //   { label: updatedMedia.label, startTime, endTime, video: updatedMedia.video, image: updatedMedia.image, thumbnail: updatedMedia.thumbnail, isThumbnailOnly: updatedMedia.isThumbnailOnly }
+        // );
         return updatedMedia;
       });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Initialization complete, updatedMedias: ${updatedMedias.length}, totalTime: ${accumulatedTime}`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Initialization complete, updatedMedias: ${updatedMedias.length}, totalTime: ${accumulatedTime}`
+    // );
     return { updatedMedias };
   }
 
@@ -90,9 +90,9 @@ export class DispalyUtility {
     });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Resized media at index ${index} to time ${time}, totalTime: ${accumulatedTime}`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Resized media at index ${index} to time ${time}, totalTime: ${accumulatedTime}`
+    // );
     return { updatedMedias };
   }
 
@@ -144,10 +144,10 @@ export class DispalyUtility {
     });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Added media:`,
-      { label: media.label, video: media.video, image: media.image, thumbnail: media.thumbnail, time: media.time, isThumbnailOnly: media.isThumbnailOnly }
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Added media:`,
+    //   { label: media.label, video: media.video, image: media.image, thumbnail: media.thumbnail, time: media.time, isThumbnailOnly: media.isThumbnailOnly }
+    // );
   }
 
   /**
@@ -171,10 +171,10 @@ export class DispalyUtility {
     });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Deleted media at index ${index}:`,
-      deletedMedia
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Deleted media at index ${index}:`,
+    //   deletedMedia
+    // );
     return { deletedMedia, updatedMedias };
   }
 
@@ -199,10 +199,10 @@ export class DispalyUtility {
     });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Duplicated media at index ${index}:`,
-      duplicatedMedia
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Duplicated media at index ${index}:`,
+    //   duplicatedMedia
+    // );
     return { duplicatedMedia, updatedMedias };
   }
 
@@ -239,9 +239,9 @@ export class DispalyUtility {
     });
     DispalyUtility.mediasSubject.next(updatedMedias);
     DispalyUtility.totalTimeSubject.next(accumulatedTime);
-    console.log(
-      `[${new Date().toISOString()}] DispalyUtility: Split media at index ${index}, splitTime: ${splitTime}`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] DispalyUtility: Split media at index ${index}, splitTime: ${splitTime}`
+    // );
     return { updatedMedias };
   }
 
@@ -250,7 +250,7 @@ export class DispalyUtility {
    */
   static togglePlayPause(): void {
     const currentIsPlaying = DispalyUtility.isPlayingSubject.getValue();
-    console.log(`[${new Date().toISOString()}] DispalyUtility: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
+    // console.log(`[${new Date().toISOString()}] DispalyUtility: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
     DispalyUtility.isPlayingSubject.next(!currentIsPlaying);
   }
 
@@ -268,13 +268,13 @@ export class DispalyUtility {
       const startTime = media.startTime ?? accumulatedTime;
       const endTime = media.endTime ?? (startTime + (media.time ?? 0));
       if (globalSecond >= startTime && globalSecond < endTime) {
-        console.log(`[${new Date().toISOString()}] DispalyUtility: Found media at index ${i}`, {
-          globalSecond,
-          startTime,
-          endTime,
-          localSecond: globalSecond - startTime,
-          label: media.label,
-        });
+        // console.log(`[${new Date().toISOString()}] DispalyUtility: Found media at index ${i}`, {
+        //   globalSecond,
+        //   startTime,
+        //   endTime,
+        //   localSecond: globalSecond - startTime,
+        //   label: media.label,
+        // });
         return { index: i, localSecond: globalSecond - startTime };
       }
       accumulatedTime = endTime;

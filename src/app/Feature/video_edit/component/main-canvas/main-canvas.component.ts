@@ -34,11 +34,11 @@ export class MainCanvasComponent implements AfterViewInit {
    * Initializes the component and subscribes to the event bus for event handling.
    */
   constructor() {
-    console.log(`[${new Date().toISOString()}] MainCanvas: Constructor called, subscribing to eventBus`);
+    // console.log(`[${new Date().toISOString()}] MainCanvas: Constructor called, subscribing to eventBus`);
     eventBus.subscribe((event: EventPayload) => {
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Received event: ${event.type}, origin: ${event.origin}, mediaElement: ${event.data?.mediaElement?.constructor.name || 'undefined'}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Received event: ${event.type}, origin: ${event.origin}, mediaElement: ${event.data?.mediaElement?.constructor.name || 'undefined'}`
+      // );
       this.handleEvent(event);
     });
   }
@@ -47,7 +47,7 @@ export class MainCanvasComponent implements AfterViewInit {
    * Sets up the Konva stage and layer after the view is initialized.
    */
   ngAfterViewInit(): void {
-    console.log(`[${new Date().toISOString()}] MainCanvas: ngAfterViewInit, setting up Konva stage`);
+    // console.log(`[${new Date().toISOString()}] MainCanvas: ngAfterViewInit, setting up Konva stage`);
     this.stage = new Konva.Stage({
       container: this.canvasContainerRef.nativeElement,
       width: this.CANVAS_WIDTH,
@@ -65,9 +65,9 @@ export class MainCanvasComponent implements AfterViewInit {
     this.layer.add(this.konvaImage);
     this.stage.add(this.layer);
     this.stage.draw();
-    console.log(
-      `[${new Date().toISOString()}] MainCanvas: Konva stage initialized, stage size: ${this.stage.width()}x${this.stage.height()}`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] MainCanvas: Konva stage initialized, stage size: ${this.stage.width()}x${this.stage.height()}`
+    // );
   }
 
   /**
@@ -77,16 +77,16 @@ export class MainCanvasComponent implements AfterViewInit {
   private handleEvent(event: EventPayload): void {
     // Only process render.frame from 'domain' origin (Display service)
     if (event.type === 'render.frame' && event.origin !== 'domain') {
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Ignoring render.frame from non-domain origin: ${event.origin}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Ignoring render.frame from non-domain origin: ${event.origin}`
+      // );
       return;
     }
 
     if (event.processed && event.type !== 'render.frame') {
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Skipping processed event: ${event.type}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Skipping processed event: ${event.type}`
+      // );
       return;
     }
 
@@ -100,9 +100,9 @@ export class MainCanvasComponent implements AfterViewInit {
           break;
         case 'media.import.trigger':
           this.fileInput.nativeElement.click();
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: Triggered file input`
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] MainCanvas: Triggered file input`
+          // );
           break;
         case 'cursor.updated':
           this.cursorX = event.data?.cursorX || 0;
@@ -112,15 +112,15 @@ export class MainCanvasComponent implements AfterViewInit {
           break;
         case 'parameters.distancePerTimeUpdated':
           this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: distancePerTime updated to ${this.distancePerTime}`
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] MainCanvas: distancePerTime updated to ${this.distancePerTime}`
+          // );
           break;
         case 'playback.toggled':
           this.isPlaying = event.data?.isPlaying || false;
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: Playback toggled, isPlaying: ${this.isPlaying}`
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] MainCanvas: Playback toggled, isPlaying: ${this.isPlaying}`
+          // );
           break;
         default:
           console.warn(
@@ -140,9 +140,9 @@ export class MainCanvasComponent implements AfterViewInit {
    */
   private handleRenderFrame(event: EventPayload): void {
     const { mediaElement, width, height } = event.data || {};
-    console.log(
-      `[${new Date().toISOString()}] MainCanvas: render.frame, mediaElement: ${mediaElement?.constructor.name || 'null'}, width: ${width}, height: ${height}, isPlaying: ${this.isPlaying}, src: ${mediaElement?.src || 'undefined'}`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] MainCanvas: render.frame, mediaElement: ${mediaElement?.constructor.name || 'null'}, width: ${width}, height: ${height}, isPlaying: ${this.isPlaying}, src: ${mediaElement?.src || 'undefined'}`
+    // );
 
     // Stop any ongoing animation
     if (this.animateFrame) {
@@ -156,7 +156,7 @@ export class MainCanvasComponent implements AfterViewInit {
       this.video = null;
       this.layer.batchDraw();
       this.stage.draw();
-      console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas`);
+      // console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas`);
       return;
     }
 
@@ -171,24 +171,24 @@ export class MainCanvasComponent implements AfterViewInit {
 
     if (mediaElement instanceof HTMLVideoElement) {
       this.video = mediaElement;
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Video element received, src: ${this.video.src}, currentTime: ${this.video.currentTime}, readyState: ${this.video.readyState}, videoWidth: ${this.video.videoWidth}, videoHeight: ${this.video.videoHeight}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Video element received, src: ${this.video.src}, currentTime: ${this.video.currentTime}, readyState: ${this.video.readyState}, videoWidth: ${this.video.videoWidth}, videoHeight: ${this.video.videoHeight}`
+      // );
 
       const renderVideoFrame = () => {
         if (!this.isPlaying || !this.video || this.video.paused || this.video.ended) {
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: Stopping video frame render, isPlaying: ${this.isPlaying}, paused: ${this.video?.paused}, ended: ${this.video?.ended}`
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] MainCanvas: Stopping video frame render, isPlaying: ${this.isPlaying}, paused: ${this.video?.paused}, ended: ${this.video?.ended}`
+          // );
           this.animateFrame = 0;
           return;
         }
         this.konvaImage.image(this.video);
         this.layer.batchDraw();
         this.stage.draw();
-        console.log(
-          `[${new Date().toISOString()}] MainCanvas: Rendered video frame, currentTime: ${this.video.currentTime}`
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] MainCanvas: Rendered video frame, currentTime: ${this.video.currentTime}`
+        // );
         this.animateFrame = requestAnimationFrame(renderVideoFrame);
       };
 
@@ -196,17 +196,17 @@ export class MainCanvasComponent implements AfterViewInit {
         this.konvaImage.image(this.video);
         this.layer.batchDraw();
         this.stage.draw();
-        console.log(
-          `[${new Date().toISOString()}] MainCanvas: Initial video frame rendered, currentTime: ${this.video.currentTime}`
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] MainCanvas: Initial video frame rendered, currentTime: ${this.video.currentTime}`
+        // );
         if (this.isPlaying) {
           renderVideoFrame();
         }
       } else {
         this.video.addEventListener('loadedmetadata', () => {
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: Video metadata loaded, starting render`
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] MainCanvas: Video metadata loaded, starting render`
+          // );
           this.konvaImage.image(this.video);
           this.layer.batchDraw();
           this.stage.draw();
@@ -221,7 +221,7 @@ export class MainCanvasComponent implements AfterViewInit {
           this.konvaImage.image(null);
           this.layer.batchDraw();
           this.stage.draw();
-          console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to video error`);
+          // console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to video error`);
         }, { once: true });
       }
     } else if (mediaElement instanceof HTMLImageElement) {
@@ -230,9 +230,9 @@ export class MainCanvasComponent implements AfterViewInit {
       this.konvaImage.image(mediaElement);
       this.layer.batchDraw();
       this.stage.draw();
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Image rendered, src: ${mediaElement.src}, width: ${mediaElement.width}, height: ${mediaElement.height}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Image rendered, src: ${mediaElement.src}, width: ${mediaElement.width}, height: ${mediaElement.height}`
+      // );
     } else {
       console.error(
         `[${new Date().toISOString()}] MainCanvas: Invalid mediaElement type: ${mediaElement?.constructor.name}`
@@ -241,7 +241,7 @@ export class MainCanvasComponent implements AfterViewInit {
       this.video = null;
       this.layer.batchDraw();
       this.stage.draw();
-      console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to invalid mediaElement`);
+      // console.log(`[${new Date().toISOString()}] MainCanvas: Cleared canvas due to invalid mediaElement`);
     }
   }
 
@@ -253,10 +253,10 @@ export class MainCanvasComponent implements AfterViewInit {
     const { updatedMedias } = event.data || {};
     if (Array.isArray(updatedMedias)) {
       this.medias = updatedMedias;
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Media list updated, count: ${this.medias.length}, medias:`,
-        this.medias.map((m) => ({ label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Media list updated, count: ${this.medias.length}, medias:`,
+      //   this.medias.map((m) => ({ label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail }))
+      // );
     }
   }
 
@@ -268,9 +268,9 @@ export class MainCanvasComponent implements AfterViewInit {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      console.log(
-        `[${new Date().toISOString()}] MainCanvas: Media selected, file: ${file.name}`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] MainCanvas: Media selected, file: ${file.name}`
+      // );
       Engine.getInstance().emit({
         type: 'media.import',
         data: { file },
