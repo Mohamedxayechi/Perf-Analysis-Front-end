@@ -5,7 +5,7 @@ export interface EventPayload<T = any> {
   data?: T;
   correlationId?: string;
   origin?: 'component' | 'domain';
-  processed?: boolean; // New flag to track if event has been routed
+  processed?: boolean; //  flag to track if event has been routed
 }
 
 export const eventBus = new Subject<EventPayload>();

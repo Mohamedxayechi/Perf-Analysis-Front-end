@@ -40,7 +40,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     this.subscription.add(
       eventsObservable.on('*', (event: EventPayload) => {
         console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
-        if (event.processed) return;
+       
         switch (event.type) {
           case 'media.initialized':
           case 'media.imported':
@@ -67,18 +67,13 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
             this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
             console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
             break;
+          case 'cursor.updated':
+            this.cursorX = event.data?.cursorX !== undefined ? event.data.cursorX : this.cursorX;
+                break;
         }
       })
     );
 
-    // Explicit subscriptions
-    this.subscription.add(
-      eventsObservable.on('cursor.updated', (event: EventPayload) => {
-        console.log(`[${new Date().toISOString()}] ActionsBar: Explicit cursor.updated, cursorX: ${event.data?.cursorX}`);
-        this.cursorX = event.data?.cursorX !== undefined ? event.data.cursorX : this.cursorX;
-        console.log(`[${new Date().toISOString()}] ActionsBar: Updated cursorX to ${this.cursorX}`);
-      })
-    );
 
   }
 
