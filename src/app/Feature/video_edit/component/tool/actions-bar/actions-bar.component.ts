@@ -18,13 +18,11 @@ import { Subscription } from 'rxjs';
 })
 export class ActionsBarComponent implements OnInit, OnDestroy {
   medias: Media[] = [];
-  private distancePerTime = 50;
-  private cursorX = 0;
   isPlaying = false;
   volume = 0.5;
   playbackSpeed = 1;
+  skipInterval = 5; // Added to support template binding
   availableSpeeds = [0.5, 1, 1.5, 2];
-  skipInterval = 5;
   availableSkipIntervals = [5, 10, 30];
   private subscription: Subscription = new Subscription();
 
@@ -40,7 +38,6 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
     this.subscription.add(
       eventsObservable.on('*', (event: EventPayload) => {
         console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
-       
         switch (event.type) {
           case 'media.initialized':
           case 'media.imported':
@@ -49,11 +46,6 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
               this.medias = event.data.updatedMedias;
               console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}`);
             }
-            break;
-       
-          case 'parameters.distancePerTimeUpdated':
-            this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
-            console.log(`[${new Date().toISOString()}] ActionsBar: Updated distancePerTime to ${this.distancePerTime}`);
             break;
           case 'playback.toggled':
             this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
@@ -67,21 +59,20 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
             this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
             console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
             break;
-          case 'cursor.updated':
-            this.cursorX = event.data?.cursorX !== undefined ? event.data.cursorX : this.cursorX;
-                break;
+          case 'skip.interval.updated':
+            this.skipInterval = event.data?.skipInterval ?? this.skipInterval;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Skip interval updated to ${this.skipInterval}s`);
+            break;
         }
       })
     );
-
-
   }
 
   onSplit(): void {
-    const time = this.cursorX / this.distancePerTime;
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting split media request`);
     Engine.getInstance().emit({
       type: 'media.split',
-      data: { time },
+      data: {}, // No time calculation here
       origin: 'component',
       processed: false,
     });
@@ -89,11 +80,10 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onTogglePlayPause(): void {
     this.isPlaying = !this.isPlaying;
-    const currentSecond = this.cursorX / this.distancePerTime;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Toggle play/pause, isPlaying: ${this.isPlaying}, currentSecond: ${currentSecond}`);
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting toggle play/pause, isPlaying: ${this.isPlaying}`);
     Engine.getInstance().emit({
       type: 'playback.toggle',
-      data: { currentSecond },
+      data: {}, // No currentSecond calculation here
       origin: 'component',
       processed: false,
     });
@@ -132,7 +122,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
       console.warn(`[${new Date().toISOString()}] ActionsBar: Invalid speed value: ${speed}`);
       return;
     }
-    console.log(`[${new Date().toISOString()}] ActionsBar: Speed change requested, newSpeed: ${parsedSpeed}, type: ${typeof parsedSpeed}`);
+    console.log(`[${new Date().toISOString()}] ActionsBar: Speed change requested, newSpeed: ${parsedSpeed}`);
     Engine.getInstance().emit({
       type: 'playback.speed.changed',
       data: { playbackSpeed: parsedSpeed },
@@ -143,63 +133,30 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onSkipIntervalChange(interval: number | string): void {
     const parsedInterval = typeof interval === 'string' ? parseFloat(interval) : interval;
-    if (isNaN(parsedInterval) || !this.availableSkipIntervals.includes(parsedInterval)) {
-      console.warn(`[${new Date().toISOString()}] ActionsBar: Invalid skip interval: ${interval}`);
-      return;
-    }
-    this.skipInterval = parsedInterval;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Skip interval changed to ${this.skipInterval}s`);
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip interval change, interval: ${parsedInterval}`);
+    Engine.getInstance().emit({
+      type: 'skip.interval.changed',
+      data: { skipInterval: parsedInterval },
+      origin: 'component',
+      processed: false,
+    });
   }
 
   skipForward(): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Before skipForward, cursorX: ${this.cursorX}, distancePerTime: ${this.distancePerTime}`);
-    let currentSecond = this.cursorX / this.distancePerTime;
-    // Fallback: Use medias to estimate currentSecond
-    if (this.cursorX === 0 && this.medias.length > 0) {
-      const currentMedia = this.medias.find((m, i) => {
-        const startTime = m.startTime ?? 0;
-        const endTime = m.endTime ?? m.time ?? Infinity;
-        const currentTime = this.cursorX / this.distancePerTime;
-        return currentTime >= startTime && currentTime < endTime;
-      });
-      if (currentMedia?.startTime !== undefined) {
-        currentSecond = currentMedia.startTime;
-        this.cursorX = currentSecond * this.distancePerTime;
-        console.log(`[${new Date().toISOString()}] ActionsBar: Synced cursorX to ${this.cursorX} from media startTime: ${currentSecond}`);
-      }
-    }
-    const newSecond = currentSecond + this.skipInterval;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Skipping forward ${this.skipInterval}s, from ${currentSecond} to ${newSecond}`);
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip forward`);
     Engine.getInstance().emit({
-      type: 'playback.seek',
-      data: { seekTime: newSecond },
+      type: 'playback.skip.forward',
+      data: {},
       origin: 'component',
       processed: false,
     });
   }
 
   skipBackward(): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Before skipBackward, cursorX: ${this.cursorX}, distancePerTime: ${this.distancePerTime}`);
-    let currentSecond = this.cursorX / this.distancePerTime;
-    // Fallback: Use medias to estimate currentSecond
-    if (this.cursorX === 0 && this.medias.length > 0) {
-      const currentMedia = this.medias.find((m, i) => {
-        const startTime = m.startTime ?? 0;
-        const endTime = m.endTime ?? m.time ?? Infinity;
-        const currentTime = this.cursorX / this.distancePerTime;
-        return currentTime >= startTime && currentTime < endTime;
-      });
-      if (currentMedia?.startTime !== undefined) {
-        currentSecond = currentMedia.startTime;
-        this.cursorX = currentSecond * this.distancePerTime;
-        console.log(`[${new Date().toISOString()}] ActionsBar: Synced cursorX to ${this.cursorX} from media startTime: ${currentSecond}`);
-      }
-    }
-    const newSecond = Math.max(0, currentSecond - this.skipInterval);
-    console.log(`[${new Date().toISOString()}] ActionsBar: Skipping backward ${this.skipInterval}s, from ${currentSecond} to ${newSecond}`);
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip backward`);
     Engine.getInstance().emit({
-      type: 'playback.seek',
-      data: { seekTime: newSecond },
+      type: 'playback.skip.backward',
+      data: {},
       origin: 'component',
       processed: false,
     });
