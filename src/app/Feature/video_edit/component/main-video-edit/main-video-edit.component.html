@@ -21,6 +21,7 @@
     <app-drag-drop-horizontalorting
       [distancePerTime]="distancePerTime * scale"
       [spaceBefore]="spaceBefore"
+      [time]="time"
     ></app-drag-drop-horizontalorting>
     <app-layers
     [time]="time"
@@ -28,4 +29,10 @@
     [spaceBefore]="spaceBefore"></app-layers>
   </div>
   <app-zoom (zoomChange)="onScaleChange($event)" [zoom]="scale"></app-zoom>
+  <div class="d-flex  justify-content-center">
+    <button mat-raised-button (click)="onAdjustLayerClip()">
+      <mat-icon>flip</mat-icon>
+       adjust layer clip
+    </button>
+  </div>
 </div>

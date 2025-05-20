@@ -18,7 +18,7 @@ import { Media } from '../../models/time-period.model';
   templateUrl: './drag-list-element.component.html',
   styleUrl: './drag-list-element.component.css',
 })
-export class DragListElementsComponent {
+export class DragListElementComponent  {
   @Input() distancePerTime = 50;
   @Input() index = 0;
   @Input() item: Media = {
@@ -28,11 +28,19 @@ export class DragListElementsComponent {
     time: 0,
     thumbnail: '',
   };
+
+
+
+  /**
+   * Computes dynamic CSS styles for the media element based on its duration and thumbnail.
+   * @returns An object containing width, background-size, and background-image styles.
+   */
   get dynamicElementStyle() {
+    const width = this.distancePerTime * (this.item.time || 0);
     return {
-      width: this.distancePerTime * this.item.time + 'px',
-      'background-size': this.distancePerTime + 'px 100%',
-      'background-image': 'url(' + this.item.thumbnail + ')',
+      width: `${width > 0 ? width : 50}px`, // Fallback width
+      'background-size': `${this.distancePerTime}px 100%`,
+      'background-image': this.item.thumbnail ? `url(${this.item.thumbnail})` : 'none',
     };
   }
 }
