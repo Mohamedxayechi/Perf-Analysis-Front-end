@@ -41,7 +41,7 @@ export class EventEmitter {
 
   // Clean up all subscriptions
   destroy(): void {
-    this.subscriptions.forEach((subs, event) => {
+    this.subscriptions.forEach((subs) => {
       subs.forEach(sub => sub.unsubscribe());
     });
     this.subscriptions.clear();

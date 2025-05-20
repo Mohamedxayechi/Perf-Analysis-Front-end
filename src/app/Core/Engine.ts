@@ -33,16 +33,13 @@ export class Engine {
 
     // Initialize and register core domains
        this.registerDomain(new Display());
-    //  this.registerDomain(new Storage());
-    //  this.registerDomain(new Library());
-
     this.isInitialized = true;
     // console.log('[${new Date().toISOString()}] Engine initialized with core domains');
   }
 
   emit<T>(event: EventPayload<T>): void {
     if (!this.isInitialized) {
-      console.warn('Engine not initialized. Call init() before emitting events.');
+      // console.warn('Engine not initialized. Call init() before emitting events.');
       return;
     }
     // Ensure processed flag is false for new events

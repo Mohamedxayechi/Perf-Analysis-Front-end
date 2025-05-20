@@ -2,15 +2,8 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { Clip, Layer, Timeline } from '../../models/timeline.model';
-import { timeline } from '../../models/timeLineExemple';
 import interact from 'interactjs';
-
-
-/* 
-dragdrop and horizantal in paralele
-make integrate TimeLine in engine logic (now there is no sync in timeline between dragdropComponent and clip
-clean the drogdrop component and change component name
-*/ 
+import { Engine } from '../../../../Core/Engine';
 
 
 @Component({
@@ -24,24 +17,32 @@ export class ClipComponent implements AfterViewInit {
   @Input() clip!: Clip 
   @Input() distancePerTime: number = 50;
   @Input() layerHeight: number = 80;
+  @Input() timeLine: Timeline=new Timeline();
 
-  timeLine: Timeline = timeline;
 
     ngAfterViewInit(): void {
     interact('.draggable-clip').draggable({
       modifiers: [
+
         interact.modifiers.restrictRect({
           restriction: '.timeline-container',
           endOnly: true,
         }),
+        interact.modifiers.restrictEdges({
+          outer: {
+            top: 0,
+            left: 75.5,
+            bottom: 0,
+            right: 0,
+          },
+        }),
+        
       ],
       listeners: {
         move: (event) => {
           const target = event.target;
-          // console.log(target)
           const x = parseFloat(target.getAttribute('data-x') || '0') + event.dx;
           const y = parseFloat(target.getAttribute('data-y') || '0') + event.dy;
-          // console.log("x : ",x,"y : ",y,"dx : ",event.dx,"dy : ",event.dy)
           target.style.transform = `translate(${x}px, ${y}px)`;
           target.setAttribute('data-x', x.toString());
           target.setAttribute('data-y', y.toString());
@@ -50,8 +51,6 @@ export class ClipComponent implements AfterViewInit {
 
           const target = event.target;
           const id = target.getAttribute('data-id')!;
-          console.log(id)
-          console.log(target)
 
           const originalClip = this.timeLine.layers
             .flatMap((layer) => layer.clips)
@@ -98,13 +97,30 @@ export class ClipComponent implements AfterViewInit {
               this.getLayerFromClipId(originalClip.id)
             );
             // Update internal model
-            originalClip.startTime = x / this.distancePerTime; // x corresponds to time or position on timeline
-            this.moveClipToLayer(id, newLayerIndex);
+            //originalClip.startTime = x / this.distancePerTime; // x corresponds to time or position on timeline
+            this.moveClip(id,newLayerIndex,x)
           }
         },
       },
       inertia: true,
     });
+  }
+
+
+
+
+
+
+
+  moveClip(clipId: string, newLayerIndex: number,startTime:number){
+
+        Engine.getInstance().emit({
+          type: 'timeLine.update',
+          data: { id:clipId,index:newLayerIndex,startTime },
+          origin: 'component',
+          processed: false,
+        });
+
   }
 
   getYFromLayerId(layerId: string): number {
@@ -137,7 +153,7 @@ export class ClipComponent implements AfterViewInit {
     return Math.max(Math.floor(y / this.layerHeight), 0);
   }
 
-    revertToOriginalPosition(originalClip: Clip, target: HTMLElement) {
+  revertToOriginalPosition(originalClip: Clip, target: HTMLElement) {
     // Revert to original position
     const revertY = this.getYFromClipId(originalClip.id);
     target.style.transform = `translate(${
@@ -150,34 +166,6 @@ export class ClipComponent implements AfterViewInit {
     target.setAttribute('data-y', revertY.toString());
     const layer = this.getLayerFromClipId(originalClip.id);
     target.setAttribute('data-layer', layer ? layer.id : '');
-  }
-
-  moveClipToLayer(clipId: string, newLayerIndex: number) {
-    // Find the current layer that contains the clip
-    const currentLayer = this.timeLine.layers.find((layer) =>
-      layer.clips.some((clip) => clip.id === clipId)
-    );
-    if (!currentLayer) {
-      console.error('Clip not found in any layer');
-      return;
-    }
-
-    // Find the clip inside the current layer
-    const clipIndex = currentLayer.clips.findIndex(
-      (clip) => clip.id === clipId
-    );
-    if (clipIndex === -1) return;
-
-    const [clip] = currentLayer.clips.splice(clipIndex, 1); // Remove clip from old layer
-
-    // Add the clip to the new layer
-    const newLayer =
-      this.timeLine.layers[newLayerIndex] || this.timeLine.layers[0];
-    if (!newLayer) {
-      console.error('Target layer does not exist');
-      return;
-    }
-    newLayer.clips.push(clip);
   }
 
   isXCollidingInLayer(
@@ -200,10 +188,13 @@ export class ClipComponent implements AfterViewInit {
         (otherRect.right > currentRect.left &&
           currentRect.left >= otherRect.left) ||
         (otherRect.right >= currentRect.right &&
-          currentRect.right > otherRect.left);
+          currentRect.right > otherRect.left)||
+          (otherRect.right > currentRect.left &&
+          currentRect.right >= otherRect.right)
 
       if (isOverlap) return true;
     }
     return false;
   }
+
 }

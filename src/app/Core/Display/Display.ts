@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { Engine } from '../Engine';
 import { eventBus, EventPayload } from '../Utility/event-bus';
 import { MediaModel, Media } from './Models/media-model';
+import { Clip, Timeline } from '../../Feature/layers/models/timeline.model';
 
 interface State {
   isPlaying: boolean;
@@ -25,13 +26,17 @@ export class Display implements OnDestroy {
   //private updateTimer: NodeJS.Timeout | null = null;
   private medias: Media[] = [];
   private totalTime = 0;
+  private timeLine: Timeline | null = null;
   private cursorX = 0;
   private distancePerTime = 50; // Default: 50 pixels per second (zoom = 1)
   private lastPausedTime = 0;
   private currentMediaIndex = -1;
   private eventProcessing = false;
   private state: State = { isPlaying: false, currentTime: 0, duration: 0 };
-  private options: RenderOptions = { frameInterval: 0.016, endTimeTolerance: 0.1 };
+  private options: RenderOptions = {
+    frameInterval: 0.016,
+    endTimeTolerance: 0.1,
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateTimer: any;
 
@@ -44,20 +49,38 @@ export class Display implements OnDestroy {
    * @param event The event payload to emit.
    */
   private emitEvent(event: EventPayload): void {
-    console.log(`[${new Date().toISOString()}] Display: Emitting event: ${event.type}, origin: ${event.origin}, data:`, event.data);
-    Engine.getInstance().emit({ ...event, processed: false, origin: event.origin || 'domain' });
+    // console.log(
+    //   `[${new Date().toISOString()}] Display: Emitting event: ${
+    //     event.type
+    //   }, origin: ${event.origin}, data:`,
+    //   event.data
+    // );
+    Engine.getInstance().emit({
+      ...event,
+      processed: false,
+      origin: event.origin || 'domain',
+    });
   }
 
   /**
    * Sets up subscriptions to media model observables and event bus for real-time updates.
    */
   private setupSubscriptions(): void {
-    console.log(`[${new Date().toISOString()}] Display: Setting up subscriptions`);
+    // console.log(
+    //   `[${new Date().toISOString()}] Display: Setting up subscriptions`
+    // );
     this.subscription.add(
       MediaModel.medias$.subscribe((medias) => {
         this.medias = medias;
-        console.log(`[${new Date().toISOString()}] Display: Media list updated`, { count: medias.length, medias: medias.map(this.summarizeMedia) });
-        this.emitEvent({ type: 'media.imported', data: { updatedMedias: medias }, origin: 'domain' });
+        // console.log(
+        //   `[${new Date().toISOString()}] Display: Media list updated`,
+        //   { count: medias.length, medias: medias.map(this.summarizeMedia) }
+        // );
+        this.emitEvent({
+          type: 'media.imported',
+          data: { updatedMedias: medias },
+          origin: 'domain',
+        });
       })
     );
 
@@ -79,7 +102,16 @@ export class Display implements OnDestroy {
    * @returns A summary object containing key media properties.
    */
   private summarizeMedia(media: Media, index: number) {
-    return { index, label: media.label, video: media.video, image: media.image, thumbnail: media.thumbnail, startTime: media.startTime, endTime: media.endTime, time: media.time };
+    return {
+      index,
+      label: media.label,
+      video: media.video,
+      image: media.image,
+      thumbnail: media.thumbnail,
+      startTime: media.startTime,
+      endTime: media.endTime,
+      time: media.time,
+    };
   }
 
   /**
@@ -87,9 +119,20 @@ export class Display implements OnDestroy {
    * @param event The event payload to process.
    */
   handleEvent(event: EventPayload): void {
-    console.log(`[${new Date().toISOString()}] Display: Received event: ${event.type}, origin: ${event.origin}, data:`, event.data);
+    // console.log(
+    //   `[${new Date().toISOString()}] Display: Received event: ${
+    //     event.type
+    //   }, origin: ${event.origin}, data:`,
+    //   event.data
+    // );
     if (this.eventProcessing || event.processed) {
-      console.warn(`[${new Date().toISOString()}] Display: Skipped event: ${event.type}, eventProcessing: ${this.eventProcessing}, processed: ${event.processed}`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: Skipped event: ${
+      //     event.type
+      //   }, eventProcessing: ${this.eventProcessing}, processed: ${
+      //     event.processed
+      //   }`
+      // );
       return;
     }
 
@@ -97,7 +140,8 @@ export class Display implements OnDestroy {
     try {
       // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style, @typescript-eslint/no-explicit-any
       const handlers: { [key: string]: (data: any) => void } = {
-        'media.loaded': (data) => this.updateDuration(data?.duration || MediaModel.getTotalTime()),
+        'media.loaded': (data) =>
+          this.updateDuration(data?.duration || MediaModel.getTotalTime()),
         'media.initialize': (data) => this.handleInitialize(data?.medias),
         'media.delete': (data) => this.handleDelete(data?.index),
         'media.duplicate': (data) => this.handleDuplicate(data?.index),
@@ -106,38 +150,92 @@ export class Display implements OnDestroy {
         'media.import.trigger': () => this.handleFileInputTrigger(),
         'media.reordered': (data) => this.handleMediaReordered(data?.medias),
         'media.resized': (data) => this.handleResize(data?.index, data?.time),
+        'timeLine.initialize': (data) =>
+          this.handleTimelineInitialize(data?.timeline),
+        'timeLine.update': (data) =>
+          this.handleTimelineUpdate(data.id, data.index, data.startTime),
+        'timeLine.LayersAdjust': () => this.handleTimelineAdjust(),
         'media.get': (data) => this.handleGetMedia(data?.index),
-        'playback.playFromSecond': (data) => this.playFromSecond(data?.globalSecond || 0),
+        'playback.playFromSecond': (data) =>
+          this.playFromSecond(data?.globalSecond || 0),
         'playback.toggle': (data) => this.togglePlayPause(data?.currentSecond),
         'cursor.changed': (data) => this.handleCursorChange(data?.cursorX || 0),
-        'parameters.distancePerTimeUpdated': (data) => this.handleDistancePerTimeUpdate(data?.distancePerTime || this.distancePerTime),
+        'parameters.distancePerTimeUpdated': (data) =>
+          this.handleDistancePerTimeUpdate(
+            data?.distancePerTime || this.distancePerTime
+          ),
         'zoom.get': () => {
           const zoom = this.distancePerTime / 50;
-          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
-          console.log(`[${new Date().toISOString()}] Display: Handled zoom.get, zoom: ${zoom}`);
+          this.emitEvent({
+            type: 'zoom.changed',
+            data: { zoom },
+            origin: 'domain',
+          });
+          // console.log(
+          //   `[${new Date().toISOString()}] Display: Handled zoom.get, zoom: ${zoom}`
+          // );
         },
         'zoom.in': (data) => {
           const stepScale = data?.stepScale || 0.1;
-          this.distancePerTime = Math.min(this.distancePerTime + stepScale * 50, 100); // Max zoom = 2
+          this.distancePerTime = Math.min(
+            this.distancePerTime + stepScale * 50,
+            100
+          ); // Max zoom = 2
           const zoom = this.distancePerTime / 50;
-          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
-          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
-          console.log(`[${new Date().toISOString()}] Display: Handled zoom.in, stepScale: ${stepScale}, new zoom: ${zoom}`);
+          this.emitEvent({
+            type: 'zoom.changed',
+            data: { zoom },
+            origin: 'domain',
+          });
+          this.emitEvent({
+            type: 'parameters.distancePerTimeUpdated',
+            data: { distancePerTime: this.distancePerTime },
+            origin: 'domain',
+          });
+          // console.log(
+          //   `[${new Date().toISOString()}] Display: Handled zoom.in, stepScale: ${stepScale}, new zoom: ${zoom}`
+          // );
         },
         'zoom.out': (data) => {
           const stepScale = data?.stepScale || 0.1;
-          this.distancePerTime = Math.max(this.distancePerTime - stepScale * 50, 5); // Min zoom = 0.1
+          this.distancePerTime = Math.max(
+            this.distancePerTime - stepScale * 50,
+            5
+          ); // Min zoom = 0.1
           const zoom = this.distancePerTime / 50;
-          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
-          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
-          console.log(`[${new Date().toISOString()}] Display: Handled zoom.out, stepScale: ${stepScale}, new zoom: ${zoom}`);
+          this.emitEvent({
+            type: 'zoom.changed',
+            data: { zoom },
+            origin: 'domain',
+          });
+          this.emitEvent({
+            type: 'parameters.distancePerTimeUpdated',
+            data: { distancePerTime: this.distancePerTime },
+            origin: 'domain',
+          });
+          // console.log(
+          //   `[${new Date().toISOString()}] Display: Handled zoom.out, stepScale: ${stepScale}, new zoom: ${zoom}`
+          // );
         },
         'zoom.change': (data) => {
-          const zoom = Math.max(data?.minScale || 0.1, Math.min(data?.maxScale || 2, data?.zoom || 1));
+          const zoom = Math.max(
+            data?.minScale || 0.1,
+            Math.min(data?.maxScale || 2, data?.zoom || 1)
+          );
           this.distancePerTime = zoom * 50;
-          this.emitEvent({ type: 'zoom.changed', data: { zoom }, origin: 'domain' });
-          this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime: this.distancePerTime }, origin: 'domain' });
-          console.log(`[${new Date().toISOString()}] Display: Handled zoom.change, new zoom: ${zoom}`);
+          this.emitEvent({
+            type: 'zoom.changed',
+            data: { zoom },
+            origin: 'domain',
+          });
+          this.emitEvent({
+            type: 'parameters.distancePerTimeUpdated',
+            data: { distancePerTime: this.distancePerTime },
+            origin: 'domain',
+          });
+          // console.log(
+          //   `[${new Date().toISOString()}] Display: Handled zoom.change, new zoom: ${zoom}`
+          // );
         },
       };
 
@@ -146,10 +244,18 @@ export class Display implements OnDestroy {
         handler(event.data);
         event.processed = true;
       } else {
-        console.warn(`[${new Date().toISOString()}] Display: Unhandled event type: ${event.type}`);
+        // console.warn(
+        //   `[${new Date().toISOString()}] Display: Unhandled event type: ${
+        //     event.type
+        //   }`
+        // );
       }
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Display: Error in event processing: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Error in event processing: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     } finally {
       this.eventProcessing = false;
     }
@@ -162,8 +268,14 @@ export class Display implements OnDestroy {
   private updateDuration(duration: number): void {
     this.state.duration = duration;
     this.totalTime = duration;
-    console.log(`[${new Date().toISOString()}] Display: Duration updated to ${duration}`);
-    this.emitEvent({ type: 'display.durationUpdated', data: { duration }, origin: 'domain' });
+    // console.log(
+    //   `[${new Date().toISOString()}] Display: Duration updated to ${duration}`
+    // );
+    this.emitEvent({
+      type: 'display.durationUpdated',
+      data: { duration },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -172,12 +284,23 @@ export class Display implements OnDestroy {
    */
   private handleInitialize(medias: Media[] | undefined): void {
     if (!medias?.length) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid medias for initialization`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid medias for initialization`
+      );
       return;
     }
     const { updatedMedias } = MediaModel.initializeMedias(medias);
-    console.log(`[${new Date().toISOString()}] Display: Initialized media list`, { count: updatedMedias.length, labels: updatedMedias.map(m => m.label) });
-    Promise.resolve().then(() => this.emitEvent({ type: 'media.initialized', data: { updatedMedias }, origin: 'domain' }));
+    // console.log(
+    //   `[${new Date().toISOString()}] Display: Initialized media list`,
+    //   { count: updatedMedias.length, labels: updatedMedias.map((m) => m.label) }
+    // );
+    Promise.resolve().then(() =>
+      this.emitEvent({
+        type: 'media.initialized',
+        data: { updatedMedias },
+        origin: 'domain',
+      })
+    );
   }
 
   /**
@@ -186,14 +309,29 @@ export class Display implements OnDestroy {
    */
   private handleDelete(index: number | undefined): void {
     if (typeof index !== 'number') {
-      console.error(`[${new Date().toISOString()}] Display: Invalid index for delete: ${index}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid index for delete: ${index}`
+      );
       return;
     }
     const result = MediaModel.delete(index);
-    if (result.deletedMedia?.video?.startsWith('blob:')) URL.revokeObjectURL(result.deletedMedia.video);
-    if (result.deletedMedia?.image?.startsWith('blob:')) URL.revokeObjectURL(result.deletedMedia.image);
-    console.log(`[${new Date().toISOString()}] Display: Handled delete at index ${index}`, { label: result.deletedMedia?.label || 'none' });
-    this.emitEvent({ type: 'media.deleted', data: { index, deletedMedia: result.deletedMedia, updatedMedias: result.updatedMedias }, origin: 'domain' });
+    if (result.deletedMedia?.video?.startsWith('blob:'))
+      URL.revokeObjectURL(result.deletedMedia.video);
+    if (result.deletedMedia?.image?.startsWith('blob:'))
+      URL.revokeObjectURL(result.deletedMedia.image);
+    console.log(
+      `[${new Date().toISOString()}] Display: Handled delete at index ${index}`,
+      { label: result.deletedMedia?.label || 'none' }
+    );
+    this.emitEvent({
+      type: 'media.deleted',
+      data: {
+        index,
+        deletedMedia: result.deletedMedia,
+        updatedMedias: result.updatedMedias,
+      },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -202,12 +340,25 @@ export class Display implements OnDestroy {
    */
   private handleDuplicate(index: number | undefined): void {
     if (typeof index !== 'number') {
-      console.error(`[${new Date().toISOString()}] Display: Invalid index for duplicate: ${index}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid index for duplicate: ${index}`
+      );
       return;
     }
     const result = MediaModel.duplicate(index);
-    console.log(`[${new Date().toISOString()}] Display: Handled duplicate at index ${index}`, { newLabel: result.duplicatedMedia?.label || 'none' });
-    this.emitEvent({ type: 'media.duplicated', data: { index, duplicatedMedia: result.duplicatedMedia, updatedMedias: result.updatedMedias }, origin: 'domain' });
+    console.log(
+      `[${new Date().toISOString()}] Display: Handled duplicate at index ${index}`,
+      { newLabel: result.duplicatedMedia?.label || 'none' }
+    );
+    this.emitEvent({
+      type: 'media.duplicated',
+      data: {
+        index,
+        duplicatedMedia: result.duplicatedMedia,
+        updatedMedias: result.updatedMedias,
+      },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -216,36 +367,201 @@ export class Display implements OnDestroy {
    */
   private handleSplit(time: number | undefined): void {
     // eslint-disable-next-line prefer-const
-    let splitTime = typeof time === 'number' && time > 0 ? time : this.state.currentTime;
-    console.log(`[${new Date().toISOString()}] Display: Handling split, input time: ${time}, using splitTime: ${splitTime}, cursorTime: ${this.state.currentTime}`);
+    let splitTime =
+      typeof time === 'number' && time > 0 ? time : this.state.currentTime;
+    console.log(
+      `[${new Date().toISOString()}] Display: Handling split, input time: ${time}, using splitTime: ${splitTime}, cursorTime: ${
+        this.state.currentTime
+      }`
+    );
 
     if (splitTime <= 0) {
-      console.warn(`[${new Date().toISOString()}] Display: Invalid split time: ${splitTime}, aborting`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: Invalid split time: ${splitTime}, aborting`
+      // );
       return;
     }
 
     const result = MediaModel.getVideoIndexAndStartTime(splitTime);
     if (!result) {
-      console.warn(`[${new Date().toISOString()}] Display: No media found at time ${splitTime} for split`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: No media found at time ${splitTime} for split`
+      // );
       return;
     }
 
     const { index, localSecond } = result;
     try {
       const splitResult = MediaModel.splitMedia(index, localSecond);
-      if (!splitResult.updatedMedias.length || splitResult.updatedMedias === this.medias) {
-        console.warn(`[${new Date().toISOString()}] Display: Split failed for index ${index}, splitTime ${localSecond}, no changes made`);
+      if (
+        !splitResult.updatedMedias.length ||
+        splitResult.updatedMedias === this.medias
+      ) {
+        // console.warn(
+        //   `[${new Date().toISOString()}] Display: Split failed for index ${index}, splitTime ${localSecond}, no changes made`
+        // );
         return;
       }
-      console.log(`[${new Date().toISOString()}] Display: Handled split at time ${splitTime}, index ${index}, splitTime ${localSecond}, updated medias: ${splitResult.updatedMedias.length}`);
+      // console.log(
+      //   `[${new Date().toISOString()}] Display: Handled split at time ${splitTime}, index ${index}, splitTime ${localSecond}, updated medias: ${
+      //     splitResult.updatedMedias.length
+      //   }`
+      // );
       this.emitEvent({
         type: 'media.splitted',
-        data: { time: splitTime, index, splitTime: localSecond, updatedMedias: splitResult.updatedMedias },
+        data: {
+          time: splitTime,
+          index,
+          splitTime: localSecond,
+          updatedMedias: splitResult.updatedMedias,
+        },
         origin: 'domain',
       });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Display: Split error for index ${index}, splitTime ${localSecond}: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Split error for index ${index}, splitTime ${localSecond}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
+  }
+
+  private handleTimelineInitialize(timeLine: Timeline): void {
+    this.timeLine = timeLine;
+
+    Promise.resolve().then(() =>
+      this.emitEvent({
+        type: 'timeLine.initialized',
+        data: { timeLine },
+        origin: 'domain',
+      })
+    );
+  }
+
+  handleTimelineUpdate(clipId: string, index: number, startTime: number): void {
+    // Find the current layer that contains the clip
+    const currentLayer = this.timeLine!.layers.find((layer) =>
+      layer.clips.some((clip) => clip.id === clipId)
+    );
+
+    if (!currentLayer) {
+      console.error('Clip not found in any layer');
+      return;
+    }
+
+    // Find the clip inside the current layer
+    const clipIndex = currentLayer.clips.findIndex(
+      (clip) => clip.id === clipId
+    );
+
+    if (clipIndex === -1) return;
+
+    const [clip] = currentLayer.clips.splice(clipIndex, 1); // Remove clip from old layer
+
+    // Add the clip to the new layer
+    const newLayer = this.timeLine!.layers[index] || this.timeLine!.layers[0];
+    if (!newLayer) {
+      console.error('Target layer does not exist');
+      return;
+    }
+    if (startTime < 0) {
+      console.log(startTime);
+      startTime = 0;
+    }
+
+    clip.startTime = startTime / this.distancePerTime;
+    newLayer.clips.push(clip);
+    if (this.timeLine && this.timeLine.layers) {
+      this.timeLine.layers = this.timeLine.layers.filter(
+        (layer) => layer.clips.length > 0
+      );
+    }
+
+    Promise.resolve().then(() =>
+      this.emitEvent({
+        type: 'timeLine.updated',
+        data: { timeLine: this.timeLine },
+        origin: 'domain',
+      })
+    );
+  }
+
+  private handleTimelineAdjust(): void {
+    if (!this.timeLine) {
+      console.error(
+        `[${new Date().toISOString()}] Display: Adjust Layer Unhandled  `
+      );
+
+      return;
+    }
+    const layers = this.timeLine.layers;
+    // Process layers from index 1 upward (skip layer 0)
+    for (
+      let currentLayerIndex = 1;
+      currentLayerIndex < layers.length;
+      currentLayerIndex++
+    ) {
+      const currentLayer = layers[currentLayerIndex];
+      // Process each clip in the current layer
+      for (
+        let clipIndex = currentLayer.clips.length - 1;
+        clipIndex >= 0;
+        clipIndex--
+      ) {
+        const clip = currentLayer.clips[clipIndex];
+        let highestLayerIndex = currentLayerIndex; // Track highest layer we can climb to
+
+        // Check all layers above for collisions
+        for (
+          let targetLayerIndex = currentLayerIndex - 1;
+          targetLayerIndex >= 0;
+          targetLayerIndex--
+        ) {
+          const targetLayer = layers[targetLayerIndex];
+          // Check if clip collides with any clip in the target layer
+          const hasCollision = targetLayer.clips.some((targetClip) =>
+            this.isColliding(clip, targetClip)
+          );
+
+          if (!hasCollision) {
+            // No collision in this layer, update highest possible layer
+            highestLayerIndex = targetLayerIndex;
+          } else {
+            // Collision found, stop checking higher layers
+            break;
+          }
+        }
+
+        // Move clip to the highest non-colliding layer (if different from current)
+        if (highestLayerIndex < currentLayerIndex) {
+          currentLayer.clips.splice(clipIndex, 1); // Remove from current layer
+          layers[highestLayerIndex].clips.push(clip); // Add to highest non-colliding layer
+        }
+      }
+    }
+
+    // Remove any layers that became empty after climbing
+    this.timeLine.layers = this.timeLine.layers.filter((layer) => layer.clips.length > 0);
+    Promise.resolve().then(() =>
+      this.emitEvent({
+        type: 'timeLine.LayersAdjusted',
+        data: { timeLine: this.timeLine },
+        origin: 'domain',
+      })
+    );
+  }
+
+  private isColliding(clipA: Clip, clipB: Clip): boolean {
+    const startA = clipA.startTime;
+    const endA = clipA.startTime + clipA.duration;
+    const startB = clipB.startTime;
+    const endB = clipB.startTime + clipB.duration;
+    // Check if time ranges overlap
+    return (
+      (startA >= startB && startA < endB) ||
+      (endA > startB && endA <= endB) ||
+      (startB > startA && startB < endA)
+    );
   }
 
   /**
@@ -253,14 +569,26 @@ export class Display implements OnDestroy {
    * @param index Index of the media item to resize.
    * @param time New duration in seconds.
    */
-  private handleResize(index: number | undefined, time: number | undefined): void {
+  private handleResize(
+    index: number | undefined,
+    time: number | undefined
+  ): void {
     if (typeof index !== 'number' || typeof time !== 'number' || time <= 0) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid resize data, index: ${index}, time: ${time}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid resize data, index: ${index}, time: ${time}`
+      );
       return;
     }
     const result = MediaModel.resize(index, time);
-    console.log(`[${new Date().toISOString()}] Display: Resized media at index ${index} to time ${time}`, { updatedCount: result.updatedMedias.length });
-    this.emitEvent({ type: 'media.resized.completed', data: { index, time, updatedMedias: result.updatedMedias }, origin: 'domain' });
+    console.log(
+      `[${new Date().toISOString()}] Display: Resized media at index ${index} to time ${time}`,
+      { updatedCount: result.updatedMedias.length }
+    );
+    this.emitEvent({
+      type: 'media.resized.completed',
+      data: { index, time, updatedMedias: result.updatedMedias },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -269,12 +597,21 @@ export class Display implements OnDestroy {
    */
   private handleGetMedia(index: number | undefined): void {
     if (typeof index !== 'number') {
-      console.error(`[${new Date().toISOString()}] Display: Invalid index for media.get: ${index}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid index for media.get: ${index}`
+      );
       return;
     }
     const media = MediaModel.getMedia(index);
-    console.log(`[${new Date().toISOString()}] Display: Retrieved media at index ${index}`, { label: media?.label || 'none' });
-    this.emitEvent({ type: 'media.get.response', data: { index, media }, origin: 'domain' });
+    console.log(
+      `[${new Date().toISOString()}] Display: Retrieved media at index ${index}`,
+      { label: media?.label || 'none' }
+    );
+    this.emitEvent({
+      type: 'media.get.response',
+      data: { index, media },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -287,24 +624,76 @@ export class Display implements OnDestroy {
       return;
     }
     const mediaURL = URL.createObjectURL(file);
-    console.log(`[${new Date().toISOString()}] Display: Created mediaURL: ${mediaURL}`, { fileName: file.name, type: file.type });
+    console.log(
+      `[${new Date().toISOString()}] Display: Created mediaURL: ${mediaURL}`,
+      { fileName: file.name, type: file.type }
+    );
 
     if (file.type.startsWith('video')) {
-      this.getVideoThumbnail(file).then(({ thumbnail, duration }) => {
-        const media: Media = { video: mediaURL, time: duration, label: file.name, thumbnail, startTime: 0, endTime: duration, isThumbnailOnly: false };
-        MediaModel.add(media);
-        const updatedMedias = MediaModel.mediasSubject.getValue();
-        console.log(`[${new Date().toISOString()}] Display: Imported video media`, { count: updatedMedias.length, media: this.summarizeMedia(media, updatedMedias.length - 1) });
-        this.emitEvent({ type: 'media.imported', data: { updatedMedias }, origin: 'domain' });
-      }).catch((err) => console.error(`[${new Date().toISOString()}] Display: Failed to import video: ${file.name}`, err));
+      this.getVideoThumbnail(file)
+        .then(({ thumbnail, duration }) => {
+          const media: Media = {
+            video: mediaURL,
+            time: duration,
+            label: file.name,
+            thumbnail,
+            startTime: 0,
+            endTime: duration,
+            isThumbnailOnly: false,
+          };
+          MediaModel.add(media);
+          const updatedMedias = MediaModel.mediasSubject.getValue();
+          console.log(
+            `[${new Date().toISOString()}] Display: Imported video media`,
+            {
+              count: updatedMedias.length,
+              media: this.summarizeMedia(media, updatedMedias.length - 1),
+            }
+          );
+          this.emitEvent({
+            type: 'media.imported',
+            data: { updatedMedias },
+            origin: 'domain',
+          });
+        })
+        .catch((err) =>
+          console.error(
+            `[${new Date().toISOString()}] Display: Failed to import video: ${
+              file.name
+            }`,
+            err
+          )
+        );
     } else if (file.type.startsWith('image')) {
-      const media: Media = { image: mediaURL, time: 5, label: file.name, thumbnail: mediaURL, startTime: 0, endTime: 5, isThumbnailOnly: false };
+      const media: Media = {
+        image: mediaURL,
+        time: 5,
+        label: file.name,
+        thumbnail: mediaURL,
+        startTime: 0,
+        endTime: 5,
+        isThumbnailOnly: false,
+      };
       MediaModel.add(media);
       const updatedMedias = MediaModel.mediasSubject.getValue();
-      console.log(`[${new Date().toISOString()}] Display: Imported image media`, { count: updatedMedias.length, media: this.summarizeMedia(media, updatedMedias.length - 1) });
-      this.emitEvent({ type: 'media.imported', data: { updatedMedias }, origin: 'domain' });
+      console.log(
+        `[${new Date().toISOString()}] Display: Imported image media`,
+        {
+          count: updatedMedias.length,
+          media: this.summarizeMedia(media, updatedMedias.length - 1),
+        }
+      );
+      this.emitEvent({
+        type: 'media.imported',
+        data: { updatedMedias },
+        origin: 'domain',
+      });
     } else {
-      console.error(`[${new Date().toISOString()}] Display: Unsupported file type: ${file.type}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Unsupported file type: ${
+          file.type
+        }`
+      );
     }
   }
 
@@ -312,7 +701,9 @@ export class Display implements OnDestroy {
    * Triggers a file input dialog for selecting media files to import.
    */
   private handleFileInputTrigger(): void {
-    console.log(`[${new Date().toISOString()}] Display: Opening file dialog for media import`);
+    console.log(
+      `[${new Date().toISOString()}] Display: Opening file dialog for media import`
+    );
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'video/*,image/*';
@@ -320,7 +711,9 @@ export class Display implements OnDestroy {
     input.onchange = (event: Event) => {
       const files = (event.target as HTMLInputElement).files;
       if (!files?.length) {
-        console.warn(`[${new Date().toISOString()}] Display: No files selected for import`);
+        // console.warn(
+        //   `[${new Date().toISOString()}] Display: No files selected for import`
+        // );
         return;
       }
       Array.from(files).forEach((file) => this.handleImportMedia(file));
@@ -334,12 +727,21 @@ export class Display implements OnDestroy {
    */
   private handleMediaReordered(medias: Media[] | undefined): void {
     if (!medias?.length) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid medias for reorder`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid medias for reorder`
+      );
       return;
     }
     MediaModel.initializeMedias(medias);
-    console.log(`[${new Date().toISOString()}] Display: Media list reordered`, { count: medias.length, medias: medias.map(this.summarizeMedia) });
-    this.emitEvent({ type: 'media.imported', data: { updatedMedias: medias }, origin: 'domain' });
+    console.log(`[${new Date().toISOString()}] Display: Media list reordered`, {
+      count: medias.length,
+      medias: medias.map(this.summarizeMedia),
+    });
+    this.emitEvent({
+      type: 'media.imported',
+      data: { updatedMedias: medias },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -350,8 +752,18 @@ export class Display implements OnDestroy {
     this.cursorX = cursorX;
     const globalSecond = cursorX / this.distancePerTime;
     this.state.currentTime = globalSecond;
-    console.log(`[${new Date().toISOString()}] Display: Cursor changed to ${cursorX}, globalSecond: ${globalSecond}`);
-    this.emitEvent({ type: 'cursor.updated', data: { cursorX, globalSecond, mediaElement: this.video || this.currentImage || null }, origin: 'domain' });
+    console.log(
+      `[${new Date().toISOString()}] Display: Cursor changed to ${cursorX}, globalSecond: ${globalSecond}`
+    );
+    this.emitEvent({
+      type: 'cursor.updated',
+      data: {
+        cursorX,
+        globalSecond,
+        mediaElement: this.video || this.currentImage || null,
+      },
+      origin: 'domain',
+    });
     if (this.state.isPlaying) {
       this.rePlay(globalSecond);
     }
@@ -363,8 +775,14 @@ export class Display implements OnDestroy {
    */
   private handleDistancePerTimeUpdate(distancePerTime: number): void {
     this.distancePerTime = distancePerTime;
-    console.log(`[${new Date().toISOString()}] Display: distancePerTime updated to ${distancePerTime}`);
-    this.emitEvent({ type: 'parameters.distancePerTimeUpdated', data: { distancePerTime }, origin: 'domain' });
+    console.log(
+      `[${new Date().toISOString()}] Display: distancePerTime updated to ${distancePerTime}`
+    );
+    this.emitEvent({
+      type: 'parameters.distancePerTimeUpdated',
+      data: { distancePerTime },
+      origin: 'domain',
+    });
   }
 
   /**
@@ -372,12 +790,24 @@ export class Display implements OnDestroy {
    * @param currentSecond Optional time to start playback from.
    */
   private togglePlayPause(currentSecond?: number): void {
-    console.log(`[${new Date().toISOString()}] Display: togglePlayPause`, { currentSecond, lastPausedTime: this.lastPausedTime, isPlaying: this.state.isPlaying, cursorTime: this.state.currentTime });
+    console.log(`[${new Date().toISOString()}] Display: togglePlayPause`, {
+      currentSecond,
+      lastPausedTime: this.lastPausedTime,
+      isPlaying: this.state.isPlaying,
+      cursorTime: this.state.currentTime,
+    });
     if (this.state.isPlaying) {
       this.pausePlayback();
     } else {
-      const playSecond = this.state.currentTime > 0 ? this.state.currentTime : (this.lastPausedTime > 0 ? this.lastPausedTime : (currentSecond ?? 0));
-      console.log(`[${new Date().toISOString()}] Display: Attempting to play from second: ${playSecond}`);
+      const playSecond =
+        this.state.currentTime > 0
+          ? this.state.currentTime
+          : this.lastPausedTime > 0
+          ? this.lastPausedTime
+          : currentSecond ?? 0;
+      console.log(
+        `[${new Date().toISOString()}] Display: Attempting to play from second: ${playSecond}`
+      );
       this.playFromSecond(playSecond);
     }
   }
@@ -386,7 +816,9 @@ export class Display implements OnDestroy {
    * Pauses the current playback and updates the state.
    */
   private pausePlayback(): void {
-    console.log(`[${new Date().toISOString()}] Display: pausePlayback`, { isPlaying: this.state.isPlaying });
+    console.log(`[${new Date().toISOString()}] Display: pausePlayback`, {
+      isPlaying: this.state.isPlaying,
+    });
     if (this.updateTimer) {
       clearTimeout(this.updateTimer);
       this.updateTimer = null;
@@ -400,9 +832,15 @@ export class Display implements OnDestroy {
       this.video.pause();
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const media = this.medias[this.currentMediaIndex];
-      this.lastPausedTime = this.video.currentTime + MediaModel.calculateAccumulatedTime(this.currentMediaIndex);
+      this.lastPausedTime =
+        this.video.currentTime +
+        MediaModel.calculateAccumulatedTime(this.currentMediaIndex);
       this.state.currentTime = this.lastPausedTime;
-      console.log(`[${new Date().toISOString()}] Display: Paused at globalSecond: ${this.lastPausedTime}`);
+      console.log(
+        `[${new Date().toISOString()}] Display: Paused at globalSecond: ${
+          this.lastPausedTime
+        }`
+      );
       mediaElement = this.video;
       width = this.video.videoWidth;
       height = this.video.videoHeight;
@@ -411,15 +849,25 @@ export class Display implements OnDestroy {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const media = this.medias[this.currentMediaIndex];
       this.lastPausedTime = this.state.currentTime;
-      console.log(`[${new Date().toISOString()}] Display: Paused image at globalSecond: ${this.lastPausedTime}`);
+      console.log(
+        `[${new Date().toISOString()}] Display: Paused image at globalSecond: ${
+          this.lastPausedTime
+        }`
+      );
       mediaElement = this.currentImage;
       width = this.currentImage.width;
       height = this.currentImage.height;
-      currentTime = this.state.currentTime - MediaModel.calculateAccumulatedTime(this.currentMediaIndex);
+      currentTime =
+        this.state.currentTime -
+        MediaModel.calculateAccumulatedTime(this.currentMediaIndex);
     }
 
     this.state.isPlaying = false;
-    this.emitEvent({ type: 'playback.toggled', data: { isPlaying: false, currentTime: this.state.currentTime }, origin: 'domain' });
+    this.emitEvent({
+      type: 'playback.toggled',
+      data: { isPlaying: false, currentTime: this.state.currentTime },
+      origin: 'domain',
+    });
     this.emitEvent({
       type: 'render.frame',
       data: { mediaElement, width, height, currentTime },
@@ -433,28 +881,44 @@ export class Display implements OnDestroy {
    * @param globalSecond The global time in seconds to start playback from.
    */
   private playFromSecond(globalSecond: number): void {
-    console.log(`[${new Date().toISOString()}] Display: playFromSecond`, { globalSecond, medias: this.medias.map(this.summarizeMedia) });
+    console.log(`[${new Date().toISOString()}] Display: playFromSecond`, {
+      globalSecond,
+      medias: this.medias.map(this.summarizeMedia),
+    });
     if (!isFinite(globalSecond) || globalSecond < 0) {
-      console.warn(`[${new Date().toISOString()}] Display: Invalid globalSecond: ${globalSecond}, defaulting to 0`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: Invalid globalSecond: ${globalSecond}, defaulting to 0`
+      // );
       globalSecond = 0;
     }
 
     if (!this.medias.length) {
-      console.error(`[${new Date().toISOString()}] Display: No medias available to play`);
+      console.error(
+        `[${new Date().toISOString()}] Display: No medias available to play`
+      );
       this.stopPlayback();
       return;
     }
 
     const result = MediaModel.getVideoIndexAndStartTime(globalSecond);
-    console.log(`[${new Date().toISOString()}] Display: getVideoIndexAndStartTime result`, result);
+    console.log(
+      `[${new Date().toISOString()}] Display: getVideoIndexAndStartTime result`,
+      result
+    );
     if (!result) {
-      console.warn(`[${new Date().toISOString()}] Display: No media found at time ${globalSecond}`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: No media found at time ${globalSecond}`
+      // );
       this.stopPlayback();
       return;
     }
 
     this.currentMediaIndex = result.index;
-    console.log(`[${new Date().toISOString()}] Display: Playing media at index ${result.index}, localSecond: ${result.localSecond}`);
+    console.log(
+      `[${new Date().toISOString()}] Display: Playing media at index ${
+        result.index
+      }, localSecond: ${result.localSecond}`
+    );
     this.renderMedia(result.index, result.localSecond);
   }
 
@@ -462,7 +926,9 @@ export class Display implements OnDestroy {
    * Stops playback and cleans up resources.
    */
   private stopPlayback(): void {
-    console.log(`[${new Date().toISOString()}] Display: stopPlayback`, { isPlaying: this.state.isPlaying });
+    console.log(`[${new Date().toISOString()}] Display: stopPlayback`, {
+      isPlaying: this.state.isPlaying,
+    });
     if (this.updateTimer) {
       clearTimeout(this.updateTimer);
       this.updateTimer = null;
@@ -475,8 +941,17 @@ export class Display implements OnDestroy {
     this.currentImage = null;
     this.state.isPlaying = false;
     this.currentMediaIndex = -1;
-    this.emitEvent({ type: 'playback.toggled', data: { isPlaying: false, currentTime: this.state.currentTime }, origin: 'domain' });
-    this.emitEvent({ type: 'render.frame', data: { mediaElement: null }, origin: 'domain', processed: false });
+    this.emitEvent({
+      type: 'playback.toggled',
+      data: { isPlaying: false, currentTime: this.state.currentTime },
+      origin: 'domain',
+    });
+    this.emitEvent({
+      type: 'render.frame',
+      data: { mediaElement: null },
+      origin: 'domain',
+      processed: false,
+    });
   }
 
   /**
@@ -486,7 +961,11 @@ export class Display implements OnDestroy {
    */
   private renderMedia(index: number, localSecond: number): void {
     if (index < 0 || index >= this.medias.length) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid index or no media available: ${index}, media count: ${this.medias.length}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid index or no media available: ${index}, media count: ${
+          this.medias.length
+        }`
+      );
       this.stopPlayback();
       return;
     }
@@ -495,7 +974,9 @@ export class Display implements OnDestroy {
     this.currentMediaIndex = index;
     const media = this.medias[index];
     if (!media || (!media.video && !media.image)) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid media at index ${index}, no video or image provided`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid media at index ${index}, no video or image provided`
+      );
       this.tryNextMedia(index + 1);
       return;
     }
@@ -506,9 +987,18 @@ export class Display implements OnDestroy {
     const accumulatedBefore = MediaModel.calculateAccumulatedTime(index);
 
     if (media.video) {
-      this.renderVideo(media, index, localSecond, { startTime, endTime, duration, accumulatedBefore });
+      this.renderVideo(media, index, localSecond, {
+        startTime,
+        endTime,
+        duration,
+        accumulatedBefore,
+      });
     } else if (media.image) {
-      this.renderImage(media, index, localSecond, { startTime, duration, accumulatedBefore });
+      this.renderImage(media, index, localSecond, {
+        startTime,
+        duration,
+        accumulatedBefore,
+      });
     }
   }
 
@@ -519,53 +1009,119 @@ export class Display implements OnDestroy {
    * @param localSecond Local time within the video to start.
    * @param timing Timing information including start time, end time, duration, and accumulated time.
    */
-  private renderVideo(media: Media, index: number, localSecond: number, timing: { startTime: number; endTime: number; duration: number; accumulatedBefore: number }): void {
+  private renderVideo(
+    media: Media,
+    index: number,
+    localSecond: number,
+    timing: {
+      startTime: number;
+      endTime: number;
+      duration: number;
+      accumulatedBefore: number;
+    }
+  ): void {
     if (!media.video?.match(/^(blob:|\/assets\/videos\/)/)) {
-      console.error(`[${new Date().toISOString()}] Display: Invalid video URL for ${media.label}, url: ${media.video}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Invalid video URL for ${
+          media.label
+        }, url: ${media.video}`
+      );
       this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
       return;
     }
 
     this.video = document.createElement('video');
-    Object.assign(this.video, { src: media.video, crossOrigin: 'anonymous', muted: true, preload: 'auto' });
+    Object.assign(this.video, {
+      src: media.video,
+      crossOrigin: 'anonymous',
+      muted: true,
+      preload: 'auto',
+    });
 
     const handleMetadata = () => {
-      console.log(`[${new Date().toISOString()}] Display: Video metadata loaded: ${media.label}`, { duration: this.video!.duration, width: this.video!.videoWidth, height: this.video!.videoHeight, endTime: timing.endTime });
+      console.log(
+        `[${new Date().toISOString()}] Display: Video metadata loaded: ${
+          media.label
+        }`,
+        {
+          duration: this.video!.duration,
+          width: this.video!.videoWidth,
+          height: this.video!.videoHeight,
+          endTime: timing.endTime,
+        }
+      );
       const actualEndTime = Math.min(timing.duration, this.video!.duration);
       let seekTime = localSecond;
 
       if (!isFinite(seekTime) || seekTime < 0) {
         seekTime = 0;
-        console.warn(`[${new Date().toISOString()}] Display: Clamped seekTime to 0 for ${media.label}`);
+        // console.warn(
+        //   `[${new Date().toISOString()}] Display: Clamped seekTime to 0 for ${
+        //     media.label
+        //   }`
+        // );
       } else if (seekTime > actualEndTime) {
         seekTime = actualEndTime;
-        console.warn(`[${new Date().toISOString()}] Display: Clamped seekTime from ${seekTime} to ${actualEndTime} for ${media.label}`);
+        // console.warn(
+        //   `[${new Date().toISOString()}] Display: Clamped seekTime from ${seekTime} to ${actualEndTime} for ${
+        //     media.label
+        //   }`
+        // );
       }
 
       this.video!.currentTime = seekTime;
       this.state.currentTime = timing.accumulatedBefore + seekTime;
       this.cursorX = this.state.currentTime * this.distancePerTime;
-      console.log(`[${new Date().toISOString()}] Display: Video seeked to ${seekTime} (global: ${this.state.currentTime}, cursorX: ${this.cursorX}) for ${media.label}`);
+      console.log(
+        `[${new Date().toISOString()}] Display: Video seeked to ${seekTime} (global: ${
+          this.state.currentTime
+        }, cursorX: ${this.cursorX}) for ${media.label}`
+      );
 
       this.emitEvent({
         type: 'cursor.updated',
-        data: { cursorX: this.cursorX, globalSecond: this.state.currentTime, mediaElement: this.video },
+        data: {
+          cursorX: this.cursorX,
+          globalSecond: this.state.currentTime,
+          mediaElement: this.video,
+        },
         origin: 'domain',
       });
 
-      this.video!.play().then(() => this.startVideoLoops(media, index, timing, actualEndTime)).catch((err) => {
-        console.error(`[${new Date().toISOString()}] Display: Video play failed for ${media.label}, src: ${media.video}`, err.message);
-        this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
-      });
+      this.video!.play()
+        .then(() => this.startVideoLoops(media, index, timing, actualEndTime))
+        .catch((err) => {
+          console.error(
+            `[${new Date().toISOString()}] Display: Video play failed for ${
+              media.label
+            }, src: ${media.video}`,
+            err.message
+          );
+          this.tryNextMedia(
+            index + 1,
+            timing.accumulatedBefore + timing.duration
+          );
+        });
     };
 
     this.video.addEventListener('loadedmetadata', handleMetadata);
     this.video.addEventListener('error', (e) => {
-      console.error(`[${new Date().toISOString()}] Display: Video error for ${media.label}, src: ${media.video}`, this.video?.error, e);
+      console.error(
+        `[${new Date().toISOString()}] Display: Video error for ${
+          media.label
+        }, src: ${media.video}`,
+        this.video?.error,
+        e
+      );
       this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
     });
     this.video.addEventListener('ended', () => {
-      console.log(`[${new Date().toISOString()}] Display: Video ended event for ${media.label}`, { currentTime: this.video?.currentTime, nextIndex: index + 1 });
+      console.log(
+        `[${new Date().toISOString()}] Display: Video ended event for ${
+          media.label
+        }`,
+        { currentTime: this.video?.currentTime, nextIndex: index + 1 }
+      );
       this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
     });
 
@@ -579,19 +1135,54 @@ export class Display implements OnDestroy {
    * @param timing Timing information including start time, duration, and accumulated time.
    * @param actualEndTime The actual end time of the video.
    */
-  private startVideoLoops(media: Media, index: number, timing: { startTime: number; duration: number; accumulatedBefore: number }, actualEndTime: number): void {
-    console.log(`[${new Date().toISOString()}] Display: Video playing: ${media.label}`, { currentTime: this.video!.currentTime, accumulatedBefore: timing.accumulatedBefore, duration: timing.duration });
+  private startVideoLoops(
+    media: Media,
+    index: number,
+    timing: { startTime: number; duration: number; accumulatedBefore: number },
+    actualEndTime: number
+  ): void {
+    console.log(
+      `[${new Date().toISOString()}] Display: Video playing: ${media.label}`,
+      {
+        currentTime: this.video!.currentTime,
+        accumulatedBefore: timing.accumulatedBefore,
+        duration: timing.duration,
+      }
+    );
     this.state.isPlaying = true;
-    this.emitEvent({ type: 'playback.toggled', data: { isPlaying: true, currentTime: this.state.currentTime }, origin: 'domain' });
+    this.emitEvent({
+      type: 'playback.toggled',
+      data: { isPlaying: true, currentTime: this.state.currentTime },
+      origin: 'domain',
+    });
 
     const renderFrame = () => {
-      if (!this.state.isPlaying || !this.video || this.video.paused || this.video.ended) {
-        console.log(`[${new Date().toISOString()}] Display: Stopping render loop for ${media.label}`, { isPlaying: this.state.isPlaying, paused: this.video?.paused, ended: this.video?.ended });
+      if (
+        !this.state.isPlaying ||
+        !this.video ||
+        this.video.paused ||
+        this.video.ended
+      ) {
+        console.log(
+          `[${new Date().toISOString()}] Display: Stopping render loop for ${
+            media.label
+          }`,
+          {
+            isPlaying: this.state.isPlaying,
+            paused: this.video?.paused,
+            ended: this.video?.ended,
+          }
+        );
         return;
       }
       this.emitEvent({
         type: 'render.frame',
-        data: { mediaElement: this.video, width: this.video.videoWidth, height: this.video.videoHeight, currentTime: this.video.currentTime },
+        data: {
+          mediaElement: this.video,
+          width: this.video.videoWidth,
+          height: this.video.videoHeight,
+          currentTime: this.video.currentTime,
+        },
         origin: 'domain',
         processed: false,
       });
@@ -600,7 +1191,16 @@ export class Display implements OnDestroy {
 
     const updateCursor = () => {
       if (!this.state.isPlaying || !this.video || this.video.paused) {
-        console.log(`[${new Date().toISOString()}] Display: Stopping cursor update for ${media.label}`, { isPlaying: this.state.isPlaying, paused: this.video?.paused, ended: this.video?.ended });
+        console.log(
+          `[${new Date().toISOString()}] Display: Stopping cursor update for ${
+            media.label
+          }`,
+          {
+            isPlaying: this.state.isPlaying,
+            paused: this.video?.paused,
+            ended: this.video?.ended,
+          }
+        );
         this.stopPlayback();
         return;
       }
@@ -610,25 +1210,47 @@ export class Display implements OnDestroy {
       this.state.currentTime = currentGlobalSecond;
       this.cursorX = currentGlobalSecond * this.distancePerTime;
 
-      console.log(`[${new Date().toISOString()}] Display: Updating cursor for ${media.label}`, {
-        currentTime: this.video.currentTime,
-        localSecond: currentLocalSecond,
-        globalSecond: currentGlobalSecond,
-        cursorX: this.cursorX,
-        distancePerTime: this.distancePerTime,
-        actualEndTime,
-        ended: this.video.ended,
-      });
+      console.log(
+        `[${new Date().toISOString()}] Display: Updating cursor for ${
+          media.label
+        }`,
+        {
+          currentTime: this.video.currentTime,
+          localSecond: currentLocalSecond,
+          globalSecond: currentGlobalSecond,
+          cursorX: this.cursorX,
+          distancePerTime: this.distancePerTime,
+          actualEndTime,
+          ended: this.video.ended,
+        }
+      );
 
       this.emitEvent({
         type: 'cursor.updated',
-        data: { cursorX: this.cursorX, globalSecond: currentGlobalSecond, mediaElement: this.video },
+        data: {
+          cursorX: this.cursorX,
+          globalSecond: currentGlobalSecond,
+          mediaElement: this.video,
+        },
         origin: 'domain',
       });
 
-      if (currentLocalSecond >= actualEndTime - this.options.endTimeTolerance || this.video.ended) {
-        console.log(`[${new Date().toISOString()}] Display: Video ended: ${media.label}`, { currentTime: this.video.currentTime, duration: timing.duration, nextIndex: index + 1 });
-        this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
+      if (
+        currentLocalSecond >= actualEndTime - this.options.endTimeTolerance ||
+        this.video.ended
+      ) {
+        console.log(
+          `[${new Date().toISOString()}] Display: Video ended: ${media.label}`,
+          {
+            currentTime: this.video.currentTime,
+            duration: timing.duration,
+            nextIndex: index + 1,
+          }
+        );
+        this.tryNextMedia(
+          index + 1,
+          timing.accumulatedBefore + timing.duration
+        );
       } else {
         this.updateTimer = setTimeout(updateCursor, 16);
       }
@@ -645,10 +1267,25 @@ export class Display implements OnDestroy {
    * @param localSecond Local time within the image duration to start.
    * @param timing Timing information including start time, duration, and accumulated time.
    */
-  private renderImage(media: Media, index: number, localSecond: number, timing: { startTime: number; duration: number; accumulatedBefore: number }): void {
-    console.log(`[${new Date().toISOString()}] Display: Setting up image for ${media.label}`, { src: media.image });
+  private renderImage(
+    media: Media,
+    index: number,
+    localSecond: number,
+    timing: { startTime: number; duration: number; accumulatedBefore: number }
+  ): void {
+    console.log(
+      `[${new Date().toISOString()}] Display: Setting up image for ${
+        media.label
+      }`,
+      { src: media.image }
+    );
     if (media.isThumbnailOnly) {
-      console.warn(`[${new Date().toISOString()}] Display: Skipping image rendering for ${media.label} as it is marked thumbnail-only`, { src: media.image });
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: Skipping image rendering for ${
+      //     media.label
+      //   } as it is marked thumbnail-only`,
+      //   { src: media.image }
+      // );
       this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
       return;
     }
@@ -658,48 +1295,81 @@ export class Display implements OnDestroy {
     image.crossOrigin = 'anonymous';
 
     image.onload = () => {
-      console.log(`[${new Date().toISOString()}] Display: Image loaded: ${media.label}`, { width: image.width, height: image.height });
+      console.log(
+        `[${new Date().toISOString()}] Display: Image loaded: ${media.label}`,
+        { width: image.width, height: image.height }
+      );
       this.currentImage = image;
       this.state.isPlaying = true;
       this.state.currentTime = timing.accumulatedBefore + localSecond;
       this.cursorX = this.state.currentTime * this.distancePerTime;
 
-      this.emitEvent({ type: 'playback.toggled', data: { isPlaying: true, currentTime: this.state.currentTime }, origin: 'domain' });
+      this.emitEvent({
+        type: 'playback.toggled',
+        data: { isPlaying: true, currentTime: this.state.currentTime },
+        origin: 'domain',
+      });
       this.emitEvent({
         type: 'cursor.updated',
-        data: { cursorX: this.cursorX, globalSecond: this.state.currentTime, mediaElement: image },
+        data: {
+          cursorX: this.cursorX,
+          globalSecond: this.state.currentTime,
+          mediaElement: image,
+        },
         origin: 'domain',
       });
 
       let currentLocalSecond = localSecond;
       const updateImageTimer = () => {
         if (!this.state.isPlaying) {
-          console.log(`[${new Date().toISOString()}] Display: Stopping image timer for ${media.label}`);
+          console.log(
+            `[${new Date().toISOString()}] Display: Stopping image timer for ${
+              media.label
+            }`
+          );
           this.stopPlayback();
           return;
         }
 
         this.emitEvent({
           type: 'render.frame',
-          data: { mediaElement: image, width: image.width, height: image.height, currentTime: currentLocalSecond },
+          data: {
+            mediaElement: image,
+            width: image.width,
+            height: image.height,
+            currentTime: currentLocalSecond,
+          },
           origin: 'domain',
           processed: false,
         });
 
         currentLocalSecond += this.options.frameInterval;
-        const currentGlobalSecond = timing.accumulatedBefore + currentLocalSecond;
+        const currentGlobalSecond =
+          timing.accumulatedBefore + currentLocalSecond;
         this.state.currentTime = currentGlobalSecond;
         this.cursorX = currentGlobalSecond * this.distancePerTime;
 
         this.emitEvent({
           type: 'cursor.updated',
-          data: { cursorX: this.cursorX, globalSecond: currentGlobalSecond, mediaElement: image },
+          data: {
+            cursorX: this.cursorX,
+            globalSecond: currentGlobalSecond,
+            mediaElement: image,
+          },
           origin: 'domain',
         });
 
         if (currentLocalSecond >= timing.duration) {
-          console.log(`[${new Date().toISOString()}] Display: Image ended: ${media.label}`, { nextIndex: index + 1 });
-          this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
+          console.log(
+            `[${new Date().toISOString()}] Display: Image ended: ${
+              media.label
+            }`,
+            { nextIndex: index + 1 }
+          );
+          this.tryNextMedia(
+            index + 1,
+            timing.accumulatedBefore + timing.duration
+          );
         } else {
           this.updateTimer = setTimeout(updateImageTimer, 16);
         }
@@ -708,7 +1378,11 @@ export class Display implements OnDestroy {
     };
 
     image.onerror = () => {
-      console.error(`[${new Date().toISOString()}] Display: Image error for ${media.label}, src: ${media.image}`);
+      console.error(
+        `[${new Date().toISOString()}] Display: Image error for ${
+          media.label
+        }, src: ${media.image}`
+      );
       this.tryNextMedia(index + 1, timing.accumulatedBefore + timing.duration);
     };
   }
@@ -719,9 +1393,14 @@ export class Display implements OnDestroy {
    * @param globalSecond Optional global time to restart playback from.
    */
   private tryNextMedia(nextIndex: number, globalSecond?: number): void {
-    console.log(`[${new Date().toISOString()}] Display: Trying next media`, { nextIndex, globalSecond });
+    console.log(`[${new Date().toISOString()}] Display: Trying next media`, {
+      nextIndex,
+      globalSecond,
+    });
     if (nextIndex >= this.medias.length) {
-      console.warn(`[${new Date().toISOString()}] Display: No more media to try, restarting playback`);
+      // console.warn(
+      //   `[${new Date().toISOString()}] Display: No more media to try, restarting playback`
+      // );
       this.rePlay(0);
       return;
     }
@@ -733,7 +1412,9 @@ export class Display implements OnDestroy {
    * @param globalSecond The global time in seconds to restart from.
    */
   private rePlay(globalSecond: number): void {
-    console.log(`[${new Date().toISOString()}] Display: Replaying from globalSecond: ${globalSecond}`);
+    console.log(
+      `[${new Date().toISOString()}] Display: Replaying from globalSecond: ${globalSecond}`
+    );
     this.stopPlayback();
     this.playFromSecond(globalSecond);
   }
@@ -744,7 +1425,10 @@ export class Display implements OnDestroy {
    * @param seekTo The time to seek to for the thumbnail (default: 1 second).
    * @returns A promise resolving to an object with the thumbnail URL and video duration.
    */
-  private getVideoThumbnail(file: File, seekTo = 1): Promise<{ thumbnail: string; duration: number }> {
+  private getVideoThumbnail(
+    file: File,
+    seekTo = 1
+  ): Promise<{ thumbnail: string; duration: number }> {
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
       const canvas = document.createElement('canvas');
@@ -779,7 +1463,7 @@ export class Display implements OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
     this.stopPlayback();
-    this.medias.forEach(media => {
+    this.medias.forEach((media) => {
       if (media.video?.startsWith('blob:')) URL.revokeObjectURL(media.video);
       if (media.image?.startsWith('blob:')) URL.revokeObjectURL(media.image);
     });

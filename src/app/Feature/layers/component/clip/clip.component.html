@@ -4,6 +4,8 @@
       [attr.data-x]="clip.startTime*this.distancePerTime"
       [attr.data-y]="getYFromLayerId((getLayerFromClipId(clip.id)?.id) || '')"
       [style.transform]="getTransformClip(clip, getLayerIndexFromCurrentClip())"
+      [style.width]="(clip.duration*this.distancePerTime)+'px'"
+    
     >
       {{ clip.source.name }}
     </div>

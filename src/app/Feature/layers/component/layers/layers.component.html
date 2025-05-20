@@ -13,6 +13,9 @@
   <!-- Render draggable items -->
   @for (layer of timeLine.layers; track layer.id) { @for (clip of layer.clips;
   track clip.id) {
-  <app-clip [clip]="clip" [distancePerTime]="distancePerTime" [layerHeight]="layerHeight"></app-clip>
+  <app-clip [timeLine]="timeLine" [clip]="clip" [distancePerTime]="distancePerTime" [layerHeight]="layerHeight"></app-clip>
   }}
 </div>
+
+
+
