@@ -33,10 +33,72 @@ export class Display implements OnDestroy {
   private distancePerTime = 50;
   private skipInterval = 5;
   private eventProcessing = false;
-  private eventQueue: EventPayload[] = []; // Added event queue
+  private eventQueue: EventPayload[] = [];
+
+  // Initialize media list directly
+  private readonly EXTERNAL_TIME_PERIODS: Media[] = (() => {
+    let currentStartTime = 0;
+    return [
+      {
+        label: 'Bronze age',
+        time: 5,
+        thumbnail: '/assets/thumbnails/1.png',
+        video: '/assets/videos/1.mp4',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 5),
+      },
+      {
+        label: 'Iron age',
+        time: 3,
+        thumbnail: '/assets/thumbnails/2.png',
+        image: '/assets/thumbnails/2.png',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 3),
+      },
+      {
+        label: 'Middle ages',
+        time: 3,
+        thumbnail: '/assets/thumbnails/3.png',
+        video: '/assets/videos/3.mp4',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 3),
+      },
+      {
+        label: 'Early modern period',
+        time: 6,
+        thumbnail: '/assets/thumbnails/4.png',
+        video: '/assets/videos/4.mp4',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 6),
+      },
+      {
+        label: 'Long nineteenth century',
+        time: 8,
+        thumbnail: '/assets/thumbnails/5.png',
+        video: '/assets/videos/5.mp4',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 8),
+      },
+      {
+        label: 'last',
+        time: 3,
+        thumbnail: '/assets/thumbnails/6.png',
+        video: '/assets/videos/6.mp4',
+        startTime: currentStartTime,
+        endTime: (currentStartTime += 3),
+      },
+    ];
+  })();
 
   constructor() {
+    this.initializeMediaList();
     this.setupSubscriptions();
+  }
+
+  private initializeMediaList(): void {
+    console.log(`[${new Date().toISOString()}] Display: Initializing media list with ${this.EXTERNAL_TIME_PERIODS.length} medias`);
+    MediaUtils.handleInitialize(this.EXTERNAL_TIME_PERIODS, this.emitEvent.bind(this));
+    this.medias = DisplayUtility.mediasSubject.getValue();
   }
 
   private emitEvent(event: EventPayload): void {
@@ -50,9 +112,8 @@ export class Display implements OnDestroy {
         this.medias = medias;
         console.log(`[${new Date().toISOString()}] Display: Media list updated`, { count: medias.length, medias: medias.map(this.summarizeMedia) });
         this.emitEvent({ type: 'Display.media.imported', data: { updatedMedias: medias }, origin: 'domain' });
-        // Restart playback if playing to sync with updated medias
         if (this.state.isPlaying) {
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Ensure latest medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
         }
       })
@@ -76,24 +137,23 @@ export class Display implements OnDestroy {
   handleEvent(event: EventPayload): void {
     if (this.eventProcessing || event.processed) {
       console.warn(`[${new Date().toISOString()}] Display: Queuing event: ${event.type}, eventProcessing: ${this.eventProcessing}, processed: ${event.processed}`);
-      this.eventQueue.push(event); // Queue the event
+      this.eventQueue.push(event);
       return;
     }
 
     this.eventProcessing = true;
     try {
       const handlers: { [key: string]: (data: any) => void } = {
-        'MediaInitializerComponent.media.initialize': (data) => MediaUtils.handleInitialize(data?.medias, this.emitEvent.bind(this)),
         'ItemListMenuComponent.media.delete': (data) => {
           MediaUtils.handleDelete(data?.index, this.emitEvent.bind(this));
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           if (this.state.isPlaying) {
             MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
           }
         },
         'ItemListMenuComponent.media.duplicate': (data) => {
           MediaUtils.handleDuplicate(data?.index, this.emitEvent.bind(this));
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           if (this.state.isPlaying) {
             MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
           }
@@ -101,7 +161,7 @@ export class Display implements OnDestroy {
         'ActionsBarComponent.media.split': (data) => {
           const splitTime = typeof data?.time === 'number' && data.time > 0 ? data.time : this.state.currentTime;
           MediaUtils.handleSplit(splitTime, this.emitEvent.bind(this));
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           if (this.state.isPlaying) {
             MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
           }
@@ -109,25 +169,25 @@ export class Display implements OnDestroy {
         'ActionsBarComponent.media.import.trigger': () => MediaUtils.handleFileInputTrigger(this.emitEvent.bind(this)),
         'DragDropHorizontalortingComponent.media.reordered': (data) => {
           MediaUtils.handleMediaReordered(data?.medias, this.emitEvent.bind(this));
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           if (this.state.isPlaying) {
             MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
           }
         },
         'ResizableDirective.media.resized': (data) => {
           MediaUtils.handleResize(data?.index, data?.time, this.emitEvent.bind(this));
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           if (this.state.isPlaying) {
             MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
           }
         },
         'ActionsBarComponent.media.convertToMP4': () => MediaConverter.handleConvertToMP4(this.medias, this.updateDuration.bind(this), this.emitEvent.bind(this)),
         'playback.playFromSecond': (data) => {
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           MediaPlayer.playFromSecond(data?.globalSecond || 0, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
         },
         'ActionsBarComponent.playback.toggle': () => {
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           MediaPlayer.togglePlayPause(this.state, this.medias, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
         },
         'ActionsBarComponent.skip.interval.changed': (data) => {
@@ -144,13 +204,13 @@ export class Display implements OnDestroy {
           });
         },
         'ActionsBarComponent.playback.skip.forward': () => {
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           const currentSecond = this.state.currentTime;
           const newSecond = Math.min(currentSecond + this.skipInterval, this.state.duration);
           MediaPlayer.seekTo(newSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
         },
         'ActionsBarComponent.playback.skip.backward': () => {
-          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          this.medias = DisplayUtility.mediasSubject.getValue();
           const currentSecond = this.state.currentTime;
           const newSecond = Math.max(0, currentSecond - this.skipInterval);
           MediaPlayer.seekTo(newSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
@@ -204,7 +264,7 @@ export class Display implements OnDestroy {
       this.eventProcessing = false;
       if (this.eventQueue.length) {
         const nextEvent = this.eventQueue.shift()!;
-        this.handleEvent(nextEvent); // Process next queued event
+        this.handleEvent(nextEvent);
       }
     }
   }
@@ -218,7 +278,7 @@ export class Display implements OnDestroy {
     this.cursorX = cursorX;
     const globalSecond = cursorX / this.distancePerTime;
     this.state.currentTime = globalSecond;
-    this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+    this.medias = DisplayUtility.mediasSubject.getValue();
     this.emitEvent({ type: 'Display.cursor.updated', data: { cursorX, globalSecond, mediaElement: MediaPlayer.getCurrentMediaElement() }, origin: 'domain' });
     if (this.state.isPlaying) {
       MediaPlayer.rePlay(globalSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
