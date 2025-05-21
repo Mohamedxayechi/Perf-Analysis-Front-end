@@ -76,14 +76,14 @@ export class MainCanvasComponent implements AfterViewInit {
    */
   private handleEvent(event: EventPayload): void {
     // Only process render.frame from 'domain' origin (Display service)
-    if (event.type === 'render.frame' && event.origin !== 'domain') {
+    if (event.type === 'Display.render.frame' && event.origin !== 'domain') {
       // console.log(
       //   `[${new Date().toISOString()}] MainCanvas: Ignoring render.frame from non-domain origin: ${event.origin}`
       // );
       return;
     }
 
-    if (event.processed && event.type !== 'render.frame') {
+    if (event.processed && event.type !== 'Display.render.frame') {
       // console.log(
       //   `[${new Date().toISOString()}] MainCanvas: Skipping processed event: ${event.type}`
       // );
@@ -92,31 +92,26 @@ export class MainCanvasComponent implements AfterViewInit {
 
     try {
       switch (event.type) {
-        case 'render.frame':
+        case 'Display.render.frame':
           this.handleRenderFrame(event);
           break;
-        case 'media.imported':
+        case 'Display.media.imported':
           this.handleMediaImported(event);
           break;
-        case 'media.import.trigger':
-          this.fileInput.nativeElement.click();
+ 
+        case 'Display.cursor.updated':
+          this.cursorX = event.data?.cursorX || 0;
           // console.log(
-          //   `[${new Date().toISOString()}] MainCanvas: Triggered file input`
+          //   `[${new Date().toISOString()}] MainCanvas: Cursor updated, cursorX: ${this.cursorX}`
           // );
           break;
-        case 'cursor.updated':
-          this.cursorX = event.data?.cursorX || 0;
-          console.log(
-            `[${new Date().toISOString()}] MainCanvas: Cursor updated, cursorX: ${this.cursorX}`
-          );
-          break;
-        case 'parameters.distancePerTimeUpdated':
+        case 'Display.parameters.distancePerTimeUpdated':
           this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
           // console.log(
           //   `[${new Date().toISOString()}] MainCanvas: distancePerTime updated to ${this.distancePerTime}`
           // );
           break;
-        case 'playback.toggled':
+        case 'Display.playback.toggled':
           this.isPlaying = event.data?.isPlaying || false;
           // console.log(
           //   `[${new Date().toISOString()}] MainCanvas: Playback toggled, isPlaying: ${this.isPlaying}`
@@ -261,22 +256,14 @@ export class MainCanvasComponent implements AfterViewInit {
   }
 
   /**
-   * Handles file selection for media import and emits an event with the selected file.
+   * Handles file selection for media import 
    * @param event The input event containing the selected file.
    */
   MediaSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
-      // console.log(
-      //   `[${new Date().toISOString()}] MainCanvas: Media selected, file: ${file.name}`
-      // );
-      Engine.getInstance().emit({
-        type: 'media.import',
-        data: { file },
-        origin: 'component',
-        processed: false,
-      });
+
     }
   }
 

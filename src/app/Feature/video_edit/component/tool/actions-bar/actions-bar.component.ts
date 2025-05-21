@@ -21,45 +21,45 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   isPlaying = false;
   volume = 0.5;
   playbackSpeed = 1;
-  skipInterval = 5; // Added to support template binding
+  skipInterval = 5;
   availableSpeeds = [0.5, 1, 1.5, 2];
   availableSkipIntervals = [5, 10, 30];
   private subscription: Subscription = new Subscription();
 
   ngOnInit(): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Available speeds:`, this.availableSpeeds);
-    console.log(`[${new Date().toISOString()}] ActionsBar: Available skip intervals:`, this.availableSkipIntervals);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Available speeds:`, this.availableSpeeds);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Available skip intervals:`, this.availableSkipIntervals);
     this.setupEngineListeners();
   }
 
   private setupEngineListeners(): void {
     const eventsObservable = Engine.getInstance().getEvents();
-    console.log(`[${new Date().toISOString()}] ActionsBar: Subscribing to Engine events`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Subscribing to Engine events`);
     this.subscription.add(
       eventsObservable.on('*', (event: EventPayload) => {
-        console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
+        // console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
         switch (event.type) {
-          case 'media.initialized':
-          case 'media.imported':
-          case 'media.resized.completed':
+          case 'Display.media.initialized':
+          case 'Display.media.imported':
+          case 'Display.media.resized.completed':
             if (event.data?.updatedMedias) {
               this.medias = event.data.updatedMedias;
-              console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}`);
+              // console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}`);
             }
             break;
-          case 'playback.toggled':
+          case 'Display.playback.toggled':
             this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
-            console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
+            // console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
             break;
-          case 'volume.changed':
+          case 'Display.volume.changed':
             this.volume = event.data?.volume ?? this.volume;
             console.log(`[${new Date().toISOString()}] ActionsBar: Volume updated, volume: ${this.volume}`);
             break;
-          case 'playback.speed.changed':
+          case 'Display.playback.speed.changed':
             this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
             console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
             break;
-          case 'skip.interval.updated':
+          case 'Display.skip.interval.updated':
             this.skipInterval = event.data?.skipInterval ?? this.skipInterval;
             console.log(`[${new Date().toISOString()}] ActionsBar: Skip interval updated to ${this.skipInterval}s`);
             break;
@@ -69,10 +69,10 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   }
 
   onSplit(): void {
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting split media request`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting split media request`);
     Engine.getInstance().emit({
-      type: 'media.split',
-      data: {}, // No time calculation here
+      type: 'ActionsBarComponent.media.split',
+      data: {},
       origin: 'component',
       processed: false,
     });
@@ -80,10 +80,10 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onTogglePlayPause(): void {
     this.isPlaying = !this.isPlaying;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting toggle play/pause, isPlaying: ${this.isPlaying}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting toggle play/pause, isPlaying: ${this.isPlaying}`);
     Engine.getInstance().emit({
-      type: 'playback.toggle',
-      data: {}, // No currentSecond calculation here
+      type: 'ActionsBarComponent.playback.toggle',
+      data: {},
       origin: 'component',
       processed: false,
     });
@@ -91,25 +91,29 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onClicImportMedia(): void {
     Engine.getInstance().emit({
-      type: 'media.import.trigger',
+      type: 'ActionsBarComponent.media.import.trigger',
       origin: 'component',
       processed: false,
     });
   }
 
-  updateDistancePerTime(distancePerTime: number): void {
+  onConvertToMP4(): void {
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting convert to MP4 request`);
     Engine.getInstance().emit({
-      type: 'parameters.distancePerTimeUpdated',
-      data: { distancePerTime },
+      type: 'ActionsBarComponent.media.convertToMP4',
+      data: {},
       origin: 'component',
       processed: false,
     });
   }
+
+
+ 
 
   onVolumeChange(volume: number): void {
     console.log(`[${new Date().toISOString()}] ActionsBar: Volume change requested, volume: ${volume}`);
     Engine.getInstance().emit({
-      type: 'volume.changed',
+      type: 'ActionsBarComponent.volume.changed',
       data: { volume },
       origin: 'component',
       processed: false,
@@ -122,9 +126,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
       console.warn(`[${new Date().toISOString()}] ActionsBar: Invalid speed value: ${speed}`);
       return;
     }
-    console.log(`[${new Date().toISOString()}] ActionsBar: Speed change requested, newSpeed: ${parsedSpeed}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Speed change requested, newSpeed: ${parsedSpeed}`);
     Engine.getInstance().emit({
-      type: 'playback.speed.changed',
+      type: 'ActionsBarComponent.playback.speed.changed',
       data: { playbackSpeed: parsedSpeed },
       origin: 'component',
       processed: false,
@@ -133,9 +137,9 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
 
   onSkipIntervalChange(interval: number | string): void {
     const parsedInterval = typeof interval === 'string' ? parseFloat(interval) : interval;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip interval change, interval: ${parsedInterval}`);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip interval change, interval: ${parsedInterval}`);
     Engine.getInstance().emit({
-      type: 'skip.interval.changed',
+      type: 'ActionsBarComponent.skip.interval.changed',
       data: { skipInterval: parsedInterval },
       origin: 'component',
       processed: false,
@@ -145,7 +149,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   skipForward(): void {
     console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip forward`);
     Engine.getInstance().emit({
-      type: 'playback.skip.forward',
+      type: 'ActionsBarComponent.playback.skip.forward',
       data: {},
       origin: 'component',
       processed: false,
@@ -155,7 +159,7 @@ export class ActionsBarComponent implements OnInit, OnDestroy {
   skipBackward(): void {
     console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip backward`);
     Engine.getInstance().emit({
-      type: 'playback.skip.backward',
+      type: 'ActionsBarComponent.playback.skip.backward',
       data: {},
       origin: 'component',
       processed: false,

@@ -2,13 +2,13 @@ import { BehaviorSubject } from 'rxjs';
 import {Media} from '../Models/media-model'
 
 
-export class DispalyUtility {
+export class DisplayUtility {
   static mediasSubject = new BehaviorSubject<Media[]>([]);
   static totalTimeSubject = new BehaviorSubject<number>(0);
   static isPlayingSubject = new BehaviorSubject<boolean>(false);
-  static medias$ = DispalyUtility.mediasSubject.asObservable();
-  static totalTime$ = DispalyUtility.totalTimeSubject.asObservable();
-  static isPlaying$ = DispalyUtility.isPlayingSubject.asObservable();
+  static medias$ = DisplayUtility.mediasSubject.asObservable();
+  static totalTime$ = DisplayUtility.totalTimeSubject.asObservable();
+  static isPlaying$ = DisplayUtility.isPlayingSubject.asObservable();
 
   /**
    * Initializes the media list with provided media items, filtering out invalid entries and setting start/end times.
@@ -58,8 +58,8 @@ export class DispalyUtility {
         // );
         return updatedMedia;
       });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Initialization complete, updatedMedias: ${updatedMedias.length}, totalTime: ${accumulatedTime}`
     // );
@@ -73,7 +73,7 @@ export class DispalyUtility {
    * @returns Object containing the updated media list.
    */
   static resize(index: number, time: number): { updatedMedias: Media[] } {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || time <= 0) {
       console.error(
         `[${new Date().toISOString()}] DispalyUtility: Invalid resize parameters, index: ${index}, time: ${time}`
@@ -88,8 +88,8 @@ export class DispalyUtility {
       media.endTime = accumulatedTime + media.time;
       accumulatedTime = media.endTime;
     });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Resized media at index ${index} to time ${time}, totalTime: ${accumulatedTime}`
     // );
@@ -102,7 +102,7 @@ export class DispalyUtility {
    * @returns The media item or null if the index is invalid.
    */
   static getMedia(index: number): Media | null {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
       console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid getMedia index: ${index}`);
       return null;
@@ -128,7 +128,7 @@ export class DispalyUtility {
       );
       return;
     }
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     const updatedMedias = [...medias, {
       ...media,
       thumbnail: media.thumbnail || '',
@@ -142,8 +142,8 @@ export class DispalyUtility {
       m.endTime = accumulatedTime + m.time;
       accumulatedTime = m.endTime;
     });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Added media:`,
     //   { label: media.label, video: media.video, image: media.image, thumbnail: media.thumbnail, time: media.time, isThumbnailOnly: media.isThumbnailOnly }
@@ -156,7 +156,7 @@ export class DispalyUtility {
    * @returns Object containing the deleted media item (or null if invalid index) and the updated media list.
    */
   static delete(index: number): { deletedMedia: Media | null; updatedMedias: Media[] } {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
       console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid delete index: ${index}`);
       return { deletedMedia: null, updatedMedias: medias };
@@ -169,8 +169,8 @@ export class DispalyUtility {
       media.endTime = accumulatedTime + media.time;
       accumulatedTime = media.endTime;
     });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Deleted media at index ${index}:`,
     //   deletedMedia
@@ -184,7 +184,7 @@ export class DispalyUtility {
    * @returns Object containing the duplicated media item (or null if invalid index) and the updated media list.
    */
   static duplicate(index: number): { duplicatedMedia: Media | null; updatedMedias: Media[] } {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
       console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid duplicate index: ${index}`);
       return { duplicatedMedia: null, updatedMedias: medias };
@@ -197,8 +197,8 @@ export class DispalyUtility {
       media.endTime = accumulatedTime + media.time;
       accumulatedTime = media.endTime;
     });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Duplicated media at index ${index}:`,
     //   duplicatedMedia
@@ -213,7 +213,7 @@ export class DispalyUtility {
    * @returns Object containing the updated media list.
    */
   static splitMedia(index: number, splitTime: number): { updatedMedias: Media[] } {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || splitTime <= 0) {
       console.error(
         `[${new Date().toISOString()}] DispalyUtility: Invalid split parameters, index: ${index}, splitTime: ${splitTime}`
@@ -237,8 +237,8 @@ export class DispalyUtility {
       m.endTime = accumulatedTime + m.time;
       accumulatedTime = m.endTime;
     });
-    DispalyUtility.mediasSubject.next(updatedMedias);
-    DispalyUtility.totalTimeSubject.next(accumulatedTime);
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
     // console.log(
     //   `[${new Date().toISOString()}] DispalyUtility: Split media at index ${index}, splitTime: ${splitTime}`
     // );
@@ -249,9 +249,9 @@ export class DispalyUtility {
    * Toggles the play/pause state of the media playback.
    */
   static togglePlayPause(): void {
-    const currentIsPlaying = DispalyUtility.isPlayingSubject.getValue();
+    const currentIsPlaying = DisplayUtility.isPlayingSubject.getValue();
     // console.log(`[${new Date().toISOString()}] DispalyUtility: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
-    DispalyUtility.isPlayingSubject.next(!currentIsPlaying);
+    DisplayUtility.isPlayingSubject.next(!currentIsPlaying);
   }
 
   /**
@@ -289,7 +289,7 @@ export class DispalyUtility {
    * @returns The total accumulated time in seconds, or 0 if the index is invalid.
    */
   static calculateAccumulatedTime(index: number): number {
-    const medias = DispalyUtility.mediasSubject.getValue();
+    const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
       console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid index for calculateAccumulatedTime: ${index}`);
       return 0;
@@ -306,6 +306,6 @@ export class DispalyUtility {
    * @returns The total time in seconds.
    */
   static getTotalTime(): number {
-    return DispalyUtility.totalTimeSubject.getValue();
+    return DisplayUtility.totalTimeSubject.getValue();
   }
 }

@@ -8,8 +8,6 @@ import {
   Output,
   EventEmitter,
 } from '@angular/core';
-import { Engine } from '../../../Core/Engine';
-import { EventPayload } from '../../../Core/Utility/event-bus';
 
 interface Tick {
   time: string | number;

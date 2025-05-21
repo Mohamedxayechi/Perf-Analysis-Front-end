@@ -47,16 +47,7 @@ export class ResizableDirective implements AfterViewInit {
           const { left } = event.edges;
           const target = event.target as HTMLElement;
           this.initialWidth = target.offsetWidth;
-          if (left) this.createPlaceholder(target);
-          Engine.getInstance().emit({
-            type: 'media.get',
-            data: { index: this.index },
-            origin: 'component',
-            processed: false,
-          });
-          console.log(
-            `[${new Date().toISOString()}] ResizableDirective: Resize started for index ${this.index}, initialWidth: ${this.initialWidth}px, timePerWidth: ${this.effectiveTimePerWidth}`
-          );
+     
         },
         move: (event) => {
           const { left } = event.edges;
@@ -136,7 +127,7 @@ export class ResizableDirective implements AfterViewInit {
               );
             }
             Engine.getInstance().emit({
-              type: 'media.resized',
+              type: 'ResizableDirective.media.resized',
               data: { index: this.index, time: newTime, width: newWidth },
               origin: 'component',
               processed: false,
@@ -148,22 +139,7 @@ export class ResizableDirective implements AfterViewInit {
       },
     });
 
-    // Subscribe to media.get response
-    Engine.getInstance()
-      .getEvents()
-      .on('media.get.response', (event: EventPayload) => {
-        if (event.data?.index === this.index && event.data?.media) {
-          this.media = event.data.media;
-          console.log(
-            `[${new Date().toISOString()}] ResizableDirective: Media fetched for index ${this.index}`,
-            this.media
-          );
-        } else {
-          console.warn(
-            `[${new Date().toISOString()}] ResizableDirective: No media found for index ${this.index}`
-          );
-        }
-      });
+
   }
 
   /**

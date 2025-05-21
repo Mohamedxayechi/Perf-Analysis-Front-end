@@ -32,7 +32,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
     this.subscription.add(
       Engine.getInstance()
         .getEvents()
-        .on('zoom.changed', (event: EventPayload) => {
+        .on('Display.zoom.changed', (event: EventPayload) => {
           if (event.data?.zoom !== undefined) {
             this.zoom = parseFloat(event.data.zoom.toFixed(1));
             this.zoomChange.emit(this.zoom);
@@ -44,7 +44,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
     );
 
     Engine.getInstance().emit({
-      type: 'zoom.get',
+      type: 'ZoomComponent.zoom.get',
       data: {},
       origin: 'component',
       processed: false,
@@ -66,7 +66,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
    */
   zoomIn(): void {
     Engine.getInstance().emit({
-      type: 'zoom.in',
+      type: 'ZoomComponent.zoom.in',
       data: { stepScale: this.stepScale },
       origin: 'component',
       processed: false,
@@ -81,7 +81,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
    */
   zoomOut(): void {
     Engine.getInstance().emit({
-      type: 'zoom.out',
+      type: 'ZoomComponent.zoom.out',
       data: { stepScale: this.stepScale },
       origin: 'component',
       processed: false,
@@ -97,7 +97,7 @@ export class ZoomComponent implements OnInit, OnDestroy {
   onZoomChange(): void {
     this.zoom = Math.max(this.minScale, Math.min(this.maxScale, parseFloat(this.zoom.toFixed(1))));
     Engine.getInstance().emit({
-      type: 'zoom.change',
+      type: 'ZoomComponent.zoom.change',
       data: { zoom: this.zoom, minScale: this.minScale, maxScale: this.maxScale },
       origin: 'component',
       processed: false,

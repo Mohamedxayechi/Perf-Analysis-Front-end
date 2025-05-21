@@ -76,7 +76,7 @@ export class MediaInitializerComponent implements OnInit {
         } medias`
       );
       engine.emit({
-        type: 'media.initialize',
+        type: 'MediaInitializerComponent.media.initialize',
         data: { medias: this.EXTERNAL_TIME_PERIODS },
         origin: 'component',
         processed: false,
