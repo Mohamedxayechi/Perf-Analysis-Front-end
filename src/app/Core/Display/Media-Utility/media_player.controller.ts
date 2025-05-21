@@ -1,5 +1,5 @@
 import { Media } from '../Models/media-model';
-import { DisplayUtility } from './Displayutility';
+import { DisplayUtility } from '../Dispaly_Utility/Displayutility';
 
 export class MediaPlayer {
   private static video: HTMLVideoElement | null = null;

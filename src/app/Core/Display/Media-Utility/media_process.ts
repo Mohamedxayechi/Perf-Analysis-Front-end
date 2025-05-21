@@ -1,6 +1,6 @@
 import * as MP4Box from 'mp4box';
 import { Media } from '../Models/media-model';
-import { DisplayUtility } from './Displayutility';
+import { DisplayUtility } from '../Dispaly_Utility/Displayutility';
 
 export class MediaConverter {
   static async handleConvertToMP4(medias: Media[], updateDuration: (duration: number) => void, emitEvent: (event: any) => void): Promise<void> {

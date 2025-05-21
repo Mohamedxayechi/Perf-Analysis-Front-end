@@ -3,10 +3,10 @@ import { Subscription } from 'rxjs';
 import { Engine } from '../Engine';
 import { eventBus, EventPayload } from '../Utility/event-bus';
 import { Media } from './Models/media-model';
-import { DisplayUtility } from './Utility/Displayutility';
-import { MediaConverter } from './Utility/media_converter';
-import { MediaPlayer } from './Utility/media_player';
-import { MediaUtils } from './Utility/media_utils';
+import { DisplayUtility } from './Dispaly_Utility/Displayutility';
+import { MediaConverter } from './Media-Utility/media_process';
+import { MediaPlayer } from './Media-Utility/media_player.controller';
+import { MediaUtils } from './Media-Utility/media_utils';
 
 interface State {
   isPlaying: boolean;
