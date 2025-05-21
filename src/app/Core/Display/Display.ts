@@ -33,6 +33,7 @@ export class Display implements OnDestroy {
   private distancePerTime = 50;
   private skipInterval = 5;
   private eventProcessing = false;
+  private eventQueue: EventPayload[] = []; // Added event queue
 
   constructor() {
     this.setupSubscriptions();
@@ -49,6 +50,11 @@ export class Display implements OnDestroy {
         this.medias = medias;
         console.log(`[${new Date().toISOString()}] Display: Media list updated`, { count: medias.length, medias: medias.map(this.summarizeMedia) });
         this.emitEvent({ type: 'Display.media.imported', data: { updatedMedias: medias }, origin: 'domain' });
+        // Restart playback if playing to sync with updated medias
+        if (this.state.isPlaying) {
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Ensure latest medias
+          MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+        }
       })
     );
 
@@ -69,7 +75,8 @@ export class Display implements OnDestroy {
 
   handleEvent(event: EventPayload): void {
     if (this.eventProcessing || event.processed) {
-      console.warn(`[${new Date().toISOString()}] Display: Skipped event: ${event.type}, eventProcessing: ${this.eventProcessing}, processed: ${event.processed}`);
+      console.warn(`[${new Date().toISOString()}] Display: Queuing event: ${event.type}, eventProcessing: ${this.eventProcessing}, processed: ${event.processed}`);
+      this.eventQueue.push(event); // Queue the event
       return;
     }
 
@@ -77,18 +84,52 @@ export class Display implements OnDestroy {
     try {
       const handlers: { [key: string]: (data: any) => void } = {
         'MediaInitializerComponent.media.initialize': (data) => MediaUtils.handleInitialize(data?.medias, this.emitEvent.bind(this)),
-        'ItemListMenuComponent.media.delete': (data) => MediaUtils.handleDelete(data?.index, this.emitEvent.bind(this)),
-        'ItemListMenuComponent.media.duplicate': (data) => MediaUtils.handleDuplicate(data?.index, this.emitEvent.bind(this)),
+        'ItemListMenuComponent.media.delete': (data) => {
+          MediaUtils.handleDelete(data?.index, this.emitEvent.bind(this));
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          if (this.state.isPlaying) {
+            MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+          }
+        },
+        'ItemListMenuComponent.media.duplicate': (data) => {
+          MediaUtils.handleDuplicate(data?.index, this.emitEvent.bind(this));
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          if (this.state.isPlaying) {
+            MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+          }
+        },
         'ActionsBarComponent.media.split': (data) => {
           const splitTime = typeof data?.time === 'number' && data.time > 0 ? data.time : this.state.currentTime;
           MediaUtils.handleSplit(splitTime, this.emitEvent.bind(this));
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          if (this.state.isPlaying) {
+            MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+          }
         },
         'ActionsBarComponent.media.import.trigger': () => MediaUtils.handleFileInputTrigger(this.emitEvent.bind(this)),
-        'DragDropHorizontalortingComponent.media.reordered': (data) => MediaUtils.handleMediaReordered(data?.medias, this.emitEvent.bind(this)),
-        'ResizableDirective.media.resized': (data) => MediaUtils.handleResize(data?.index, data?.time, this.emitEvent.bind(this)),
+        'DragDropHorizontalortingComponent.media.reordered': (data) => {
+          MediaUtils.handleMediaReordered(data?.medias, this.emitEvent.bind(this));
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          if (this.state.isPlaying) {
+            MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+          }
+        },
+        'ResizableDirective.media.resized': (data) => {
+          MediaUtils.handleResize(data?.index, data?.time, this.emitEvent.bind(this));
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          if (this.state.isPlaying) {
+            MediaPlayer.rePlay(this.state.currentTime, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+          }
+        },
         'ActionsBarComponent.media.convertToMP4': () => MediaConverter.handleConvertToMP4(this.medias, this.updateDuration.bind(this), this.emitEvent.bind(this)),
-        'playback.playFromSecond': (data) => MediaPlayer.playFromSecond(data?.globalSecond || 0, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this)),
-        'ActionsBarComponent.playback.toggle': () => MediaPlayer.togglePlayPause(this.state, this.medias, this.cursorX, this.distancePerTime, this.emitEvent.bind(this)),
+        'playback.playFromSecond': (data) => {
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          MediaPlayer.playFromSecond(data?.globalSecond || 0, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+        },
+        'ActionsBarComponent.playback.toggle': () => {
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
+          MediaPlayer.togglePlayPause(this.state, this.medias, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
+        },
         'ActionsBarComponent.skip.interval.changed': (data) => {
           const skipInterval = data?.skipInterval;
           if (isNaN(skipInterval) || ![5, 10, 30].includes(skipInterval)) {
@@ -103,11 +144,13 @@ export class Display implements OnDestroy {
           });
         },
         'ActionsBarComponent.playback.skip.forward': () => {
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
           const currentSecond = this.state.currentTime;
           const newSecond = Math.min(currentSecond + this.skipInterval, this.state.duration);
           MediaPlayer.seekTo(newSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
         },
         'ActionsBarComponent.playback.skip.backward': () => {
+          this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
           const currentSecond = this.state.currentTime;
           const newSecond = Math.max(0, currentSecond - this.skipInterval);
           MediaPlayer.seekTo(newSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
@@ -159,6 +202,10 @@ export class Display implements OnDestroy {
       console.error(`[${new Date().toISOString()}] Display: Error in event processing: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       this.eventProcessing = false;
+      if (this.eventQueue.length) {
+        const nextEvent = this.eventQueue.shift()!;
+        this.handleEvent(nextEvent); // Process next queued event
+      }
     }
   }
 
@@ -171,6 +218,7 @@ export class Display implements OnDestroy {
     this.cursorX = cursorX;
     const globalSecond = cursorX / this.distancePerTime;
     this.state.currentTime = globalSecond;
+    this.medias = DisplayUtility.mediasSubject.getValue(); // Sync medias
     this.emitEvent({ type: 'Display.cursor.updated', data: { cursorX, globalSecond, mediaElement: MediaPlayer.getCurrentMediaElement() }, origin: 'domain' });
     if (this.state.isPlaying) {
       MediaPlayer.rePlay(globalSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
