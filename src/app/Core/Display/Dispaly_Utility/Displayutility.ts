@@ -1,6 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import {Media} from '../Models/media-model'
-
+import { Media } from '../Models/media-model';
 
 export class DisplayUtility {
   static mediasSubject = new BehaviorSubject<Media[]>([]);
@@ -10,6 +9,20 @@ export class DisplayUtility {
   static totalTime$ = DisplayUtility.totalTimeSubject.asObservable();
   static isPlaying$ = DisplayUtility.isPlayingSubject.asObservable();
 
+  //private method to handle common media timing updates ***
+  private static updateMediasAndTimes(medias: Media[]): Media[] {
+    let accumulatedTime = 0;
+    const updatedMedias = medias.map((media) => {
+      const startTime = accumulatedTime;
+      const endTime = startTime + media.time;
+      accumulatedTime = endTime;
+      return { ...media, startTime, endTime };
+    });
+    DisplayUtility.mediasSubject.next(updatedMedias);
+    DisplayUtility.totalTimeSubject.next(accumulatedTime);
+    return updatedMedias;
+  }
+
   /**
    * Initializes the media list with provided media items, filtering out invalid entries and setting start/end times.
    * @param medias Array of media items to initialize.
@@ -17,53 +30,36 @@ export class DisplayUtility {
    */
   static initializeMedias(medias: Media[]): { updatedMedias: Media[] } {
     // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility.initializeMedias: Initializing with ${medias.length} medias:`,
+    //   `[${new Date().toISOString()}] DisplayUtility.initializeMedias: Initializing with ${medias.length} medias:`,
     //   medias.map((m, i) => ({ index: i, label: m.label, video: m.video, image: m.image, thumbnail: m.thumbnail, time: m.time }))
     // );
-    let accumulatedTime = 0;
     const updatedMedias = medias
       .filter((m) => {
         if (m.time <= 0) {
           console.warn(
-            `[${new Date().toISOString()}] DispalyUtility: Filtering out invalid media with time <= 0:`,
+            `[${new Date().toISOString()}] DisplayUtility: Filtering out invalid media with time <= 0:`,
             m
           );
           return false;
         }
         if (!m.video && !m.image) {
           console.warn(
-            `[${new Date().toISOString()}] DispalyUtility: Filtering out invalid media with no video or image:`,
+            `[${new Date().toISOString()}] DisplayUtility: Filtering out invalid media with no video or image:`,
             m
           );
           return false;
         }
         return true;
       })
-      .map((media, i) => {
-        const startTime = accumulatedTime;
-        const endTime = startTime + media.time;
-        accumulatedTime = endTime;
-        const updatedMedia = {
-          ...media,
-          startTime,
-          endTime,
-          thumbnail: media.thumbnail || '',
-          video: media.video || undefined,
-          image: media.image || undefined,
-          isThumbnailOnly: media.isThumbnailOnly ?? false,
-        };
-        // console.log(
-        //   `[${new Date().toISOString()}] DispalyUtility: Initialized media ${i}:`,
-        //   { label: updatedMedia.label, startTime, endTime, video: updatedMedia.video, image: updatedMedia.image, thumbnail: updatedMedia.thumbnail, isThumbnailOnly: updatedMedia.isThumbnailOnly }
-        // );
-        return updatedMedia;
-      });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Initialization complete, updatedMedias: ${updatedMedias.length}, totalTime: ${accumulatedTime}`
-    // );
-    return { updatedMedias };
+      .map((media) => ({
+        ...media,
+        thumbnail: media.thumbnail || '',
+        video: media.video || undefined,
+        image: media.image || undefined,
+        isThumbnailOnly: media.isThumbnailOnly ?? false,
+      }));
+
+    return { updatedMedias: DisplayUtility.updateMediasAndTimes(updatedMedias) };
   }
 
   /**
@@ -76,24 +72,14 @@ export class DisplayUtility {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || time <= 0) {
       console.error(
-        `[${new Date().toISOString()}] DispalyUtility: Invalid resize parameters, index: ${index}, time: ${time}`
+        `[${new Date().toISOString()}] DisplayUtility: Invalid resize parameters, index: ${index}, time: ${time}`
       );
       return { updatedMedias: medias };
     }
     const updatedMedias = [...medias];
     updatedMedias[index] = { ...medias[index], time, endTime: medias[index].startTime + time };
-    let accumulatedTime = 0;
-    updatedMedias.forEach((media, i) => {
-      media.startTime = accumulatedTime;
-      media.endTime = accumulatedTime + media.time;
-      accumulatedTime = media.endTime;
-    });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Resized media at index ${index} to time ${time}, totalTime: ${accumulatedTime}`
-    // );
-    return { updatedMedias };
+
+    return { updatedMedias: DisplayUtility.updateMediasAndTimes(updatedMedias) };
   }
 
   /**
@@ -104,7 +90,7 @@ export class DisplayUtility {
   static getMedia(index: number): Media | null {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
-      console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid getMedia index: ${index}`);
+      console.error(`[${new Date().toISOString()}] DisplayUtility: Invalid getMedia index: ${index}`);
       return null;
     }
     return medias[index];
@@ -117,14 +103,14 @@ export class DisplayUtility {
   static add(media: Media): void {
     if (!media.video && !media.image) {
       console.error(
-        `[${new Date().toISOString()}] DispalyUtility: Cannot add media with no video or image:`,
+        `[${new Date().toISOString()}] DisplayUtility: Cannot add media with no video or image:`,
         media
       );
       return;
     }
     if (media.time <= 0) {
       console.error(
-        `[${new Date().toISOString()}] DispalyUtility: Cannot add media with invalid time: ${media.time}`
+        `[${new Date().toISOString()}] DisplayUtility: Cannot add media with invalid time: ${media.time}`
       );
       return;
     }
@@ -136,18 +122,8 @@ export class DisplayUtility {
       image: media.image || undefined,
       isThumbnailOnly: media.isThumbnailOnly ?? false,
     }];
-    let accumulatedTime = 0;
-    updatedMedias.forEach((m) => {
-      m.startTime = accumulatedTime;
-      m.endTime = accumulatedTime + m.time;
-      accumulatedTime = m.endTime;
-    });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Added media:`,
-    //   { label: media.label, video: media.video, image: media.image, thumbnail: media.thumbnail, time: media.time, isThumbnailOnly: media.isThumbnailOnly }
-    // );
+ 
+    DisplayUtility.updateMediasAndTimes(updatedMedias);
   }
 
   /**
@@ -158,24 +134,13 @@ export class DisplayUtility {
   static delete(index: number): { deletedMedia: Media | null; updatedMedias: Media[] } {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
-      console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid delete index: ${index}`);
+      console.error(`[${new Date().toISOString()}] DisplayUtility: Invalid delete index: ${index}`);
       return { deletedMedia: null, updatedMedias: medias };
     }
-    const deletedMedia = medias[index];
+  const deletedMedia = medias[index];
     const updatedMedias = medias.filter((_, i) => i !== index);
-    let accumulatedTime = 0;
-    updatedMedias.forEach((media) => {
-      media.startTime = accumulatedTime;
-      media.endTime = accumulatedTime + media.time;
-      accumulatedTime = media.endTime;
-    });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Deleted media at index ${index}:`,
-    //   deletedMedia
-    // );
-    return { deletedMedia, updatedMedias };
+
+    return { deletedMedia, updatedMedias: DisplayUtility.updateMediasAndTimes(updatedMedias) };
   }
 
   /**
@@ -186,24 +151,13 @@ export class DisplayUtility {
   static duplicate(index: number): { duplicatedMedia: Media | null; updatedMedias: Media[] } {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
-      console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid duplicate index: ${index}`);
+      console.error(`[${new Date().toISOString()}] DisplayUtility: Invalid duplicate index: ${index}`);
       return { duplicatedMedia: null, updatedMedias: medias };
     }
     const duplicatedMedia = { ...medias[index], label: `${medias[index].label} (copy)` };
     const updatedMedias = [...medias.slice(0, index + 1), duplicatedMedia, ...medias.slice(index + 1)];
-    let accumulatedTime = 0;
-    updatedMedias.forEach((media) => {
-      media.startTime = accumulatedTime;
-      media.endTime = accumulatedTime + media.time;
-      accumulatedTime = media.endTime;
-    });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Duplicated media at index ${index}:`,
-    //   duplicatedMedia
-    // );
-    return { duplicatedMedia, updatedMedias };
+
+    return { duplicatedMedia, updatedMedias: DisplayUtility.updateMediasAndTimes(updatedMedias) };
   }
 
   /**
@@ -216,7 +170,7 @@ export class DisplayUtility {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length || splitTime <= 0) {
       console.error(
-        `[${new Date().toISOString()}] DispalyUtility: Invalid split parameters, index: ${index}, splitTime: ${splitTime}`
+        `[${new Date().toISOString()}] DisplayUtility: Invalid split parameters, index: ${index}, splitTime: ${splitTime}`
       );
       return { updatedMedias: medias };
     }
@@ -224,25 +178,15 @@ export class DisplayUtility {
     const duration = media.time;
     if (splitTime >= duration) {
       console.warn(
-        `[${new Date().toISOString()}] DispalyUtility: Split time ${splitTime} exceeds media duration ${duration}`
+        `[${new Date().toISOString()}] DisplayUtility: Split time ${splitTime} exceeds media duration ${duration}`
       );
       return { updatedMedias: medias };
     }
     const firstPart = { ...media, time: splitTime, endTime: media.startTime + splitTime };
     const secondPart = { ...media, time: duration - splitTime, startTime: media.startTime + splitTime };
     const updatedMedias = [...medias.slice(0, index), firstPart, secondPart, ...medias.slice(index + 1)];
-    let accumulatedTime = 0;
-    updatedMedias.forEach((m) => {
-      m.startTime = accumulatedTime;
-      m.endTime = accumulatedTime + m.time;
-      accumulatedTime = m.endTime;
-    });
-    DisplayUtility.mediasSubject.next(updatedMedias);
-    DisplayUtility.totalTimeSubject.next(accumulatedTime);
-    // console.log(
-    //   `[${new Date().toISOString()}] DispalyUtility: Split media at index ${index}, splitTime: ${splitTime}`
-    // );
-    return { updatedMedias };
+ 
+    return { updatedMedias: DisplayUtility.updateMediasAndTimes(updatedMedias) };
   }
 
   /**
@@ -250,7 +194,7 @@ export class DisplayUtility {
    */
   static togglePlayPause(): void {
     const currentIsPlaying = DisplayUtility.isPlayingSubject.getValue();
-    // console.log(`[${new Date().toISOString()}] DispalyUtility: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
+    // console.log(`[${new Date().toISOString()}] DisplayUtility: Toggling play/pause, current isPlaying: ${currentIsPlaying}`);
     DisplayUtility.isPlayingSubject.next(!currentIsPlaying);
   }
 
@@ -268,7 +212,7 @@ export class DisplayUtility {
       const startTime = media.startTime ?? accumulatedTime;
       const endTime = media.endTime ?? (startTime + (media.time ?? 0));
       if (globalSecond >= startTime && globalSecond < endTime) {
-        // console.log(`[${new Date().toISOString()}] DispalyUtility: Found media at index ${i}`, {
+        // console.log(`[${new Date().toISOString()}] DisplayUtility: Found media at index ${i}`, {
         //   globalSecond,
         //   startTime,
         //   endTime,
@@ -279,7 +223,7 @@ export class DisplayUtility {
       }
       accumulatedTime = endTime;
     }
-    console.warn(`[${new Date().toISOString()}] DispalyUtility: No media found for globalSecond ${globalSecond}`);
+    console.warn(`[${new Date().toISOString()}] DisplayUtility: No media found for globalSecond ${globalSecond}`);
     return null;
   }
 
@@ -291,7 +235,7 @@ export class DisplayUtility {
   static calculateAccumulatedTime(index: number): number {
     const medias = DisplayUtility.mediasSubject.getValue();
     if (index < 0 || index >= medias.length) {
-      console.error(`[${new Date().toISOString()}] DispalyUtility: Invalid index for calculateAccumulatedTime: ${index}`);
+      console.error(`[${new Date().toISOString()}] DisplayUtility: Invalid index for calculateAccumulatedTime: ${index}`);
       return 0;
     }
     let accumulated = 0;
