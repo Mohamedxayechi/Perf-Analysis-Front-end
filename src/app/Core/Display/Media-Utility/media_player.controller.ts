@@ -5,6 +5,8 @@ export class MediaPlayer {
   private static video: HTMLVideoElement | null = null;
   private static currentImage: HTMLImageElement | null = null;
   private static updateTimer: NodeJS.Timeout | null = null;
+  private static cursorFrameId: number | null = null; // CHANGE: Replaced cursorTimer with cursorFrameId for requestAnimationFrame
+
   private static currentMediaIndex = -1;
   private static lastPausedTime = 0;
 
@@ -116,6 +118,7 @@ export class MediaPlayer {
     }
   }
 
+  // CHANGE START: Updated to clear cursorFrameId
   static pausePlayback(
     state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
     medias: Media[],
@@ -124,6 +127,10 @@ export class MediaPlayer {
     if (this.updateTimer) {
       clearTimeout(this.updateTimer);
       this.updateTimer = null;
+    }
+    if (this.cursorFrameId) {
+      cancelAnimationFrame(this.cursorFrameId);
+      this.cursorFrameId = null;
     }
     let mediaElement: HTMLVideoElement | HTMLImageElement | null = null;
     let width: number | undefined;
@@ -157,7 +164,9 @@ export class MediaPlayer {
       processed: false,
     });
   }
+  // CHANGE END
 
+  // CHANGE START: Updated to clear cursorFrameId
   static stopPlayback(
     state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
     emitEvent: (event: any) => void
@@ -165,6 +174,10 @@ export class MediaPlayer {
     if (this.updateTimer) {
       clearTimeout(this.updateTimer);
       this.updateTimer = null;
+    }
+    if (this.cursorFrameId) {
+      cancelAnimationFrame(this.cursorFrameId);
+      this.cursorFrameId = null;
     }
     if (this.video) {
       this.video.pause();
@@ -177,6 +190,7 @@ export class MediaPlayer {
     emitEvent({ type: 'Display.playback.toggled', data: { isPlaying: false, currentTime: state.currentTime }, origin: 'domain' });
     emitEvent({ type: 'Display.render.frame', data: { mediaElement: null }, origin: 'domain', processed: false });
   }
+  // CHANGE END
 
   static rePlay(
     globalSecond: number,
@@ -360,6 +374,7 @@ export class MediaPlayer {
     this.updateTimer = setTimeout(updateCursor, 16);
   }
 
+  // CHANGE START: Use requestAnimationFrame for smooth cursor updates
   private static renderImage(
     medias: Media[],
     currentMedia: Media,
@@ -396,21 +411,37 @@ export class MediaPlayer {
         origin: 'domain',
       });
 
+      // Render the image once
+      emitEvent({
+        type: 'Display.render.frame',
+        data: { mediaElement: image, width: image.width, height: image.height, currentTime: localSecond },
+        origin: 'domain',
+        processed: false,
+      });
+
+      // Use a single timer for the image duration
+      const defaultImageDuration = 2; // Fallback duration in seconds
+      const imageDuration = isFinite(timing.duration) && timing.duration > 0 ? timing.duration : defaultImageDuration;
+      const remainingDurationMs = (imageDuration - localSecond) * 1000 / state.playbackSpeed;
+      this.updateTimer = setTimeout(() => {
+        if (state.isPlaying) {
+          this.tryNextMedia(index + 1, medias, state, options, cursorX, distancePerTime, emitEvent);
+        }
+      }, remainingDurationMs);
+
+      // Cursor update loop using requestAnimationFrame
+      let lastFrameTime = performance.now();
       let currentLocalSecond = localSecond;
-      const updateImageTimer = () => {
+      const updateCursor = (currentTime: number) => {
         if (!state.isPlaying) {
-          this.stopPlayback(state, emitEvent);
+          this.cursorFrameId = null;
           return;
         }
 
-        emitEvent({
-          type: 'Display.render.frame',
-          data: { mediaElement: image, width: image.width, height: image.height, currentTime: currentLocalSecond },
-          origin: 'domain',
-          processed: false,
-        });
+        const deltaTime = (currentTime - lastFrameTime) / 1000; // Time since last frame in seconds
+        lastFrameTime = currentTime;
 
-        const timeIncrement = options.frameInterval * state.playbackSpeed;
+        const timeIncrement = deltaTime * state.playbackSpeed;
         currentLocalSecond += timeIncrement;
         const currentGlobalSecond = timing.accumulatedBefore + currentLocalSecond;
         state.currentTime = currentGlobalSecond;
@@ -422,13 +453,13 @@ export class MediaPlayer {
           origin: 'domain',
         });
 
-        if (currentLocalSecond >= timing.duration) {
-          this.tryNextMedia(index + 1, medias, state, options, cursorX, distancePerTime, emitEvent);
+        if (currentLocalSecond < imageDuration) {
+          this.cursorFrameId = requestAnimationFrame(updateCursor);
         } else {
-          this.updateTimer = setTimeout(updateImageTimer, 16);
+          this.cursorFrameId = null;
         }
       };
-      this.updateTimer = setTimeout(updateImageTimer, 16);
+      this.cursorFrameId = requestAnimationFrame(updateCursor);
     };
 
     image.onerror = () => {
@@ -436,6 +467,7 @@ export class MediaPlayer {
       this.tryNextMedia(index + 1, medias, state, options, cursorX, distancePerTime, emitEvent);
     };
   }
+  // CHANGE END
 
   private static tryNextMedia(
     nextIndex: number,
