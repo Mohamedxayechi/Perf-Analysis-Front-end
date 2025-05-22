@@ -118,18 +118,19 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     this.updateDistancePerTime(this.distancePerTime); // Emit updated distancePerTime
   }
 
-  /**
-   * Emits an event when the cursor position changes.
-   * @param cursorX The new x-coordinate of the cursor in pixels.
-   */
-  onCursorMove(cursorX: number): void {
-    Engine.getInstance().emit({
-      type: 'MainVideoEditComponent.cursor.changed',
-      data: { cursorX },
-      origin: 'component',
-      processed: false,
-    });
-  }
+/**
+ * Emits an event when the cursor position changes.
+ * @param cursorX The new x-coordinate of the cursor in pixels.
+ */
+onCursorMove(cursorX: number): void {
+  console.log("cursor place:", cursorX);
+  Engine.getInstance().emit({
+    type: 'MainVideoEditComponent.cursor.changed',
+    data: { cursorX },
+    origin: 'component',
+    processed: false,
+  });
+}
 
   /**
    * Emits an event to update the distance per time (pixels per second) for the timeline.

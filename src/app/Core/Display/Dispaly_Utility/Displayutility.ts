@@ -203,29 +203,34 @@ export class DisplayUtility {
    * @param globalSecond The global time in seconds.
    * @returns Object containing the media index and local time within the media, or null if not found.
    */
-  static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number } | null {
-    const medias = this.mediasSubject.getValue();
-    let accumulatedTime = 0;
+ static getVideoIndexAndStartTime(globalSecond: number): { index: number; localSecond: number } | null {
+  const medias = this.mediasSubject.getValue();
+  console.log(`[${new Date().toISOString()}] DisplayUtility: getVideoIndexAndStartTime`, {
+    globalSecond,
+    medias: medias.map(m => ({ label: m.label, startTime: m.startTime, endTime: m.endTime, time: m.time })),
+  });
 
-    for (let i = 0; i < medias.length; i++) {
-      const media = medias[i];
-      const startTime = media.startTime ?? accumulatedTime;
-      const endTime = media.endTime ?? (startTime + (media.time ?? 0));
-      if (globalSecond >= startTime && globalSecond < endTime) {
-        // console.log(`[${new Date().toISOString()}] DisplayUtility: Found media at index ${i}`, {
-        //   globalSecond,
-        //   startTime,
-        //   endTime,
-        //   localSecond: globalSecond - startTime,
-        //   label: media.label,
-        // });
-        return { index: i, localSecond: globalSecond - startTime };
-      }
-      accumulatedTime = endTime;
+  let accumulatedTime = 0;
+  for (let i = 0; i < medias.length; i++) {
+    const media = medias[i];
+    const startTime = media.startTime ?? accumulatedTime;
+    const endTime = media.endTime ?? (startTime + (media.time ?? 0));
+    if (globalSecond >= startTime && globalSecond < endTime) {
+      const localSecond = globalSecond - startTime;
+      console.log(`[${new Date().toISOString()}] DisplayUtility: Found media at index ${i}`, {
+        globalSecond,
+        startTime,
+        endTime,
+        localSecond,
+        label: media.label,
+      });
+      return { index: i, localSecond };
     }
-    console.warn(`[${new Date().toISOString()}] DisplayUtility: No media found for globalSecond ${globalSecond}`);
-    return null;
+    accumulatedTime = endTime;
   }
+  console.warn(`[${new Date().toISOString()}] DisplayUtility: No media found for globalSecond ${globalSecond}`);
+  return null;
+}
 
   /**
    * Calculates the accumulated time up to the specified media index.

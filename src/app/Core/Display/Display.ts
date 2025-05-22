@@ -274,16 +274,20 @@ export class Display implements OnDestroy {
     this.emitEvent({ type: 'Display.display.durationUpdated', data: { duration }, origin: 'domain' });
   }
 
-  private handleCursorChange(cursorX: number): void {
-    this.cursorX = cursorX;
-    const globalSecond = cursorX / this.distancePerTime;
-    this.state.currentTime = globalSecond;
-    this.medias = DisplayUtility.mediasSubject.getValue();
-    this.emitEvent({ type: 'Display.cursor.updated', data: { cursorX, globalSecond, mediaElement: MediaPlayer.getCurrentMediaElement() }, origin: 'domain' });
-    if (this.state.isPlaying) {
-      MediaPlayer.rePlay(globalSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
-    }
+ private handleCursorChange(cursorX: number): void {
+  console.log(`[${new Date().toISOString()}] Display: Before handleCursorChange`, { cursorX, currentTime: this.state.currentTime, lastPausedTime: (MediaPlayer as any).lastPausedTime });
+  this.cursorX = cursorX;
+  const globalSecond = cursorX / this.distancePerTime;
+  console.log(`[${new Date().toISOString()}] Display: handleCursorChange`, { cursorX, globalSecond, distancePerTime: this.distancePerTime });
+  this.state.currentTime = globalSecond;
+  this.medias = DisplayUtility.mediasSubject.getValue();
+  this.emitEvent({ type: 'Display.cursor.updated', data: { cursorX, globalSecond, mediaElement: MediaPlayer.getCurrentMediaElement() }, origin: 'domain' });
+  if (this.state.isPlaying) {
+    console.log(`[${new Date().toISOString()}] Display: Replaying from globalSecond: ${globalSecond}`);
+    MediaPlayer.rePlay(globalSecond, this.medias, this.state, this.options, this.cursorX, this.distancePerTime, this.emitEvent.bind(this));
   }
+  console.log(`[${new Date().toISOString()}] Display: After handleCursorChange`, { currentTime: this.state.currentTime, lastPausedTime: (MediaPlayer as any).lastPausedTime });
+}
 
   private handleDistancePerTimeUpdate(distancePerTime: number): void {
     this.distancePerTime = distancePerTime;

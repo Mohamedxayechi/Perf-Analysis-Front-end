@@ -103,70 +103,73 @@ export class MediaPlayer {
     }
   }
 
-  static togglePlayPause(
-    state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
-    medias: Media[],
-    cursorX: number,
-    distancePerTime: number,
-    emitEvent: (event: any) => void
-  ): void {
-    if (state.isPlaying) {
-      this.pausePlayback(state, medias, emitEvent);
-    } else {
-      const playSecond = state.currentTime > 0 ? state.currentTime : (this.lastPausedTime > 0 ? this.lastPausedTime : 0);
-      this.playFromSecond(playSecond, medias, state, { frameInterval: 0.016, endTimeTolerance: 0.1 }, cursorX, distancePerTime, emitEvent);
-    }
+static togglePlayPause(
+  state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
+  medias: Media[],
+  cursorX: number,
+  distancePerTime: number,
+  emitEvent: (event: any) => void
+): void {
+  if (state.isPlaying) {
+    this.pausePlayback(state, medias, emitEvent);
+  } else {
+    const playSecond = Math.max(0, state.currentTime); // Always use state.currentTime
+    console.log(`[${new Date().toISOString()}] MediaPlayer: togglePlayPause resuming`, { currentTime: state.currentTime, lastPausedTime: this.lastPausedTime, playSecond });
+    this.playFromSecond(playSecond, medias, state, { frameInterval: 0.016, endTimeTolerance: 0.1 }, cursorX, distancePerTime, emitEvent);
+  }
+}
+static pausePlayback(
+  state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
+  medias: Media[],
+  emitEvent: (event: any) => void
+): void {
+  console.log(`[${new Date().toISOString()}] MediaPlayer: Before pausePlayback`, { currentTime: state.currentTime, lastPausedTime: this.lastPausedTime });
+  if (this.updateTimer) {
+    clearTimeout(this.updateTimer);
+    this.updateTimer = null;
+  }
+  if (this.cursorFrameId) {
+    cancelAnimationFrame(this.cursorFrameId);
+    this.cursorFrameId = null;
+  }
+  let mediaElement: HTMLVideoElement | HTMLImageElement | null = null;
+  let width: number | undefined;
+  let height: number | undefined;
+  let currentTime: number | undefined;
+
+  if (this.video && this.currentMediaIndex >= 0) {
+    this.video.pause();
+    const media = medias[this.currentMediaIndex];
+    this.lastPausedTime = this.video.currentTime + DisplayUtility.calculateAccumulatedTime(this.currentMediaIndex);
+    state.currentTime = this.lastPausedTime;
+    mediaElement = this.video;
+    width = this.video.videoWidth;
+    height = this.video.videoHeight;
+    currentTime = this.video.currentTime;
+  } else if (this.currentImage && this.currentMediaIndex >= 0) {
+    const media = medias[this.currentMediaIndex];
+    this.lastPausedTime = state.currentTime;
+    mediaElement = this.currentImage;
+    width = this.currentImage.width;
+    height = this.currentImage.height;
+    currentTime = state.currentTime - DisplayUtility.calculateAccumulatedTime(this.currentMediaIndex);
+  } else {
+    this.lastPausedTime = 0; // Reset lastPausedTime if no media is active
   }
 
-  // CHANGE START: Updated to clear cursorFrameId
-  static pausePlayback(
-    state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
-    medias: Media[],
-    emitEvent: (event: any) => void
-  ): void {
-    if (this.updateTimer) {
-      clearTimeout(this.updateTimer);
-      this.updateTimer = null;
-    }
-    if (this.cursorFrameId) {
-      cancelAnimationFrame(this.cursorFrameId);
-      this.cursorFrameId = null;
-    }
-    let mediaElement: HTMLVideoElement | HTMLImageElement | null = null;
-    let width: number | undefined;
-    let height: number | undefined;
-    let currentTime: number | undefined;
+  state.isPlaying = false;
+  emitEvent({ type: 'Display.playback.toggled', data: { isPlaying: false, currentTime: state.currentTime }, origin: 'domain' });
+  emitEvent({
+    type: 'Display.render.frame',
+    data: { mediaElement, width, height, currentTime },
+    origin: 'domain',
+    processed: false,
+  });
+  console.log(`[${new Date().toISOString()}] MediaPlayer: After pausePlayback`, { currentTime: state.currentTime, lastPausedTime: this.lastPausedTime });
+}
 
-    if (this.video && this.currentMediaIndex >= 0) {
-      this.video.pause();
-      const media = medias[this.currentMediaIndex];
-      this.lastPausedTime = this.video.currentTime + DisplayUtility.calculateAccumulatedTime(this.currentMediaIndex);
-      state.currentTime = this.lastPausedTime;
-      mediaElement = this.video;
-      width = this.video.videoWidth;
-      height = this.video.videoHeight;
-      currentTime = this.video.currentTime;
-    } else if (this.currentImage && this.currentMediaIndex >= 0) {
-      const media = medias[this.currentMediaIndex];
-      this.lastPausedTime = state.currentTime;
-      mediaElement = this.currentImage;
-      width = this.currentImage.width;
-      height = this.currentImage.height;
-      currentTime = state.currentTime - DisplayUtility.calculateAccumulatedTime(this.currentMediaIndex);
-    }
 
-    state.isPlaying = false;
-    emitEvent({ type: 'Display.playback.toggled', data: { isPlaying: false, currentTime: state.currentTime }, origin: 'domain' });
-    emitEvent({
-      type: 'Display.render.frame',
-      data: { mediaElement, width, height, currentTime },
-      origin: 'domain',
-      processed: false,
-    });
-  }
-  // CHANGE END
 
-  // CHANGE START: Updated to clear cursorFrameId
   static stopPlayback(
     state: { isPlaying: boolean; currentTime: number; duration: number; volume: number; playbackSpeed: number },
     emitEvent: (event: any) => void
@@ -190,7 +193,7 @@ export class MediaPlayer {
     emitEvent({ type: 'Display.playback.toggled', data: { isPlaying: false, currentTime: state.currentTime }, origin: 'domain' });
     emitEvent({ type: 'Display.render.frame', data: { mediaElement: null }, origin: 'domain', processed: false });
   }
-  // CHANGE END
+
 
   static rePlay(
     globalSecond: number,
@@ -374,7 +377,7 @@ export class MediaPlayer {
     this.updateTimer = setTimeout(updateCursor, 16);
   }
 
-  // CHANGE START: Use requestAnimationFrame for smooth cursor updates
+ 
   private static renderImage(
     medias: Media[],
     currentMedia: Media,
@@ -467,7 +470,7 @@ export class MediaPlayer {
       this.tryNextMedia(index + 1, medias, state, options, cursorX, distancePerTime, emitEvent);
     };
   }
-  // CHANGE END
+
 
   private static tryNextMedia(
     nextIndex: number,
