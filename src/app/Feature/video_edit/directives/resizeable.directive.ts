@@ -47,18 +47,14 @@ export class ResizableDirective implements AfterViewInit {
           const { left } = event.edges;
           const target = event.target as HTMLElement;
           this.initialWidth = target.offsetWidth;
-     
         },
         move: (event) => {
           const { left } = event.edges;
           const target = event.target;
           const x = parseFloat(target.dataset.x || '0') + event.deltaRect.left;
           const minWidth = 10; // Prevent collapse
-          const maxWidth = 500; // Prevent oversized
-          const constrainedWidth = Math.max(
-            minWidth,
-            Math.min(event.rect.width, maxWidth)
-          );
+          
+          const constrainedWidth = Math.max(minWidth, event.rect.width);
 
           if (
             x < 0 ||
@@ -138,8 +134,6 @@ export class ResizableDirective implements AfterViewInit {
         },
       },
     });
-
-
   }
 
   /**
