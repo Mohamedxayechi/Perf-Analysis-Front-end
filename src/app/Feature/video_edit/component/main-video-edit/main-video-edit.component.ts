@@ -57,25 +57,26 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
         .getEvents()
         .on('*', (event: EventPayload) => {
           switch (event.type) {
-            case 'display.durationUpdated':
+            case 'Display.display.durationUpdated':
               if (event.data?.duration) {
                 this.time = event.data.duration;
                 this.updateWidth();
               }
               break;
-            case 'parameters.distancePerTimeUpdated':
+            case 'Display.parameters.distancePerTimeUpdated':
               if (event.data?.distancePerTime) {
                 this.distancePerTime = event.data.distancePerTime;
                 this.scale = this.distancePerTime / 50; // Sync scale with distancePerTime
                 this.updateWidth();
               }
               break;
-            case 'cursor.updated':
+            case 'Display.cursor.updated':
               if (event.data?.cursorX !== undefined) {
                 this.cursorX = event.data.cursorX;
+                
               }
               break;
-            case 'zoom.changed': // Handle zoom changes from Display service
+            case 'Display.zoom.changed': // Handle zoom changes from Display service
               if (event.data?.zoom) {
                 this.scale = event.data.zoom;
                 this.distancePerTime = this.scale * 50;
@@ -117,18 +118,19 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
     this.updateDistancePerTime(this.distancePerTime); // Emit updated distancePerTime
   }
 
-  /**
-   * Emits an event when the cursor position changes.
-   * @param cursorX The new x-coordinate of the cursor in pixels.
-   */
-  onCursorMove(cursorX: number): void {
-    Engine.getInstance().emit({
-      type: 'cursor.changed',
-      data: { cursorX },
-      origin: 'component',
-      processed: false,
-    });
-  }
+/**
+ * Emits an event when the cursor position changes.
+ * @param cursorX The new x-coordinate of the cursor in pixels.
+ */
+onCursorMove(cursorX: number): void {
+  console.log("cursor place:", cursorX);
+  Engine.getInstance().emit({
+    type: 'MainVideoEditComponent.cursor.changed',
+    data: { cursorX },
+    origin: 'component',
+    processed: false,
+  });
+}
 
   /**
    * Emits an event to update the distance per time (pixels per second) for the timeline.
@@ -136,7 +138,7 @@ export class MainVideoEditComponent implements OnInit, OnDestroy {
    */
   updateDistancePerTime(distancePerTime: number): void {
     Engine.getInstance().emit({
-      type: 'parameters.distancePerTimeUpdated',
+      type: 'MainVideoEditComponent.parameters.distancePerTimeUpdated',
       data: { distancePerTime },
       origin: 'component',
       processed: false,

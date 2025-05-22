@@ -1,14 +1,49 @@
-<div class="button-container d-flex justify-content-around align-items-center" >
-  <button mat-raised-button (click)="onSplit()">
-    <mat-icon>flip</mat-icon>
-    Split Clip
+<div class="button-container">
+  <button mat-icon-button (click)="onTogglePlayPause()" title="Play/Pause">
+    <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon>
   </button>
-  <button mat-fab aria-label="icon button with a delete icon" (click)="onTogglePlayPause()">
-    <mat-icon>{{ isPlaying ? "pause_circle" : "play_circle" }}</mat-icon>
+  <button mat-icon-button (click)="onSplit()" title="Split Media">
+    <mat-icon>content_cut</mat-icon>
   </button>
-  <button mat-raised-button (click)="onClicImportMedia()">
-    <mat-icon>flip</mat-icon>
-    Import Media
+  <button mat-icon-button (click)="onClicImportMedia()" title="Import Media">
+    <mat-icon>file_upload</mat-icon>
+  </button>
+  <button mat-icon-button (click)="onConvertToMP4()" title="Convert to MP4">
+    <mat-icon>movie</mat-icon>
+  </button>
+  <mat-divider vertical></mat-divider>
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    [(ngModel)]="volume"
+    (input)="onVolumeChange(volume)"
+    title="Volume"
+    class="volume-slider"
+  />
+  <mat-divider vertical></mat-divider>
+  <select
+    class="speed-select"
+    [(ngModel)]="playbackSpeed"
+    (ngModelChange)="onSpeedChange($event)"
+    aria-label="Playback speed"
+  >
+    <option *ngFor="let speed of availableSpeeds" [value]="speed">{{ speed }}x</option>
+  </select>
+  <mat-divider vertical></mat-divider>
+  <select
+    class="skip-interval-select"
+    [(ngModel)]="skipInterval"
+    (ngModelChange)="onSkipIntervalChange($event)"
+    aria-label="Skip interval"
+  >
+    <option *ngFor="let interval of availableSkipIntervals" [value]="interval">{{ interval }}s</option>
+  </select>
+  <button mat-icon-button (click)="skipBackward()" title="Skip Backward">
+    <mat-icon>fast_rewind</mat-icon>
+  </button>
+  <button mat-icon-button (click)="skipForward()" title="Skip Forward">
+    <mat-icon>fast_forward</mat-icon>
   </button>
 </div>
-

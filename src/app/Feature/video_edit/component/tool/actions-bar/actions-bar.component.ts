@@ -1,7 +1,9 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { Media } from '../../../models/time-period.model';
 import { Engine } from '../../../../../Core/Engine';
 import { EventPayload } from '../../../../../Core/Utility/event-bus';
@@ -10,119 +12,160 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-actions-bar',
   standalone: true,
-  imports: [MatButtonModule, MatDividerModule, MatIconModule],
+  imports: [MatButtonModule, MatDividerModule, MatIconModule, FormsModule, CommonModule],
   templateUrl: './actions-bar.component.html',
   styleUrl: './actions-bar.component.css',
 })
 export class ActionsBarComponent implements OnInit, OnDestroy {
   medias: Media[] = [];
-  private distancePerTime = 50;
-  private cursorX = 0;
   isPlaying = false;
+  volume = 0.5;
+  playbackSpeed = 1;
+  skipInterval = 5;
+  availableSpeeds = [0.5, 1, 1.5, 2];
+  availableSkipIntervals = [5, 10, 30];
   private subscription: Subscription = new Subscription();
 
-  /**
-   * Initializes the component with NgZone for handling events outside Angular's change detection.
-   * @param ngZone The NgZone service for running code outside Angular's zone.
-   */
-  constructor(private ngZone: NgZone) {}
-
-  /**
-   * Sets up event listeners for engine events on component initialization.
-   */
   ngOnInit(): void {
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Available speeds:`, this.availableSpeeds);
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Available skip intervals:`, this.availableSkipIntervals);
     this.setupEngineListeners();
   }
 
-  /**
-   * Subscribes to engine events to update media list, cursor position, distance per time, and playback state.
-   */
   private setupEngineListeners(): void {
+    const eventsObservable = Engine.getInstance().getEvents();
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Subscribing to Engine events`);
     this.subscription.add(
-      Engine.getInstance()
-        .getEvents()
-        .on('*', (event: EventPayload) => {
-          if (event.processed) return;
-          this.ngZone.run(() => {
-            switch (event.type) {
-              case 'media.initialized':
-              case 'media.imported':
-              case 'media.resized.completed':
-                if (event.data?.updatedMedias) {
-                  this.medias = event.data.updatedMedias;
-                }
-                break;
-              case 'cursor.updated':
-                this.cursorX = event.data?.cursorX || this.cursorX;
-                break;
-              case 'parameters.distancePerTimeUpdated':
-                this.distancePerTime = event.data?.distancePerTime || this.distancePerTime;
-                break;
-              case 'playback.toggled':
-                this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
-                console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
-                break;
+      eventsObservable.on('*', (event: EventPayload) => {
+        // console.log(`[${new Date().toISOString()}] ActionsBar: Received event: ${event.type}, processed: ${event.processed}, data:`, event.data);
+        switch (event.type) {
+          case 'Display.media.initialized':
+          case 'Display.media.imported':
+          case 'Display.media.resized.completed':
+            if (event.data?.updatedMedias) {
+              this.medias = event.data.updatedMedias;
+              // console.log(`[${new Date().toISOString()}] ActionsBar: Updated medias, count: ${this.medias.length}`);
             }
-          });
-        })
+            break;
+          case 'Display.playback.toggled':
+            this.isPlaying = event.data?.isPlaying ?? this.isPlaying;
+            // console.log(`[${new Date().toISOString()}] ActionsBar: Playback toggled, isPlaying: ${this.isPlaying}`);
+            break;
+          case 'Display.volume.changed':
+            this.volume = event.data?.volume ?? this.volume;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Volume updated, volume: ${this.volume}`);
+            break;
+          case 'Display.playback.speed.changed':
+            this.playbackSpeed = event.data?.playbackSpeed ?? this.playbackSpeed;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Playback speed updated, speed: ${this.playbackSpeed}`);
+            break;
+          case 'Display.skip.interval.updated':
+            this.skipInterval = event.data?.skipInterval ?? this.skipInterval;
+            console.log(`[${new Date().toISOString()}] ActionsBar: Skip interval updated to ${this.skipInterval}s`);
+            break;
+        }
+      })
     );
   }
 
-  /**
-   * Emits an event to split a media item at the current cursor time.
-   */
   onSplit(): void {
-    const time = this.cursorX / this.distancePerTime;
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting split media request`);
     Engine.getInstance().emit({
-      type: 'media.split',
-      data: { time },
+      type: 'ActionsBarComponent.media.split',
+      data: {},
       origin: 'component',
       processed: false,
     });
   }
 
-  /**
-   * Toggles playback state and emits an event with the current time.
-   */
   onTogglePlayPause(): void {
-    this.isPlaying = !this.isPlaying; // Local toggle as fallback
-    const currentSecond = this.cursorX / this.distancePerTime;
-    console.log(`[${new Date().toISOString()}] ActionsBar: Toggle play/pause, isPlaying: ${this.isPlaying}, currentSecond: ${currentSecond}`);
+    this.isPlaying = !this.isPlaying;
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting toggle play/pause, isPlaying: ${this.isPlaying}`);
     Engine.getInstance().emit({
-      type: 'playback.toggle',
-      data: { currentSecond },
+      type: 'ActionsBarComponent.playback.toggle',
+      data: {},
       origin: 'component',
       processed: false,
     });
   }
 
-  /**
-   * Emits an event to trigger the media import file picker.
-   */
   onClicImportMedia(): void {
     Engine.getInstance().emit({
-      type: 'media.import.trigger',
+      type: 'ActionsBarComponent.media.import.trigger',
       origin: 'component',
       processed: false,
     });
   }
 
-  /**
-   * Emits an event to update the distance per time (pixels per second) for the timeline.
-   * @param distancePerTime The new distance per time value.
-   */
-  updateDistancePerTime(distancePerTime: number): void {
+  onConvertToMP4(): void {
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting convert to MP4 request`);
     Engine.getInstance().emit({
-      type: 'parameters.distancePerTimeUpdated',
-      data: { distancePerTime },
+      type: 'ActionsBarComponent.media.convertToMP4',
+      data: {},
       origin: 'component',
       processed: false,
     });
   }
 
-  /**
-   * Cleans up subscriptions when the component is destroyed.
-   */
+
+ 
+
+  onVolumeChange(volume: number): void {
+    console.log(`[${new Date().toISOString()}] ActionsBar: Volume change requested, volume: ${volume}`);
+    Engine.getInstance().emit({
+      type: 'ActionsBarComponent.volume.changed',
+      data: { volume },
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  onSpeedChange(speed: number | string): void {
+    const parsedSpeed = typeof speed === 'string' ? parseFloat(speed) : speed;
+    if (isNaN(parsedSpeed)) {
+      console.warn(`[${new Date().toISOString()}] ActionsBar: Invalid speed value: ${speed}`);
+      return;
+    }
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Speed change requested, newSpeed: ${parsedSpeed}`);
+    Engine.getInstance().emit({
+      type: 'ActionsBarComponent.playback.speed.changed',
+      data: { playbackSpeed: parsedSpeed },
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  onSkipIntervalChange(interval: number | string): void {
+    const parsedInterval = typeof interval === 'string' ? parseFloat(interval) : interval;
+    // console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip interval change, interval: ${parsedInterval}`);
+    Engine.getInstance().emit({
+      type: 'ActionsBarComponent.skip.interval.changed',
+      data: { skipInterval: parsedInterval },
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  skipForward(): void {
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip forward`);
+    Engine.getInstance().emit({
+      type: 'ActionsBarComponent.playback.skip.forward',
+      data: {},
+      origin: 'component',
+      processed: false,
+    });
+  }
+
+  skipBackward(): void {
+    console.log(`[${new Date().toISOString()}] ActionsBar: Emitting skip backward`);
+    Engine.getInstance().emit({
+      type: 'ActionsBarComponent.playback.skip.backward',
+      data: {},
+      origin: 'component',
+      processed: false,
+    });
+  }
+
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }

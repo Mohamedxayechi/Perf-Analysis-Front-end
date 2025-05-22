@@ -19,7 +19,7 @@ export class ItemListMenuComponent {
    */
   deleteItem() {
     Engine.getInstance().emit({
-      type: 'media.delete',
+      type: 'ItemListMenuComponent.media.delete',
       data: { index: this.index },
       origin: 'component',
       processed: false
@@ -31,7 +31,7 @@ export class ItemListMenuComponent {
    */
   duplicateItem() {
     Engine.getInstance().emit({
-      type: 'media.duplicate',
+      type: 'ItemListMenuComponent.media.duplicate',
       data: { index: this.index },
       origin: 'component',
       processed: false
