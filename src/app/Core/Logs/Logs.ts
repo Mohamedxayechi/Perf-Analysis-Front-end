@@ -1,59 +1,68 @@
-import { Injectable, OnDestroy, Inject, Optional } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { Engine, Domain } from '../Engine';
 import { EventPayload } from '../Utility/event-bus';
-
-interface LogEntry {
-  timestamp: string;
-  eventType: string;
-  origin?: string;
-  correlationId?: string;
-  data?: any;
-  processed?: boolean;
-}
 
 @Injectable({
   providedIn: 'root',
 })
-export class Logs implements OnDestroy {
-  private backendUrl = 'http://localhost:5251/api/logs';
+export class Logs implements Domain, OnDestroy {
+  private subscription = new Subscription();
+  private readonly backendUrl = 'http://localhost:5251/api/logs'; // Adjust to your .NET API endpoint
+  private http: HttpClient | null;
 
-  constructor(@Optional() @Inject(HttpClient) private http?: HttpClient) {
-    console.log(`[${new Date().toISOString()}] Logs: Service instantiated`);
+  constructor(http: HttpClient | null = null) { // Default to null to allow instantiation without arguments
+    this.http = http;
+    this.setupSubscriptions();
+  }
+
+  private setupSubscriptions(): void {
+    console.log(`[${new Date().toISOString()}] Logs: Setting up subscriptions`);
+    this.subscription.add(
+      Engine.getInstance().getEvents().on('*', (event: EventPayload) => {
+        this.handleEvent(event);
+      })
+    );
   }
 
   handleEvent(event: EventPayload): void {
-    console.log(`[${new Date().toISOString()}] Logs: Processing event: ${event.type}, origin: ${event.origin}, processed: ${event.processed}, data:`, event.data);
-
-    const logEntry: LogEntry = {
-      timestamp: new Date().toISOString(),
-      eventType: event.type,
-      origin: event.origin,
-      correlationId: event.correlationId,
-      data: event.data,
-      processed: event.processed,
-    };
-
-    this.sendLogToBackend(logEntry);
-  }
-
-  private sendLogToBackend(logEntry: LogEntry): void {
-    console.log(`[${new Date().toISOString()}] Logs: Preparing to send log:`, logEntry);
-    if (!this.http) {
-      console.warn(`[${new Date().toISOString()}] Logs: HttpClient not available, skipping backend log for event: ${logEntry.eventType}`);
+    if (event.processed) {
+      console.log(`[${new Date().toISOString()}] Logs: Skipping processed event: ${event.type}`);
       return;
     }
-    this.http.post(this.backendUrl, logEntry).subscribe({
-      next: (response) => {
-        console.log(`[${new Date().toISOString()}] Logs: Successfully sent log for event: ${logEntry.eventType}`, response);
-      },
-      error: (error) => {
-        console.error(`[${new Date().toISOString()}] Logs: Failed to send log for event: ${logEntry.eventType}`);
-        console.error('Error details:', error.message, error.status, error.statusText);
-      },
-    });
+
+    const logData = {
+      timestamp: new Date().toISOString(),
+      type: event.type,
+      origin: event.origin || 'unknown',
+      data: event.data,
+      level: this.mapEventTypeToLogLevel(event.type),
+    };
+
+    console.log(`[${new Date().toISOString()}] Logs: Processing event`, logData);
+
+    if (this.http) {
+      this.http.post(this.backendUrl, logData).subscribe({
+        next: () => console.log(`[${new Date().toISOString()}] Logs: Successfully sent log to backend`, logData),
+        error: (err) => console.error(`[${new Date().toISOString()}] Logs: Failed to send log to backend`, err),
+      });
+    } else {
+      console.warn(`[${new Date().toISOString()}] Logs: HttpClient not available, skipping backend log for event: ${event.type}`);
+    }
+
+    event.processed = true;
+  }
+
+  private mapEventTypeToLogLevel(eventType: string): string {
+    if (eventType.includes('error')) return 'Error';
+    if (eventType.includes('warn')) return 'Warning';
+    if (eventType.includes('info') || eventType.includes('updated') || eventType.includes('imported')) return 'Information';
+    return 'Debug';
   }
 
   ngOnDestroy(): void {
-    console.log(`[${new Date().toISOString()}] Logs: Cleaning up`);
+    console.log(`[${new Date().toISOString()}] Logs: Cleaning up subscriptions`);
+    this.subscription.unsubscribe();
   }
 }
