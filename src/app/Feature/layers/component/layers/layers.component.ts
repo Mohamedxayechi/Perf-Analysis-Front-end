@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Timeline } from '../../models/timeline.model';
+import { Layer, Timeline } from '../../models/timeline.model';
 // import { timeline } from '../../models/timeLineExemple';
 import { ClipComponent } from '../clip/clip.component';
 import { Subscription } from 'rxjs';
@@ -9,6 +9,7 @@ import { EventPayload } from '../../../../Core/Utility/event-bus';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
+
 @Component({
   selector: 'app-layers',
   standalone: true,
@@ -17,6 +18,8 @@ import { MatButtonModule } from '@angular/material/button';
     ClipComponent,
     MatButtonModule,
     MatDividerModule,
+    MatIconModule,
+    MatButtonModule,
     MatIconModule,
   ],
   templateUrl: './layers.component.html',
@@ -29,8 +32,10 @@ export class LayersComponent implements OnInit {
   @Input() distancePerTime = 50;
   @Input() time = 30;
   timeLine: Timeline = new Timeline();
+  visibleLayers: Layer[] = this.timeLine.layers;
+
   layerHeight = 80;
-  
+
   private subscription: Subscription = new Subscription();
   /**
    * Initializes the component by setting up event listeners for  timeline updates.
@@ -52,6 +57,10 @@ export class LayersComponent implements OnInit {
             case 'timeLine.initialized':
               if (event.data?.timeLine) {
                 this.timeLine = event.data.timeLine;
+                this.visibleLayers = this.timeLine.layers.filter(
+                  (layer) => layer.properties.visible
+                );
+                console.log(this.visibleLayers);
                 // console.log(
                 //   `[${new Date().toISOString()}] LayersComponent: initialized timeline, layers: ${
                 //     this.timeLine.layers.length
@@ -68,6 +77,19 @@ export class LayersComponent implements OnInit {
                 this.timeLine = event.data.timeLine;
                 console.log(
                   `[${new Date().toISOString()}] LayersComponent: Updated timeline, layers:`,
+                  this.timeLine
+                );
+              } else {
+                console.warn(
+                  `[${new Date().toISOString()}] Layers: No updatedMedias in media.initialized event`
+                );
+              }
+              break;
+            case 'timeLine.resized':
+              if (event.data?.timeLine) {
+                this.timeLine = event.data.timeLine;
+                console.log(
+                  `[${new Date().toISOString()}] LayersComponent: Resized timeline, layers:`,
                   this.timeLine
                 );
               } else {
@@ -100,12 +122,13 @@ export class LayersComponent implements OnInit {
         })
     );
   }
-
   get containerStyle() {
+    const visibleLayerCount = this.visibleLayers.length;
+    const height = this.layerHeight * visibleLayerCount;
     return {
       width: `${this.time * this.distancePerTime + this.spaceBefore}px`,
       'padding-left': `${this.spaceBefore}px`,
-      height: `${this.layerHeight * this.timeLine.layers.length}px`,
+      height: `${height}px`,
     };
   }
 }

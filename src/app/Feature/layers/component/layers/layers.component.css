@@ -6,7 +6,6 @@
   border: 2px dashed #aaa;
   overflow: hidden;
   user-select: none;
-  
 }
 
 .list-row {
@@ -23,24 +22,6 @@
   font-weight: bold;
   color: #555;
 }
-
-.draggable-clip {
-  position: absolute;
-  width: 100px;
-  height: 50px;
-  color: black;
-  box-sizing: border-box;
-  font-size: 12px;
-  border-radius: 12px;
-  background-repeat: repeat-x;
-  background-position: top left;
-  box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14),
-    0 1px 3px 0 rgba(0, 0, 0, 0.12);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: grab;
-  font-weight: bold;
-
+button {
+  margin: 8px;
 }
-

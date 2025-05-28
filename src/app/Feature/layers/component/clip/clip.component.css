@@ -15,5 +15,6 @@
   align-items: center;
   cursor: grab;
   font-weight: bold;
+  z-index: 10000;
 
 }

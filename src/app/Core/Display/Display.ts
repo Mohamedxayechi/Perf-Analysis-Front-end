@@ -154,6 +154,13 @@ export class Display implements OnDestroy {
           this.handleTimelineInitialize(data?.timeline),
         'timeLine.update': (data) =>
           this.handleTimelineUpdate(data.id, data.index, data.startTime),
+        'timeLine.resize': (data) =>
+          this.handleTimelineResize(
+            data.id,
+            data.duration,
+            data.startTime,
+            data.edge
+          ),
         'timeLine.LayersAdjust': () => this.handleTimelineAdjust(),
         'media.get': (data) => this.handleGetMedia(data?.index),
         'playback.playFromSecond': (data) =>
@@ -438,43 +445,19 @@ export class Display implements OnDestroy {
     );
   }
 
-  handleTimelineUpdate(clipId: string, index: number, startTime: number): void {
-    // Find the current layer that contains the clip
-    const currentLayer = this.timeLine!.layers.find((layer) =>
-      layer.clips.some((clip) => clip.id === clipId)
-    );
+  handleTimelineUpdate(
+    clipId: string,
+    LayerId: string,
+    startTime: number
+  ): void {
+    const success = this.timeLine?.updateClipLayer(clipId, LayerId, startTime);
 
-    if (!currentLayer) {
-      console.error('Clip not found in any layer');
-      return;
-    }
-
-    // Find the clip inside the current layer
-    const clipIndex = currentLayer.clips.findIndex(
-      (clip) => clip.id === clipId
-    );
-
-    if (clipIndex === -1) return;
-
-    const [clip] = currentLayer.clips.splice(clipIndex, 1); // Remove clip from old layer
-
-    // Add the clip to the new layer
-    const newLayer = this.timeLine!.layers[index] || this.timeLine!.layers[0];
-    if (!newLayer) {
-      console.error('Target layer does not exist');
-      return;
-    }
-    if (startTime < 0) {
-      console.log(startTime);
-      startTime = 0;
-    }
-
-    clip.startTime = startTime / this.distancePerTime;
-    newLayer.clips.push(clip);
-    if (this.timeLine && this.timeLine.layers) {
-      this.timeLine.layers = this.timeLine.layers.filter(
-        (layer) => layer.clips.length > 0
-      );
+    if (success) {
+      this.emitEvent({
+        type: 'timeLine.updated',
+        data: { timeLine: this.timeLine },
+        origin: 'domain',
+      });
     }
 
     Promise.resolve().then(() =>
@@ -486,81 +469,114 @@ export class Display implements OnDestroy {
     );
   }
 
-  private handleTimelineAdjust(): void {
-    if (!this.timeLine) {
-      console.error(
-        `[${new Date().toISOString()}] Display: Adjust Layer Unhandled  `
-      );
+  handleTimelineResize(
+    clipId: string,
+    newDuration: number,
+    newStartTime: number,
+    edge: string
+  ): void {
+    const currentLayer = this.timeLine?.layers.find((layer) =>
+      layer.clips.some((clip) => clip.id === clipId)
+    );
 
+    if (!currentLayer) {
+      console.error('Clip not found in any layer');
       return;
     }
-    const layers = this.timeLine.layers;
-    // Process layers from index 1 upward (skip layer 0)
-    for (
-      let currentLayerIndex = 1;
-      currentLayerIndex < layers.length;
-      currentLayerIndex++
-    ) {
-      const currentLayer = layers[currentLayerIndex];
-      // Process each clip in the current layer
-      for (
-        let clipIndex = currentLayer.clips.length - 1;
-        clipIndex >= 0;
-        clipIndex--
-      ) {
-        const clip = currentLayer.clips[clipIndex];
-        let highestLayerIndex = currentLayerIndex; // Track highest layer we can climb to
 
-        // Check all layers above for collisions
-        for (
-          let targetLayerIndex = currentLayerIndex - 1;
-          targetLayerIndex >= 0;
-          targetLayerIndex--
-        ) {
-          const targetLayer = layers[targetLayerIndex];
-          // Check if clip collides with any clip in the target layer
-          const hasCollision = targetLayer.clips.some((targetClip) =>
-            this.isColliding(clip, targetClip)
-          );
+    const clip = currentLayer.clips.find((clip) => clip.id === clipId);
+    if (!clip) return;
 
-          if (!hasCollision) {
-            // No collision in this layer, update highest possible layer
-            highestLayerIndex = targetLayerIndex;
-          } else {
-            // Collision found, stop checking higher layers
-            break;
-          }
-        }
+    if (newStartTime < 0) newStartTime = 0;
 
-        // Move clip to the highest non-colliding layer (if different from current)
-        if (highestLayerIndex < currentLayerIndex) {
-          currentLayer.clips.splice(clipIndex, 1); // Remove from current layer
-          layers[highestLayerIndex].clips.push(clip); // Add to highest non-colliding layer
-        }
-      }
-    }
+    // Get max duration allowed without colliding
+    const { startTime, duration } = this.getMaxDurationWithoutCollision(
+      clip,
+      newStartTime,
+      newDuration,
+      currentLayer.clips,
+      edge
+    );
 
-    // Remove any layers that became empty after climbing
-    this.timeLine.layers = this.timeLine.layers.filter((layer) => layer.clips.length > 0);
+    // Update clip properties
+    clip.startTime = startTime;
+    clip.duration = duration;
+
+    // Clean empty layers
+    // if (this.timeLine && this.timeLine.layers) {
+    //   this.timeLine.layers = this.timeLine.layers.filter(layer => layer.clips.length > 0);
+    // }
+
     Promise.resolve().then(() =>
       this.emitEvent({
-        type: 'timeLine.LayersAdjusted',
+        type: 'timeLine.resized',
         data: { timeLine: this.timeLine },
         origin: 'domain',
       })
     );
   }
 
-  private isColliding(clipA: Clip, clipB: Clip): boolean {
-    const startA = clipA.startTime;
-    const endA = clipA.startTime + clipA.duration;
-    const startB = clipB.startTime;
-    const endB = clipB.startTime + clipB.duration;
-    // Check if time ranges overlap
-    return (
-      (startA >= startB && startA < endB) ||
-      (endA > startB && endA <= endB) ||
-      (startB > startA && startB < endA)
+  private getMaxDurationWithoutCollision(
+    clipToResize: Clip,
+    proposedStartTime: number,
+    proposedDuration: number,
+    clipsInLayer: Clip[],
+    edge: string
+  ): { startTime: number; duration: number } {
+     proposedStartTime= proposedStartTime<0?0:proposedStartTime
+    const proposedEndTime = proposedStartTime + proposedDuration;
+
+    // Find the minimum collision start time among other clips that start after proposedStartTime
+    let maxAllowedEndTime = proposedEndTime;
+    let maxAllowedStartTime = proposedStartTime;
+
+    for (const otherClip of clipsInLayer) {
+      if (otherClip.id === clipToResize.id) continue; // skip the same clip
+
+      const otherStart = otherClip.startTime;
+      const otherEnd = otherStart + otherClip.duration;
+
+      // If clips overlap, adjust maxAllowedEndTime
+      // Check if otherClip starts within the proposed resize range
+
+     
+      if (edge == 'right') {
+        if (otherStart > proposedStartTime && otherStart < maxAllowedEndTime) {
+          // Limit the max allowed end time to the start of the other clip
+          maxAllowedEndTime = otherStart;
+        }
+      } else if (edge == 'left') {
+        if (otherEnd < proposedEndTime && otherEnd > maxAllowedStartTime) {
+          const difference = Math.abs(otherEnd - maxAllowedStartTime);
+          maxAllowedStartTime = otherEnd;
+          maxAllowedEndTime = maxAllowedEndTime - difference;
+        }
+      }
+    }
+
+    // The new duration is the difference between proposedStartTime and maxAllowedEndTime
+    const maxDuration = maxAllowedEndTime - proposedStartTime;
+
+    // Ensure non-negative duration
+    return { startTime: maxAllowedStartTime, duration: maxDuration };
+  }
+
+  private handleTimelineAdjust(): void {
+    if (!this.timeLine) {
+      console.error(
+        `[${new Date().toISOString()}] Display: Adjust Layer Unhandled`
+      );
+      return;
+    }
+
+    this.timeLine.adjustClipLayers();
+
+    Promise.resolve().then(() =>
+      this.emitEvent({
+        type: 'timeLine.LayersAdjusted',
+        data: { timeLine: this.timeLine },
+        origin: 'domain',
+      })
     );
   }
 
