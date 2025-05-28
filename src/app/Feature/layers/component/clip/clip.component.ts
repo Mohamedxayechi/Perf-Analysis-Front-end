@@ -13,16 +13,17 @@ import { Engine } from '../../../../Core/Engine';
   styleUrl: './clip.component.css',
 })
 export class ClipComponent implements AfterViewInit {
+
   @Input() clip!: Clip;
   @Input() distancePerTime: number = 50;
   @Input() layerHeight: number = 80;
   @Input() timeLine: Timeline = new Timeline();
   @Input() layerIndex = 0;
-  @Input()
-  visibleLayers: Layer[] = [];
+  @Input()visibleLayers: Layer[] = [];
   private newX=0
 
   ngAfterViewInit(): void {
+
     interact('.draggable-clip')
       .draggable({
         modifiers: [
@@ -125,6 +126,7 @@ export class ClipComponent implements AfterViewInit {
         ],
         listeners: {
           move: (event) => {
+
             const target = event.target as HTMLElement;
 
             const x = parseFloat(target.getAttribute('data-x') || '0') || 0;
@@ -171,7 +173,8 @@ export class ClipComponent implements AfterViewInit {
             this.resizeClip(id, newDuration, newStartTime, edge);
             target.style.width = clip.duration * this.distancePerTime + 'px';
             const x = clip.startTime * this.distancePerTime;
-            const y = this.layerIndex * this.layerHeight;
+            const y = this.getLayerIndexClipId(clip.id) * this.layerHeight;
+            
             target.style.transform = `translate(${x}px, ${y}px)`;
             target.setAttribute('data-x', x.toString());
             target.setAttribute('data-y', y.toString());
@@ -230,6 +233,10 @@ export class ClipComponent implements AfterViewInit {
 
   getLayerIndexFromCurrentClip(): number {
     const y = this.getYFromClipId(this.clip.id);
+    return Math.max(Math.floor(y / this.layerHeight), 0);
+  }
+    getLayerIndexClipId(clipId:string): number {
+    const y = this.getYFromClipId(clipId);
     return Math.max(Math.floor(y / this.layerHeight), 0);
   }
 
